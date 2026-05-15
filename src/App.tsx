@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PreApprovalPage } from "./pages/PreApprovalPage";
+import { SellYourRideApplyPage } from "./pages/SellYourRideApplyPage";
 import { SellYourRidePage } from "./pages/SellYourRidePage";
 import { StaffPage } from "./pages/StaffPage";
 import { isMarketingOnlySite } from "./siteMode";
@@ -19,6 +20,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="sell-your-ride" element={<SellYourRidePage />} />
+        <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
         <Route path="pre-approval" element={<PreApprovalPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
@@ -27,6 +29,14 @@ export default function App() {
           element={
             <ProtectedRoute requireCrm={false} requireInventoryAdmin>
               <AdminInventoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="admin/sell-queue"
+          element={
+            <ProtectedRoute requireCrm={false} requireInventoryAdmin>
+              <Navigate to="/admin/inventory?tab=sell" replace />
             </ProtectedRoute>
           }
         />

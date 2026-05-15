@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import logoUrl from "../assets/logo.png";
 
 export function SellYourRidePage() {
@@ -50,6 +51,11 @@ export function SellYourRidePage() {
             <p>
               When we put a financed deal together on your unit, you receive a cheque in hand for the amount we agreed
               on during negotiations. No moving the goalposts after the fact.
+            </p>
+            <p className="sell-ride-applyCta">
+              <Link to="/sell-your-ride/apply" className="btn btn-primary">
+                Start an application
+              </Link>
             </p>
           </div>
         </div>

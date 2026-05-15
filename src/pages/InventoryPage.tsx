@@ -40,11 +40,13 @@ export function InventoryPage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(() => load());
   }, [load]);
 
   useEffect(() => {
-    setCategory(categoryFromUrl);
+    queueMicrotask(() => {
+      setCategory(categoryFromUrl);
+    });
   }, [categoryFromUrl]);
 
   const filteredSorted = useMemo(() => {

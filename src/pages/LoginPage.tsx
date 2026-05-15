@@ -53,11 +53,9 @@ export function LoginPage() {
       <div className="loginScreenInner">
         <header className="loginScreenHeader">
           <h1 className="loginScreenTitle">{isMarketingOnlySite() ? "Admin sign in" : "Staff sign in"}</h1>
-          <p className="loginScreenSubtitle">
-            {isMarketingOnlySite()
-              ? "Use the Supabase account created for inventory admins."
-              : "Use the same account as the finance CRM."}
-          </p>
+          {!isMarketingOnlySite() ? (
+            <p className="loginScreenSubtitle">Use the same account as the finance CRM.</p>
+          ) : null}
         </header>
         <form className="loginForm" onSubmit={handleSubmit}>
           <label className="loginLabel" htmlFor="site-login-email">

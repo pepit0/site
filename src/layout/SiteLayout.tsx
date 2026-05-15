@@ -108,12 +108,18 @@ function SiteNavMarketing() {
 
   useEffect(() => {
     if (!user) {
-      setCanManageInventory(false);
-      setInventoryCheckDone(true);
+      queueMicrotask(() => {
+        setCanManageInventory(false);
+        setInventoryCheckDone(true);
+      });
       return;
     }
     let cancelled = false;
-    setInventoryCheckDone(false);
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setInventoryCheckDone(false);
+      }
+    });
     void fetchUserCanManageInventory(supabase).then(({ allowed }) => {
       if (cancelled) return;
       setCanManageInventory(allowed);
