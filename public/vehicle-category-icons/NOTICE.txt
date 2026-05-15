@@ -1,0 +1,13 @@
+Vehicle category PNG icons (transparent backgrounds)
+
+Sources in scripts/vehicle-icon-sources/:
+
+- motorcycle.svg — Openclipart “Motorcycle silhouette” (detail/337499), CC0 1.0.
+- snowmobile.svg — Openclipart “Snowmobile silhouette” (detail/64183), CC0 1.0.
+- atv.svg — National Park Service NPMap Symbol Library v3.0.0, `all-terrain-trail-black-30.svg` (public domain U.S. Government work).
+- side-by-side.svg — Same library, `four-wheel-drive-road-black-30.svg` (4×4 / high-clearance vehicle map symbol; public domain U.S. Government work).
+- watercraft.svg — Same library, `personal-watercraft-black-30.svg` (public domain U.S. Government work).
+
+Original SVGs: https://github.com/nationalparkservice/symbol-library (tag v3.0.0, `src/standalone/`).
+
+PNG files are generated with: npm run build:vehicle-icons

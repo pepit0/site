@@ -1,73 +1,23 @@
-# React + TypeScript + Vite
+# Temptation Motorsports (marketing site)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Vite + React + TypeScript. Pre-approval and inventory are in this repo.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Copy `.env.example` to `.env.local` and fill in values from your **marketing** Supabase project (Settings → API).
+2. For a **separate** Supabase project from the CRM, set `VITE_SITE_MARKETING_ONLY=true`.
+3. In Supabase **SQL Editor**, set the query **role to `postgres`** (not `anon` / `authenticated`). Then run **`sql/marketing/01_inventory_units.sql`** then **`sql/marketing/02_storage_inventory_photos.sql`**. If you still see `permission denied for schema public`, run **`sql/marketing/00_public_schema_for_owner.sql`** once as `postgres` (it only runs `GRANT` + a diagnostic `SELECT`—do not hand-edit schema ownership in SQL unless you know the owner role). Then run `01` again. If you already ran an older `01` without **Sold** / **Unlisted** on `inventory_units`, also run **`sql/marketing/03_inventory_status_sold_unlisted.sql`**. Create admin users under **Authentication → Users**, then run `insert into public.inventory_admins (user_id) values ('<user-uuid>');` for each admin.
+4. **Pre-approval (Get pre-approved form):** run **`sql/marketing/04_submit_public_preapproval_lead.sql`** on the marketing project (creates `preapproval_leads` + `submit_public_preapproval_lead` RPC). Optional: **`sql/marketing/05_preapproval_crm_sync_columns.sql`** for sync status columns.
 
-## React Compiler
+5. **CRM bridge (two Supabase projects):** after CRM runs **`sql/crm_marketing_ingest_bridge.sql`** and deploys the Edge Function, configure the marketing DB webhook per **`docs/CRM_BRIDGE.md`**. Pre-approvals then appear in CRM **System leads** with alerts.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Inventory:** Public units load from the view `inventory_units_public` (no `cost` column; **Unlisted** rows are excluded). Admins manage stock at **`/admin/inventory`** after sign-in. If you already ran older `01` without **Sold** / **Unlisted**, run **`sql/marketing/03_inventory_status_sold_unlisted.sql`**. Photos live in the **`inventory-photos`** Storage bucket.
 
-## Expanding the ESLint configuration
+**Click-by-click Supabase + Windows help:** in the **auto-finance-manager** repo open **`docs/SUPABASE_BEGINNER_CLICKS.md`**.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Full checklist (two projects, hosting): **`docs/SETUP_CHECKLIST.md`** in the same repo.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
