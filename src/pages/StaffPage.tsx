@@ -1,4 +1,5 @@
 import { useAuth } from "../auth/useAuth";
+import { Seo } from "../seo/Seo";
 
 const crmAppUrl = import.meta.env.VITE_CRM_APP_URL;
 
@@ -8,6 +9,7 @@ export function StaffPage() {
 
   return (
     <div className="staff">
+      <Seo title="Staff" description="Staff sign-in hub for Temptation Motorsports." path="/staff" noindex />
       <header className="page-header">
         <h1 className="page-title">Staff</h1>
         <p className="page-subtitle">

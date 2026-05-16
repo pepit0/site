@@ -1,9 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import heroBackground from "../assets/background.png";
+import heroBackgroundPng from "../assets/background.png";
+import heroBackgroundWebp from "../assets/background.webp";
 import logoUrl from "../assets/logo.png";
+import { HomeReviewsConveyor } from "../components/HomeReviewsConveyor";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
+import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
+import { Seo } from "../seo/Seo";
 
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
@@ -30,6 +34,12 @@ export function HomePage() {
 
   return (
     <div className="home">
+      <Seo
+        title="Powersports financing in Edmonton"
+        description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, and boat financing. Fast, friendly credit help from Edmonton for riders across Canada."
+        path="/"
+      />
+      <LocalBusinessJsonLd />
       <div className="home-backdrop">
         <div className="home-backdropLedger" aria-hidden />
         <div className="home-backdropStage">
@@ -56,7 +66,17 @@ export function HomePage() {
               </filter>
             </defs>
           </svg>
-          <img src={heroBackground} alt="" className="home-backdropImg" decoding="async" aria-hidden />
+          <picture>
+            <source type="image/webp" srcSet={heroBackgroundWebp} />
+            <img
+              src={heroBackgroundPng}
+              alt=""
+              className="home-backdropImg"
+              decoding="async"
+              fetchPriority="high"
+              aria-hidden
+            />
+          </picture>
           {spotsWithLayer.map((h) => (
             <div
               key={h.id}
@@ -79,6 +99,7 @@ export function HomePage() {
             </div>
           ))}
         </div>
+        <HomeReviewsConveyor />
       </div>
 
       <div className="home-content">
@@ -95,8 +116,8 @@ export function HomePage() {
           <h1 className="home-title">Temptation Motorsports</h1>
           <p className="home-tagline">Serving motorsports customers since 2015</p>
           <p className="home-lede">
-            Fast, friendly credit options for motorcycles, ATVs, snowmobiles, side-by-sides, and more—built for riders who
-            want to get on the trail, not stuck in paperwork.
+            Fast, friendly financing for motorcycles, sleds, snowmobiles, jet skis, boats, ATVs, and side-by-sides. We are
+            based in Edmonton and work with riders all over Canada who want to ride, not fight paperwork.
           </p>
           <div className="home-actions">
             <Link to="/pre-approval" className="btn btn-primary">

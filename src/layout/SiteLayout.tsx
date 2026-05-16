@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { fetchUserCanManageInventory } from "../lib/inventoryAdminAccess";
 import { supabase } from "../lib/supabase";
@@ -13,7 +13,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
       <header className="site-header">
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>
-            <img src={tLogoUrl} alt="" className="site-brandMark" width={52} height={52} decoding="async" />
+            <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={52} height={52} decoding="async" />
             <span>Temptation Motorsports</span>
           </NavLink>
           <nav className="site-nav" aria-label="Main">
@@ -65,6 +65,17 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                 <a href="tel:+15877411945">(587) 741-1945</a>
               </p>
               <p className="site-footerTagline">We deliver all over Canada!</p>
+              <p className="site-footerSeoBlurb">
+                Looking for{" "}
+                <Link className="site-footerSeoLink" to="/pre-approval">
+                  motorcycle or snowmobile financing
+                </Link>
+                ? Explore our latest{" "}
+                <Link className="site-footerSeoLink" to="/inventory">
+                  powersports inventory
+                </Link>{" "}
+                across Alberta and Canada.
+              </p>
               <p className="site-footerText">
                 © {new Date().getFullYear()} Temptation Motorsports. All rights reserved.
               </p>

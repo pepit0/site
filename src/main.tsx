@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import "./index.css";
@@ -10,11 +11,13 @@ import { SupabaseMissing } from "./SupabaseMissing";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     {isSupabaseConfigured() ? (
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </BrowserRouter>
+      </HelmetProvider>
     ) : (
       <SupabaseMissing />
     )}

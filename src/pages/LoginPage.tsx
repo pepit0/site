@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { isMarketingOnlySite } from "../siteMode";
+import { Seo } from "../seo/Seo";
 
 function safeRedirectPath(raw: string | null): string | null {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
@@ -50,6 +51,12 @@ export function LoginPage() {
 
   return (
     <div className="loginScreen" role="main" aria-label="Sign in">
+      <Seo
+        title={isMarketingOnlySite() ? "Admin sign in" : "Staff sign in"}
+        description="Sign in to Temptation Motorsports staff or admin tools."
+        path="/login"
+        noindex
+      />
       <div className="loginScreenInner">
         <header className="loginScreenHeader">
           <h1 className="loginScreenTitle">{isMarketingOnlySite() ? "Admin sign in" : "Staff sign in"}</h1>

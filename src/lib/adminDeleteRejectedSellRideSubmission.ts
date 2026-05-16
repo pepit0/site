@@ -22,12 +22,20 @@ export async function adminDeleteRejectedSellRideSubmission(
     return { ok: false, error: row?.error ?? "Delete failed." };
   }
   if (isMissingRpcError(error.message, "code" in error ? String((error as { code?: string }).code) : undefined)) {
-    const { error: delErr } = await supabase
+    const { data: deleted, error: delErr } = await supabase
       .from("sell_ride_submissions")
       .delete()
       .eq("id", id)
-      .eq("status", "rejected");
+      .eq("status", "rejected")
+      .select("id");
     if (delErr) return { ok: false, error: delErr.message };
+    if (!deleted?.length) {
+      return {
+        ok: false,
+        error:
+          "Could not delete row. Run sql/marketing/09_admin_delete_rejected_sell_ride.sql on your Supabase project."
+      };
+    }
     return { ok: true };
   }
   return { ok: false, error: error.message };

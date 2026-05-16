@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { InventoryPlaceholder } from "../components/InventoryPlaceholder";
 import {
   inventoryDisplayTitle,
@@ -12,6 +12,7 @@ import {
 } from "../data/inventory";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import { supabase } from "../lib/supabase";
+import { Seo } from "../seo/Seo";
 
 type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
 
@@ -70,13 +71,27 @@ export function InventoryPage() {
 
   return (
     <div className="inventory">
+      <Seo
+        title="Inventory"
+        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, and more. Sold units marked; unlisted units hidden. Financing available through Temptation Motorsports."
+        path="/inventory"
+      />
       <header className="page-header">
         <h1 className="page-title">Inventory</h1>
-        <p className="page-subtitle">
-          Browse units by category. Sold units show a banner on the photo. Unlisted units are hidden here. Sort by year,
-          stock number, or name.
-        </p>
       </header>
+
+      <section className="inventory-seoBlurb" aria-labelledby="inventory-seo-heading">
+        <h2 id="inventory-seo-heading" className="inventory-seoBlurbTitle">
+          ATVs, sleds, bikes, and more
+        </h2>
+        <p className="inventory-seoBlurbText">
+          Shop our lineup for your next ride. Many buyers pair a unit with{" "}
+          <Link className="inventory-seoBlurbLink" to="/pre-approval">
+            powersports financing
+          </Link>
+          . We are based in Edmonton and work with customers across Canada.
+        </p>
+      </section>
 
       <div className="inventory-toolbar">
         <div className="inventory-filters" role="group" aria-label="Filter by vehicle type">
@@ -137,7 +152,7 @@ export function InventoryPage() {
                   {item.photo_paths.length > 0 ? (
                     <img
                       src={inventoryPhotoPublicUrl(supabase, item.photo_paths[0]!)}
-                      alt=""
+                      alt={`${inventoryDisplayTitle(item)} photo`}
                       loading="lazy"
                     />
                   ) : (

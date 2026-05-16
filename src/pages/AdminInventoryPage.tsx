@@ -16,6 +16,7 @@ import {
 } from "../data/inventory";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import { supabase } from "../lib/supabase";
+import { Seo } from "../seo/Seo";
 
 function formatMoney(n: number): string {
   return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
@@ -237,6 +238,7 @@ export function AdminInventoryPage() {
 
   return (
     <div className="admin-inv">
+      <Seo title="Admin inventory" description="Internal inventory management for Temptation Motorsports." path="/admin/inventory" noindex />
       <header className="admin-invHeader page-header">
         <h1 className="page-title">Admin inventory</h1>
         <p className="page-subtitle admin-invHeaderSubtitle">

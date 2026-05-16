@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/seo-prebuild.mjs && node scripts/build-og-default.mjs && node scripts/build-hero-webp.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:vehicle-icons": "node scripts/build-vehicle-category-icons.mjs",
+    "build:og": "node scripts/build-og-default.mjs",
+    "build:hero-webp": "node scripts/build-hero-webp.mjs",
     "build:favicon": "node scripts/build-favicon.mjs",
     "msf:queue": "node scripts/msf-fetch-inventory-queue.mjs",
     "msf:trim-first": "node scripts/msf-fetch-inventory-queue.mjs --trim-first-pending",
@@ -17,6 +19,7 @@
     "@supabase/supabase-js": "^2.105.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-helmet-async": "^3.0.0",
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {

@@ -1,18 +1,15 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import logoUrl from "../assets/logo.png";
+import { Seo } from "../seo/Seo";
 
 export function SellYourRidePage() {
-  useEffect(() => {
-    const prev = document.title;
-    document.title = "Sell your ride | Temptation Motorsports";
-    return () => {
-      document.title = prev;
-    };
-  }, []);
-
   return (
     <div className="sell-ride">
+      <Seo
+        title="Sell your ride"
+        description="List your motorcycle, ATV, sled, or powersports unit. Temptation Motorsports helps buyers who need financing while you keep control of your sale."
+        path="/sell-your-ride"
+      />
       <div className="sell-ride-layout">
         <div className="sell-ride-brandColumn">
           <header className="sell-ride-brandHeader">
@@ -32,6 +29,15 @@ export function SellYourRidePage() {
 
         <div className="sell-ride-panel">
           <div className="sell-ride-body">
+            <section className="sell-ride-seoBlurb" aria-labelledby="sell-ride-seo-heading">
+              <h2 id="sell-ride-seo-heading" className="sell-ride-seoBlurbTitle">
+                List jet skis, quads, sleds, and bikes
+              </h2>
+              <p className="sell-ride-seoBlurbText">
+                Private sellers use this path to reach riders who may need financing through our team. You keep control of
+                your price and your ad while we help qualified buyers get funded.
+              </p>
+            </section>
             <p>
               Start by sending us good photos, the odometer reading, and any other relevant info about your ride. Tell
               us clearly what you want for it. That number is your floor, and we work from there with buyers who need

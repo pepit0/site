@@ -1,15 +1,81 @@
 import { useCallback, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { VehicleSilhouette } from "../components/VehicleSilhouette";
+import { PREAPPROVAL_FAQ, preapprovalFaqJsonLd } from "../data/preapprovalFaq";
 import { VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
 import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead";
+import { Seo } from "../seo/Seo";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
+
+/** Slider range $200–$1000 (by $50). Sentinels stored in DB / RPC: under/over that range. */
+const BUDGET_SLIDER_MIN = 200;
+const BUDGET_SLIDER_MAX = 1000;
+const BUDGET_STEP = 50;
+const BUDGET_SENTINEL_UNDER = 199;
+const BUDGET_SENTINEL_OVER = 1001;
+
+type EmploymentStatus =
+  | "employed"
+  | "unemployed"
+  | "retired_pension"
+  | "disability_pension"
+  | "aish"
+  | "self_employed"
+  | "student"
+  | "spousal_income"
+  | "other";
+
+const EMPLOYMENT_OPTIONS: { value: EmploymentStatus; label: string }[] = [
+  { value: "employed", label: "Employed" },
+  { value: "unemployed", label: "Unemployed" },
+  { value: "retired_pension", label: "Retired / pension" },
+  { value: "disability_pension", label: "Disability / pension" },
+  { value: "aish", label: "AISH" },
+  { value: "self_employed", label: "Self-employed" },
+  { value: "student", label: "Student" },
+  { value: "spousal_income", label: "Spousal income" },
+  { value: "other", label: "Other" }
+];
+
+const CREDIT_BAND_OPTIONS: { value: string; label: string; hint: string }[] = [
+  { value: "excellent_750_plus", label: "Excellent", hint: "750+" },
+  { value: "great_670_750", label: "Great", hint: "670–750" },
+  { value: "good_620_670", label: "Good", hint: "620–670" },
+  { value: "decent_550_619", label: "Decent", hint: "550–619" },
+  { value: "poor_300_549", label: "Poor", hint: "300–549" }
+];
+
+const ADDRESS_TENURE_OPTIONS: { value: string; label: string }[] = [
+  { value: "under_1_year", label: "Under 1 year" },
+  { value: "1_to_2_years", label: "1–2 years" },
+  { value: "3_to_5_years", label: "3–5 years" },
+  { value: "over_5_years", label: "5+ years" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" }
+];
+
+type TradeIntent = "unset" | "no" | "yes";
 
 type WizardState = {
   vehicleInterest: string;
   hasChosenVehicle: boolean;
+  monthlyBudgetCad: number;
+  tradeIntent: TradeIntent;
+  tradeYear: string;
+  tradeMake: string;
+  tradeModel: string;
+  tradeKms: string;
+  employmentStatus: EmploymentStatus | "";
+  employmentOtherDescription: string;
+  employmentType: "" | "full_time" | "part_time";
+  mainIncome: string;
+  otherIncome: string;
+  otherIncomeDescription: string;
+  employer: string;
+  jobTitle: string;
+  creditScoreBand: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -19,15 +85,55 @@ type WizardState = {
   unit: string;
   city: string;
   province: string;
-  employer: string;
-  income: string;
+  addressTenure: string;
   consentContact: boolean;
   consentCredit: boolean;
 };
 
+function snapBudget(raw: number): number {
+  const clamped = Math.min(BUDGET_SLIDER_MAX, Math.max(BUDGET_SLIDER_MIN, raw));
+  const steps = Math.round((clamped - BUDGET_SLIDER_MIN) / BUDGET_STEP);
+  return BUDGET_SLIDER_MIN + steps * BUDGET_STEP;
+}
+
+function sliderValueFromBudget(budget: number): number {
+  if (budget === BUDGET_SENTINEL_UNDER) return BUDGET_SLIDER_MIN;
+  if (budget === BUDGET_SENTINEL_OVER) return BUDGET_SLIDER_MAX;
+  return snapBudget(budget);
+}
+
+function formatBudgetChoice(budget: number): string {
+  if (budget === BUDGET_SENTINEL_UNDER) return "Less than $200";
+  if (budget === BUDGET_SENTINEL_OVER) return "$1000+";
+  return `$${budget}`;
+}
+
+function requiresEmploymentType(status: EmploymentStatus | ""): boolean {
+  return status === "employed" || status === "self_employed" || status === "student";
+}
+
+function requiresEmployerAndTitle(status: EmploymentStatus | ""): boolean {
+  return status === "employed" || status === "self_employed";
+}
+
 const emptyWizard = (): WizardState => ({
   vehicleInterest: "",
   hasChosenVehicle: false,
+  monthlyBudgetCad: 600,
+  tradeIntent: "unset",
+  tradeYear: "",
+  tradeMake: "",
+  tradeModel: "",
+  tradeKms: "",
+  employmentStatus: "",
+  employmentOtherDescription: "",
+  employmentType: "",
+  mainIncome: "",
+  otherIncome: "",
+  otherIncomeDescription: "",
+  employer: "",
+  jobTitle: "",
+  creditScoreBand: "",
   firstName: "",
   lastName: "",
   phone: "",
@@ -37,48 +143,105 @@ const emptyWizard = (): WizardState => ({
   unit: "",
   city: "",
   province: "",
-  employer: "",
-  income: "",
+  addressTenure: "",
   consentContact: false,
   consentCredit: false
 });
 
 function validateEmail(value: string): boolean {
   const v = value.trim();
-  if (!v) return false;
+  if (!v) return true;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function parseMoney(raw: string): { ok: false; error: string } | { ok: true; value: number } {
+  const t = raw.trim();
+  if (!t) return { ok: true, value: 0 };
+  const n = Number.parseFloat(t);
+  if (!Number.isFinite(n) || n < 0) return { ok: false, error: "Enter a valid dollar amount." };
+  return { ok: true, value: n };
+}
+
+function validateTradeKms(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return "Enter the vehicle’s mileage (km).";
+  const n = Number.parseInt(t.replace(/[, ]/g, ""), 10);
+  if (!Number.isFinite(n) || n < 0 || n > 999_999) return "Enter a realistic odometer reading (km).";
+  return null;
 }
 
 function validateStep(step: number, w: WizardState): string | null {
   switch (step) {
-    case 0:
+    case 0: {
+      if (!w.hasChosenVehicle) return "Choose a unit type (or Not sure yet).";
       return null;
-    case 1: {
+    }
+    case 1:
+      return null;
+    case 2: {
+      if (w.tradeIntent === "unset") return "Let us know if you have a trade-in.";
+      if (w.tradeIntent === "yes") {
+        if (!w.tradeYear.trim()) return "Enter the trade-in year.";
+        if (!w.tradeMake.trim()) return "Enter the trade-in make.";
+        if (!w.tradeModel.trim()) return "Enter the trade-in model.";
+        const kmErr = validateTradeKms(w.tradeKms);
+        if (kmErr) return kmErr;
+      }
+      return null;
+    }
+    case 3: {
+      if (!w.employmentStatus) return "Select your employment / income type.";
+      if (w.employmentStatus === "other" && !w.employmentOtherDescription.trim()) {
+        return "Describe your income situation.";
+      }
+      if (requiresEmploymentType(w.employmentStatus) && !w.employmentType) {
+        return "Select full-time or part-time.";
+      }
+      const main = parseMoney(w.mainIncome);
+      if (!main.ok) return main.error;
+      if (w.employmentStatus === "unemployed") {
+        /* allow zero */
+      } else if (main.value <= 0) {
+        return "Enter your main monthly income (CAD).";
+      }
+      const other = parseMoney(w.otherIncome);
+      if (!other.ok) return other.error;
+      if (other.value > 0 && !w.otherIncomeDescription.trim()) {
+        return "Describe your other monthly income.";
+      }
+      if (requiresEmployerAndTitle(w.employmentStatus)) {
+        if (!w.employer.trim()) {
+          return w.employmentStatus === "self_employed"
+            ? "Enter your business name."
+            : "Enter your employer name.";
+        }
+        if (!w.jobTitle.trim()) {
+          return w.employmentStatus === "self_employed" ? "Enter your role." : "Enter your job title.";
+        }
+      }
+      return null;
+    }
+    case 4: {
+      if (!w.creditScoreBand) return "Select the range that best matches your credit.";
+      return null;
+    }
+    case 5: {
       if (!w.firstName.trim()) return "Enter your first name.";
       if (!w.lastName.trim()) return "Enter your last name.";
       const phone = normalizePhoneForStorage(w.phone);
       if (phone.error || !phone.value) return phone.error ?? "Enter a valid phone number.";
-      return null;
-    }
-    case 2: {
-      if (!validateEmail(w.email)) return "Enter a valid email address.";
+      if (!validateEmail(w.email)) return "Enter a valid email address, or leave it blank.";
       if (!w.dob.trim()) return "Enter your date of birth.";
-      return null;
-    }
-    case 3: {
       if (!w.street.trim()) return "Enter your street address.";
       if (!w.city.trim()) return "Enter your city.";
       if (!w.province.trim()) return "Enter your province.";
+      if (!w.addressTenure) return "Select how long you’ve lived at this address.";
       return null;
     }
-    case 4: {
-      if (!w.employer.trim()) return "Enter your employer.";
-      const income = Number.parseFloat(w.income);
-      if (!Number.isFinite(income) || income < 0) return "Enter a valid gross monthly income (CAD).";
-      return null;
-    }
-    case 5: {
-      if (!w.consentContact || !w.consentCredit) return "Both consent checkboxes are required to submit.";
+    case 6: {
+      if (!w.consentContact) {
+        return "You must agree to be contacted to submit your application.";
+      }
       return null;
     }
     default:
@@ -92,6 +255,8 @@ export function PreApprovalPage() {
   const [w, setW] = useState<WizardState>(() => emptyWizard());
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const otherIncomeParsed = parseMoney(w.otherIncome);
+  const showOtherIncomeDescription = otherIncomeParsed.ok && otherIncomeParsed.value > 0;
 
   const update = useCallback(<K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setW((prev) => ({ ...prev, [key]: value }));
@@ -104,6 +269,28 @@ export function PreApprovalPage() {
   const selectNotSureVehicle = () => {
     setW((prev) => ({ ...prev, vehicleInterest: "", hasChosenVehicle: true }));
   };
+
+  const setTradeYes = () => {
+    setW((prev) => ({ ...prev, tradeIntent: "yes" }));
+  };
+
+  const setTradeNo = () => {
+    setW((prev) => ({
+      ...prev,
+      tradeIntent: "no",
+      tradeYear: "",
+      tradeMake: "",
+      tradeModel: "",
+      tradeKms: ""
+    }));
+  };
+
+  const onBudgetInput = (raw: number) => {
+    update("monthlyBudgetCad", snapBudget(raw));
+  };
+
+  const setBudgetUnder = () => update("monthlyBudgetCad", BUDGET_SENTINEL_UNDER);
+  const setBudgetOver = () => update("monthlyBudgetCad", BUDGET_SENTINEL_OVER);
 
   const goNext = () => {
     const err = validateStep(step, w);
@@ -121,7 +308,7 @@ export function PreApprovalPage() {
   };
 
   const onSubmit = async () => {
-    const err = validateStep(5, w);
+    const err = validateStep(TOTAL_STEPS - 1, w);
     setErrorMessage(err);
     if (err) return;
 
@@ -130,18 +317,26 @@ export function PreApprovalPage() {
       setErrorMessage(phoneNorm.error ?? "Enter a valid phone number.");
       return;
     }
-    const income = Number.parseFloat(w.income);
-    if (!Number.isFinite(income) || income < 0) {
-      setErrorMessage("Enter a valid gross monthly income.");
+    const main = parseMoney(w.mainIncome);
+    if (!main.ok) {
+      setErrorMessage(main.error);
+      return;
+    }
+    const otherParsed = parseMoney(w.otherIncome);
+    if (!otherParsed.ok) {
+      setErrorMessage(otherParsed.error);
       return;
     }
 
     const displayName = `${w.firstName.trim()} ${w.lastName.trim()}`.trim();
+    const emailTrim = w.email.trim();
+    const otherAmt = otherParsed.value > 0 ? otherParsed.value : null;
+    const otherDesc = otherAmt != null ? w.otherIncomeDescription.trim() || null : null;
 
     setSubmitting(true);
     const result = await submitPublicPreapprovalLead({
       displayName,
-      email: w.email.trim(),
+      email: emailTrim.length > 0 ? emailTrim : null,
       phone: phoneNorm.value,
       dateOfBirth: w.dob.trim(),
       street: w.street.trim(),
@@ -149,8 +344,23 @@ export function PreApprovalPage() {
       city: w.city.trim(),
       province: w.province.trim(),
       employer: w.employer.trim(),
-      grossMonthlyIncomeCad: income,
+      jobTitle: w.jobTitle.trim() ? w.jobTitle.trim() : null,
+      grossMonthlyIncomeCad: main.value,
+      otherMonthlyIncomeCad: otherAmt,
+      otherIncomeDescription: otherDesc,
       vehicleInterest: w.vehicleInterest.trim(),
+      monthlyBudgetCad: w.monthlyBudgetCad,
+      hasTrade: w.tradeIntent === "yes",
+      tradeYear: w.tradeIntent === "yes" ? w.tradeYear.trim() : null,
+      tradeMake: w.tradeIntent === "yes" ? w.tradeMake.trim() : null,
+      tradeModel: w.tradeIntent === "yes" ? w.tradeModel.trim() : null,
+      tradeKms: w.tradeIntent === "yes" ? w.tradeKms.trim() : null,
+      employmentStatus: w.employmentStatus,
+      employmentOtherDescription:
+        w.employmentStatus === "other" ? w.employmentOtherDescription.trim() : null,
+      employmentType: requiresEmploymentType(w.employmentStatus) ? w.employmentType : null,
+      creditScoreBand: w.creditScoreBand,
+      addressTenure: w.addressTenure,
       consentContact: w.consentContact,
       consentCredit: w.consentCredit
     });
@@ -169,6 +379,11 @@ export function PreApprovalPage() {
   if (submitted) {
     return (
       <div className="preapproval">
+        <Seo
+          title="Thank you"
+          description="We received your financing application. Temptation Motorsports will contact you soon about motorcycle, ATV, snowmobile, and powersports loan options."
+          path="/pre-approval"
+        />
         <div className="preapproval-success card card-pad" role="status">
           <h1 className="page-title">Thank you</h1>
           <p className="page-subtitle">
@@ -187,12 +402,26 @@ export function PreApprovalPage() {
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
+  const empStatus = w.employmentStatus;
+  const employerLabel =
+    empStatus === "self_employed" ? "Business name" : empStatus === "employed" ? "Employer" : "Employer";
+  const jobLabel = empStatus === "self_employed" ? "Your role" : "Job title";
+
   return (
     <div className="preapproval">
+      <Seo
+        title="Credit pre-approval"
+        description="Apply for powersports financing: motorcycles, bikes, snowmobiles, sleds, ATVs, side-by-sides, jet skis, and boats. Edmonton-based team serving riders across Canada."
+        path="/pre-approval"
+      />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(preapprovalFaqJsonLd())}</script>
+      </Helmet>
       <header className="page-header">
         <h1 className="page-title">Credit pre-approval</h1>
         <p className="page-subtitle">
-          A few short steps. This is not a final credit decision—we use this to prepare options before we reach out.
+          Financing for sleds, bikes, quads, PWCs, and more. A few short steps. This is not a final credit decision—we
+          use this to prepare options before we reach out.
         </p>
       </header>
 
@@ -241,7 +470,353 @@ export function PreApprovalPage() {
 
         {step === 1 ? (
           <>
-            <h2 className="preapproval-wizardStepTitle">Your name and phone</h2>
+            <h2 className="preapproval-wizardStepTitle">Monthly payment budget</h2>
+            <p className="preapproval-wizardHint">
+              Roughly what monthly payment fits your budget? Pick an end option or drag between ${BUDGET_SLIDER_MIN} and
+              ${BUDGET_SLIDER_MAX} (steps of ${BUDGET_STEP}).
+            </p>
+            <div className="preapproval-budgetBlock">
+              <div className="preapproval-budgetValue" aria-live="polite">
+                <strong>{formatBudgetChoice(w.monthlyBudgetCad)}</strong>
+                <span className="preapproval-budgetSuffix">/month</span>
+              </div>
+              <div className="preapproval-budgetSliderRow">
+                <button
+                  type="button"
+                  className={`preapproval-budgetEndpoint${w.monthlyBudgetCad === BUDGET_SENTINEL_UNDER ? " preapproval-budgetEndpointActive" : ""}`}
+                  onClick={setBudgetUnder}
+                  aria-pressed={w.monthlyBudgetCad === BUDGET_SENTINEL_UNDER}
+                >
+                  &lt;&nbsp;$200
+                </button>
+                <input
+                  className="preapproval-budgetRange"
+                  type="range"
+                  min={BUDGET_SLIDER_MIN}
+                  max={BUDGET_SLIDER_MAX}
+                  step={BUDGET_STEP}
+                  value={sliderValueFromBudget(w.monthlyBudgetCad)}
+                  onChange={(e) => onBudgetInput(Number(e.target.value))}
+                  aria-valuemin={BUDGET_SLIDER_MIN}
+                  aria-valuemax={BUDGET_SLIDER_MAX}
+                  aria-valuenow={sliderValueFromBudget(w.monthlyBudgetCad)}
+                  aria-valuetext={formatBudgetChoice(w.monthlyBudgetCad)}
+                  aria-label="Monthly budget in Canadian dollars"
+                />
+                <button
+                  type="button"
+                  className={`preapproval-budgetEndpoint${w.monthlyBudgetCad === BUDGET_SENTINEL_OVER ? " preapproval-budgetEndpointActive" : ""}`}
+                  onClick={setBudgetOver}
+                  aria-pressed={w.monthlyBudgetCad === BUDGET_SENTINEL_OVER}
+                >
+                  $1000+
+                </button>
+              </div>
+              <div className="preapproval-budgetTicks" aria-hidden>
+                <span>Less than $200</span>
+                <span>$1000+</span>
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        {step === 2 ? (
+          <>
+            <h2 className="preapproval-wizardStepTitle">Trade-in</h2>
+            <p className="preapproval-wizardHint">Do you have a vehicle to trade?</p>
+            <div className="preapproval-yesNoRow" role="group" aria-label="Trade-in">
+              <button
+                type="button"
+                className={`preapproval-wizardVehicleBtn preapproval-yesNoBtn${
+                  w.tradeIntent === "yes" ? " preapproval-wizardVehicleBtnActive" : ""
+                }`}
+                onClick={setTradeYes}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className={`preapproval-wizardVehicleBtn preapproval-yesNoBtn${
+                  w.tradeIntent === "no" ? " preapproval-wizardVehicleBtnActive" : ""
+                }`}
+                onClick={setTradeNo}
+              >
+                No
+              </button>
+            </div>
+            {w.tradeIntent === "yes" ? (
+              <>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-ty">
+                    Year <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="pa-ty"
+                    className="input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={w.tradeYear}
+                    onChange={(e) => update("tradeYear", e.target.value)}
+                  />
+                </div>
+                <div className="form-row form-rowSplit">
+                  <div>
+                    <label className="form-label" htmlFor="pa-tmk">
+                      Make <span className="form-required">*</span>
+                    </label>
+                    <input
+                      id="pa-tmk"
+                      className="input"
+                      type="text"
+                      autoComplete="off"
+                      value={w.tradeMake}
+                      onChange={(e) => update("tradeMake", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor="pa-tmd">
+                      Model <span className="form-required">*</span>
+                    </label>
+                    <input
+                      id="pa-tmd"
+                      className="input"
+                      type="text"
+                      autoComplete="off"
+                      value={w.tradeModel}
+                      onChange={(e) => update("tradeModel", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-tkm">
+                    Odometer (km) <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="pa-tkm"
+                    className="input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={w.tradeKms}
+                    onChange={(e) => update("tradeKms", e.target.value)}
+                  />
+                </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
+
+        {step === 3 ? (
+          <>
+            <h2 className="preapproval-wizardStepTitle">Income and employment</h2>
+            <div className="form-row">
+              <label className="form-label" htmlFor="pa-emp-st">
+                Status <span className="form-required">*</span>
+              </label>
+              <select
+                id="pa-emp-st"
+                className="input"
+                value={w.employmentStatus}
+                onChange={(e) => {
+                  const v = e.target.value as EmploymentStatus | "";
+                  setW((prev) => ({
+                    ...prev,
+                    employmentStatus: v,
+                    employmentType: requiresEmploymentType(v) ? prev.employmentType : "",
+                    employer: requiresEmployerAndTitle(v) ? prev.employer : "",
+                    jobTitle: requiresEmployerAndTitle(v) ? prev.jobTitle : ""
+                  }));
+                }}
+              >
+                <option value="">Select…</option>
+                {EMPLOYMENT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {w.employmentStatus === "other" ? (
+              <div className="form-row">
+                <label className="form-label" htmlFor="pa-emp-oth">
+                  Describe <span className="form-required">*</span>
+                </label>
+                <input
+                  id="pa-emp-oth"
+                  className="input"
+                  type="text"
+                  autoComplete="off"
+                  value={w.employmentOtherDescription}
+                  onChange={(e) => update("employmentOtherDescription", e.target.value)}
+                />
+              </div>
+            ) : null}
+            {requiresEmploymentType(w.employmentStatus) ? (
+              <fieldset className="form-fieldset">
+                <legend className="form-label">
+                  Employment type <span className="form-required">*</span>
+                </legend>
+                <div className="preapproval-inlineRadios">
+                  <label className="form-check">
+                    <input
+                      type="radio"
+                      name="pa-emptype"
+                      checked={w.employmentType === "full_time"}
+                      onChange={() => update("employmentType", "full_time")}
+                    />
+                    <span>Full-time</span>
+                  </label>
+                  <label className="form-check">
+                    <input
+                      type="radio"
+                      name="pa-emptype"
+                      checked={w.employmentType === "part_time"}
+                      onChange={() => update("employmentType", "part_time")}
+                    />
+                    <span>Part-time</span>
+                  </label>
+                </div>
+              </fieldset>
+            ) : null}
+            <div className="form-row">
+              <label className="form-label" htmlFor="pa-main-inc">
+                Main monthly income (CAD) <span className="form-required">*</span>
+              </label>
+              <input
+                id="pa-main-inc"
+                className="input"
+                type="number"
+                min={0}
+                step={50}
+                inputMode="decimal"
+                value={w.mainIncome}
+                onChange={(e) => update("mainIncome", e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <label className="form-label" htmlFor="pa-oth-inc">
+                Other monthly income (CAD) <span className="preapproval-optional">(optional)</span>
+              </label>
+              <input
+                id="pa-oth-inc"
+                className="input"
+                type="number"
+                min={0}
+                step={50}
+                inputMode="decimal"
+                value={w.otherIncome}
+                onChange={(e) => update("otherIncome", e.target.value)}
+              />
+            </div>
+            {showOtherIncomeDescription ? (
+              <div className="form-row">
+                <label className="form-label" htmlFor="pa-oth-desc">
+                  Describe other income <span className="form-required">*</span>
+                </label>
+                <input
+                  id="pa-oth-desc"
+                  className="input"
+                  type="text"
+                  autoComplete="off"
+                  value={w.otherIncomeDescription}
+                  onChange={(e) => update("otherIncomeDescription", e.target.value)}
+                />
+              </div>
+            ) : null}
+            {requiresEmployerAndTitle(w.employmentStatus) ? (
+              <>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-empl">
+                    {employerLabel} <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="pa-empl"
+                    className="input"
+                    type="text"
+                    autoComplete="organization"
+                    value={w.employer}
+                    onChange={(e) => update("employer", e.target.value)}
+                  />
+                </div>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-job">
+                    {jobLabel} <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="pa-job"
+                    className="input"
+                    type="text"
+                    autoComplete="organization-title"
+                    value={w.jobTitle}
+                    onChange={(e) => update("jobTitle", e.target.value)}
+                  />
+                </div>
+              </>
+            ) : w.employmentStatus === "student" ? (
+              <>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-empl-opt">
+                    Employer <span className="preapproval-optional">(optional)</span>
+                  </label>
+                  <input
+                    id="pa-empl-opt"
+                    className="input"
+                    type="text"
+                    autoComplete="organization"
+                    value={w.employer}
+                    onChange={(e) => update("employer", e.target.value)}
+                  />
+                </div>
+                <div className="form-row">
+                  <label className="form-label" htmlFor="pa-job-opt">
+                    Job title <span className="preapproval-optional">(optional)</span>
+                  </label>
+                  <input
+                    id="pa-job-opt"
+                    className="input"
+                    type="text"
+                    autoComplete="organization-title"
+                    value={w.jobTitle}
+                    onChange={(e) => update("jobTitle", e.target.value)}
+                  />
+                </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
+
+        {step === 4 ? (
+          <>
+            <h2 className="preapproval-wizardStepTitle">Credit score (estimate)</h2>
+            <p className="preapproval-wizardHint">
+              If you’re not sure, your best guess still helps us line up realistic options.
+            </p>
+            <div
+              className="preapproval-tierGrid"
+              role="radiogroup"
+              aria-label="Estimated credit score range"
+            >
+              {CREDIT_BAND_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={w.creditScoreBand === opt.value}
+                  className={`preapproval-tierBtn${w.creditScoreBand === opt.value ? " preapproval-tierBtnActive" : ""}`}
+                  onClick={() => update("creditScoreBand", opt.value)}
+                >
+                  <span className="preapproval-tierTitle">{opt.label}</span>
+                  <span className="preapproval-tierHint">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        {step === 5 ? (
+          <>
+            <h2 className="preapproval-wizardStepTitle">Your contact details</h2>
             <div className="form-row">
               <label className="form-label" htmlFor="pa-fn">
                 First name <span className="form-required">*</span>
@@ -281,25 +856,6 @@ export function PreApprovalPage() {
                 onChange={(e) => update("phone", e.target.value)}
               />
             </div>
-          </>
-        ) : null}
-
-        {step === 2 ? (
-          <>
-            <h2 className="preapproval-wizardStepTitle">Email and date of birth</h2>
-            <div className="form-row">
-              <label className="form-label" htmlFor="pa-email">
-                Email <span className="form-required">*</span>
-              </label>
-              <input
-                id="pa-email"
-                className="input"
-                type="email"
-                autoComplete="email"
-                value={w.email}
-                onChange={(e) => update("email", e.target.value)}
-              />
-            </div>
             <div className="form-row">
               <label className="form-label" htmlFor="pa-dob">
                 Date of birth <span className="form-required">*</span>
@@ -313,12 +869,19 @@ export function PreApprovalPage() {
                 onChange={(e) => update("dob", e.target.value)}
               />
             </div>
-          </>
-        ) : null}
-
-        {step === 3 ? (
-          <>
-            <h2 className="preapproval-wizardStepTitle">Address</h2>
+            <div className="form-row">
+              <label className="form-label" htmlFor="pa-email">
+                Email <span className="preapproval-optional">(optional)</span>
+              </label>
+              <input
+                id="pa-email"
+                className="input"
+                type="email"
+                autoComplete="email"
+                value={w.email}
+                onChange={(e) => update("email", e.target.value)}
+              />
+            </div>
             <div className="form-row">
               <label className="form-label" htmlFor="pa-street">
                 Street address <span className="form-required">*</span>
@@ -373,44 +936,28 @@ export function PreApprovalPage() {
                 />
               </div>
             </div>
-          </>
-        ) : null}
-
-        {step === 4 ? (
-          <>
-            <h2 className="preapproval-wizardStepTitle">Employment</h2>
             <div className="form-row">
-              <label className="form-label" htmlFor="pa-employer">
-                Employer <span className="form-required">*</span>
+              <label className="form-label" htmlFor="pa-tenure">
+                Time at this address <span className="form-required">*</span>
               </label>
-              <input
-                id="pa-employer"
+              <select
+                id="pa-tenure"
                 className="input"
-                type="text"
-                autoComplete="organization"
-                value={w.employer}
-                onChange={(e) => update("employer", e.target.value)}
-              />
-            </div>
-            <div className="form-row">
-              <label className="form-label" htmlFor="pa-income">
-                Gross monthly income (CAD) <span className="form-required">*</span>
-              </label>
-              <input
-                id="pa-income"
-                className="input"
-                type="number"
-                min={0}
-                step={100}
-                inputMode="numeric"
-                value={w.income}
-                onChange={(e) => update("income", e.target.value)}
-              />
+                value={w.addressTenure}
+                onChange={(e) => update("addressTenure", e.target.value)}
+              >
+                <option value="">Select…</option>
+                {ADDRESS_TENURE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </>
         ) : null}
 
-        {step === 5 ? (
+        {step === 6 ? (
           <>
             <h2 className="preapproval-wizardStepTitle">Consent and submit</h2>
             <label className="form-check">
@@ -432,7 +979,7 @@ export function PreApprovalPage() {
               />
               <span>
                 I consent to Temptation Motorsports pulling and viewing my consumer credit report in connection with this
-                application. <span className="form-required">*</span>
+                application. <span className="form-optional">(optional)</span>
               </span>
             </label>
           </>
@@ -459,6 +1006,20 @@ export function PreApprovalPage() {
           </div>
         </div>
       </div>
+
+      <section className="preapproval-faq card card-pad" aria-labelledby="preapproval-faq-heading">
+        <h2 id="preapproval-faq-heading" className="preapproval-faqTitle">
+          Common questions
+        </h2>
+        <dl className="preapproval-faqList">
+          {PREAPPROVAL_FAQ.map((item) => (
+            <div key={item.question} className="preapproval-faqItem">
+              <dt className="preapproval-faqQuestion">{item.question}</dt>
+              <dd className="preapproval-faqAnswer">{item.answer}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </div>
   );
 }

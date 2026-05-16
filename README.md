@@ -21,3 +21,17 @@ Full checklist (two projects, hosting): **`docs/SETUP_CHECKLIST.md`** in the sam
 npm install
 npm run dev
 ```
+
+## SEO (search)
+
+1. Set **`VITE_PUBLIC_SITE_URL`** in `.env.local` and on your host (e.g. Vercel) to your canonical site root **without** a trailing slash, e.g. `https://www.yourdomain.com`. This powers **canonical URLs**, **Open Graph** links, and **MotorcycleDealer** JSON-LD on the home page.
+2. Every production **`npm run build`** runs **`prebuild`**, which writes **`public/sitemap.xml`** and **`public/robots.txt`** from that URL. Those files are gitignored; deploy via CI/Vercel so the build always runs with the env var set.
+3. In **[Google Search Console](https://search.google.com/search-console)** (and Bing Webmaster), verify the property and submit **`https://YOURDOMAIN/sitemap.xml`**.
+4. Match your **Google Business Profile** name, phone, and address to what appears on the site (footer) so local listings and the site reinforce each other.
+
+5. **Optional NAP / profiles in JSON-LD:** set `VITE_PUBLIC_BUSINESS_STREET_ADDRESS`, `VITE_PUBLIC_BUSINESS_POSTAL_CODE`, and `VITE_PUBLIC_BUSINESS_SAME_AS` in `.env.local` (see `.env.example`) when you want richer `MotorcycleDealer` markup (keep values identical to GBP).
+
+6. **Prebuild assets:** `npm run build` runs `seo-prebuild`, `build-og-default`, and `build-hero-webp` (requires `src/assets/background.png`). Commit `src/assets/background.webp` after the first build if you want `npm run dev` to work without running prebuild locally.
+
+7. **Further technical SEO:** If indexing still lags, consider **prerendering** `/`, `/pre-approval`, and `/inventory` (Vite prerender plugin or a future SSR move). Re-check **LCP** after hero changes (WebP + `fetchPriority` on the home backdrop).
+

@@ -16,6 +16,8 @@ import {
 } from "../lib/sellRideApplyDraft";
 import { sellRideBeginDraft, sellRideSubmit } from "../lib/sellRideSubmission";
 import { supabase } from "../lib/supabase";
+import { Seo } from "../seo/Seo";
+import { SellRideApplyBreadcrumbJsonLd } from "../seo/SellRideApplyBreadcrumbJsonLd";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
@@ -111,25 +113,19 @@ export function SellYourRideApplyPage() {
   const [hydrated, setHydrated] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  /** True once the user adds/changes photos — avoids a late IDB restore overwriting their new picks. */
+  const userTouchedFilesRef = useRef(false);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
 
   useEffect(() => {
-    const prev = document.title;
-    document.title = "Sell your ride — Apply | Temptation Motorsports";
-    return () => {
-      document.title = prev;
-    };
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         const restored = await readSellRideApplyFileDraft();
-        if (!cancelled && restored.length > 0) {
+        if (!cancelled && restored.length > 0 && !userTouchedFilesRef.current) {
           setFileItems(restored);
         }
       } finally {
@@ -145,10 +141,17 @@ export function SellYourRideApplyPage() {
     if (!hydrated) return;
     const t = window.setTimeout(() => {
       writeSellRideApplySessionDraft({ version: 1, step, form });
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [hydrated, form, step]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const t = window.setTimeout(() => {
       void writeSellRideApplyFileDraft(fileItems);
     }, 400);
     return () => window.clearTimeout(t);
-  }, [hydrated, form, step, fileItems]);
+  }, [hydrated, fileItems]);
 
   const previewUrls = useMemo(() => fileItems.map((item) => URL.createObjectURL(item.file)), [fileItems]);
 
@@ -161,6 +164,7 @@ export function SellYourRideApplyPage() {
 
   const addFiles = (list: FileList | null) => {
     if (!list?.length) return;
+    userTouchedFilesRef.current = true;
     const additions: FileDraftItem[] = [];
     const problems: string[] = [];
     for (const file of Array.from(list)) {
@@ -190,6 +194,7 @@ export function SellYourRideApplyPage() {
   };
 
   const removeFileById = (clientId: string) => {
+    userTouchedFilesRef.current = true;
     setFileItems((prev) => prev.filter((x) => x.clientId !== clientId));
   };
 
@@ -282,6 +287,7 @@ export function SellYourRideApplyPage() {
 
       clearSellRideApplySessionDraft();
       void clearSellRideApplyFileDraft();
+      userTouchedFilesRef.current = false;
 
       setSuccessOpen(true);
       setForm(emptyForm());
@@ -307,6 +313,27 @@ export function SellYourRideApplyPage() {
 
   return (
     <div className="sell-ride-apply">
+      <SellRideApplyBreadcrumbJsonLd />
+      <Seo
+        title="Sell your ride application"
+        description="Submit your sled, bike, ATV, or powersports listing to Temptation Motorsports. Photos and details help us connect financed buyers with your ride."
+        path="/sell-your-ride/apply"
+      />
+      <nav className="sell-ride-applyBreadcrumbs" aria-label="Breadcrumb">
+        <Link className="sell-ride-applyBreadcrumbsLink" to="/">
+          Home
+        </Link>
+        <span className="sell-ride-applyBreadcrumbsSep" aria-hidden>
+          /
+        </span>
+        <Link className="sell-ride-applyBreadcrumbsLink" to="/sell-your-ride">
+          Sell your ride
+        </Link>
+        <span className="sell-ride-applyBreadcrumbsSep" aria-hidden>
+          /
+        </span>
+        <span className="sell-ride-applyBreadcrumbsCurrent">Apply</span>
+      </nav>
       <header className="sell-ride-applyHeader page-header">
         <h1 className="page-title">Sell your ride — application</h1>
         <nav className="sell-ride-applyStepper" aria-label="Form progress">
