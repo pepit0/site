@@ -9,7 +9,7 @@ import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
 import { Seo } from "../seo/Seo";
 
-const HOME_STACK_MQ = "(max-width: 900px), (max-height: 820px)";
+const HOME_STACK_MQ = "(max-width: 768px)";
 
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
