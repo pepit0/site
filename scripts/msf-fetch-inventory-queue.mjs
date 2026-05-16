@@ -405,29 +405,43 @@ async function main() {
 
   /** @type {Record<string, unknown>[]} */
   const toUpsert = [];
-  let skippedPosted = 0;
-  let skippedInCatalog = 0;
+  let importedNew = 0;
+  let alreadyPending = 0;
+  let alreadySkipped = 0;
+  let ignoredPosted = 0;
+  let ignoredInCatalog = 0;
   for (const p of allProducts) {
     const mapped = mapProduct(p);
     if (!mapped) continue;
     const st = statusByPid.get(mapped.source_product_id);
     if (st === "posted") {
-      skippedPosted += 1;
+      ignoredPosted += 1;
       continue;
     }
     if (catalogMsfStocks.has(mapped.stock_number)) {
-      skippedInCatalog += 1;
+      ignoredInCatalog += 1;
       continue;
     }
+    if (st === "pending") {
+      alreadyPending += 1;
+      continue;
+    }
+    if (st === "skipped") {
+      alreadySkipped += 1;
+      continue;
+    }
+    importedNew += 1;
     toUpsert.push({
       ...mapped,
-      status: st === "skipped" ? "skipped" : "pending"
+      status: "pending"
     });
   }
 
+  console.log(`MSF store: ${allProducts.length} product(s) fetched.`);
   console.log(
-    `Mapped ${allProducts.length} products; upserting ${toUpsert.length} rows (${skippedPosted} queue-posted skipped, ${skippedInCatalog} already in catalog as MSF-*).`
+    `${importedNew} new in queue · ${alreadyPending} already pending (unchanged) · ${alreadySkipped} already skipped (unchanged) · ${ignoredPosted} already posted (ignored) · ${ignoredInCatalog} already in catalog (ignored).`
   );
+  console.log(`Upserting ${toUpsert.length} row(s)…`);
 
   const chunk = 80;
   for (let i = 0; i < toUpsert.length; i += chunk) {

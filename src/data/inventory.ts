@@ -51,11 +51,30 @@ export type InventoryPublicRow = {
   updated_at: string;
 };
 
-/** Full row for admins (`inventory_units`). */
-export type InventoryUnitRow = Omit<InventoryPublicRow, "status"> & {
-  status: InventoryStatus;
-  cost: number;
+/** Admin-only customer-unit / compliance fields on `inventory_units`. */
+export type InventoryCustomerUnitFields = {
+  vin: string | null;
+  is_customer_unit: boolean;
+  sell_ride_submission_id: string | null;
+  has_registration: boolean | null;
+  has_insurance: boolean | null;
+  no_reg_insurance: boolean;
 };
+
+/** Full row for admins (`inventory_units`). */
+export type InventoryUnitRow = Omit<InventoryPublicRow, "status"> &
+  InventoryCustomerUnitFields & {
+    status: InventoryStatus;
+    cost: number;
+  };
+
+export function inventoryComplianceLabel(row: Pick<InventoryCustomerUnitFields, "has_registration" | "has_insurance" | "no_reg_insurance">): string {
+  if (row.no_reg_insurance) return "No reg/insurance";
+  const parts: string[] = [];
+  if (row.has_registration) parts.push("Reg");
+  if (row.has_insurance) parts.push("Ins");
+  return parts.length ? parts.join(", ") : "—";
+}
 
 export const VEHICLE_CATEGORIES: VehicleCategory[] = [
   "Motorcycle",
@@ -121,7 +140,20 @@ export function parseInventoryCategoryFromQuery(value: string | null | undefined
   return CATEGORY_QUERY_ALIASES[raw.toLowerCase()] ?? "all";
 }
 
-type InventoryCoreFields = Omit<InventoryUnitRow, "cost">;
+type InventoryCoreFields = Omit<InventoryPublicRow, "status"> & { status: InventoryStatus };
+
+function parseInventoryCustomerFields(row: Record<string, unknown>): InventoryCustomerUnitFields {
+  const vin = typeof row.vin === "string" ? row.vin : null;
+  return {
+    vin,
+    is_customer_unit: row.is_customer_unit === true,
+    sell_ride_submission_id:
+      typeof row.sell_ride_submission_id === "string" ? row.sell_ride_submission_id : null,
+    has_registration: row.has_registration === true ? true : row.has_registration === false ? false : null,
+    has_insurance: row.has_insurance === true ? true : row.has_insurance === false ? false : null,
+    no_reg_insurance: row.no_reg_insurance === true
+  };
+}
 
 function parseInventoryCore(row: unknown): InventoryCoreFields | null {
   if (!row || typeof row !== "object") return null;
@@ -188,5 +220,5 @@ export function parseInventoryUnitRow(row: unknown): InventoryUnitRow | null {
   const cost = r.cost;
   const n = typeof cost === "number" ? cost : typeof cost === "string" ? Number(cost) : NaN;
   if (!Number.isFinite(n)) return null;
-  return { ...core, cost: n };
+  return { ...core, ...parseInventoryCustomerFields(r), cost: n };
 }

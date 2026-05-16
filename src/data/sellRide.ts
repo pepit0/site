@@ -17,6 +17,7 @@ export type SellRideSubmissionRow = {
   odometer_km: number | null;
   category: VehicleCategory | null;
   seller_notes: string | null;
+  admin_notes: string | null;
   photo_paths: string[];
   created_at: string;
   updated_at: string;
@@ -57,6 +58,7 @@ export function parseSellRideSubmissionRow(row: unknown): SellRideSubmissionRow 
     typeof catRaw === "string" && isVehicleCategory(catRaw) ? (catRaw as VehicleCategory) : null;
 
   const seller_notes = typeof r.seller_notes === "string" ? r.seller_notes : null;
+  const admin_notes = typeof r.admin_notes === "string" ? r.admin_notes : null;
 
   const rawPaths = r.photo_paths;
   const photo_paths = Array.isArray(rawPaths)
@@ -85,6 +87,7 @@ export function parseSellRideSubmissionRow(row: unknown): SellRideSubmissionRow 
     odometer_km,
     category,
     seller_notes,
+    admin_notes,
     photo_paths,
     created_at,
     updated_at,

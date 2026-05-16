@@ -12,6 +12,9 @@
     "build:favicon": "node scripts/build-favicon.mjs",
     "msf:queue": "node scripts/msf-fetch-inventory-queue.mjs",
     "msf:trim-first": "node scripts/msf-fetch-inventory-queue.mjs --trim-first-pending",
+    "supabase:login": "supabase login",
+    "supabase:link": "supabase link",
+    "supabase:deploy-msf": "supabase functions deploy sync-msf-import-queue",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -33,6 +36,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "sharp": "^0.34.5",
+    "supabase": "^2.98.2",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"

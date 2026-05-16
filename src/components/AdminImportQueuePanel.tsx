@@ -9,8 +9,20 @@ import {
   type VehicleCategory
 } from "../data/inventory";
 import { parseInventoryImportQueueRow, type InventoryImportQueueRow, type InventoryImportQueueStatus } from "../data/inventoryImportQueue";
+import {
+  findInventoryUnitByStock,
+  isStockNumberUniqueViolation,
+  normalizeStockNumber,
+  type StockDuplicateMatch
+} from "../lib/inventoryStockDuplicate";
+import {
+  formatMsfImportSyncSummary,
+  syncMsfImportQueue,
+  type MsfImportSyncSummary
+} from "../lib/syncMsfImportQueue";
 import { supabase } from "../lib/supabase";
 import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
+import { AdminStockDuplicateError } from "./AdminStockDuplicateError";
 
 function guessImageExt(url: string, contentType: string | null): string {
   const path = (url.split("?")[0] ?? "").toLowerCase();
@@ -60,6 +72,9 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
   const [actionBusy, setActionBusy] = useState(false);
   const [removingPhotoUrl, setRemovingPhotoUrl] = useState<string | null>(null);
   const [photoRemoveError, setPhotoRemoveError] = useState<string | null>(null);
+  const [msfSyncing, setMsfSyncing] = useState(false);
+  const [msfSyncError, setMsfSyncError] = useState<string | null>(null);
+  const [msfSyncSummary, setMsfSyncSummary] = useState<MsfImportSyncSummary | null>(null);
 
   const [editStock, setEditStock] = useState("");
   const [editYear, setEditYear] = useState("");
@@ -70,10 +85,12 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
 
   const [pubCost, setPubCost] = useState("0");
   const [pubStatus, setPubStatus] = useState<InventoryStatus>("Available");
+  const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
 
   const applyRowToForm = (row: InventoryImportQueueRow | null) => {
     setSaveError(null);
     setPublishError(null);
+    setStockDuplicate(null);
     setActionError(null);
     if (!row) {
       setEditStock("");
@@ -243,10 +260,32 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     setActionBusy(false);
   };
 
+  const runMsfSync = async () => {
+    setMsfSyncError(null);
+    setMsfSyncSummary(null);
+    setMsfSyncing(true);
+    const result = await syncMsfImportQueue(supabase);
+    if (!result.ok) {
+      setMsfSyncError(result.error);
+    } else {
+      setMsfSyncSummary(formatMsfImportSyncSummary(result.stats));
+      const queueChanged = result.stats.importedNew > 0 || result.stats.removedStale > 0;
+      if (queueChanged) {
+        setQueueTab("pending");
+        setSelectedId(null);
+        applyRowToForm(null);
+        await fetchRows("pending");
+        onInventoryChanged?.();
+      }
+    }
+    setMsfSyncing(false);
+  };
+
   const publishSelected = async (event: FormEvent) => {
     event.preventDefault();
     if (!selected || selected.status !== "pending") return;
     setPublishError(null);
+    setStockDuplicate(null);
     const cost = Number.parseFloat(pubCost);
     if (!Number.isFinite(cost) || cost < 0) {
       setPublishError("Enter a valid cost.");
@@ -267,9 +306,19 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       setPublishError("Fix odometer (km) or leave blank.");
       return;
     }
-    const stock = editStock.trim();
+    const stock = normalizeStockNumber(editStock);
     if (!stock) {
       setPublishError("Stock number is required.");
+      return;
+    }
+    try {
+      const dup = await findInventoryUnitByStock(supabase, stock);
+      if (dup) {
+        setStockDuplicate(dup);
+        return;
+      }
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : "Could not verify stock number.");
       return;
     }
     if (!editMake.trim() || !editModel.trim()) {
@@ -300,7 +349,17 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
         })
         .select("*")
         .single();
-      if (insErr) throw new Error(insErr.message);
+      if (insErr) {
+        if (isStockNumberUniqueViolation(insErr.message)) {
+          const dup = await findInventoryUnitByStock(supabase, stock);
+          if (dup) {
+            setStockDuplicate(dup);
+            setPublishing(false);
+            return;
+          }
+        }
+        throw new Error(insErr.message);
+      }
       const row = parseInventoryUnitRow(inserted);
       if (!row) throw new Error("Invalid inventory response.");
       unitId = row.id;
@@ -348,14 +407,45 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
 
   return (
     <section className="admin-sell-queueIntegrated" aria-labelledby="admin-import-heading">
-      <h2 id="admin-import-heading" className="sell-ride-applySectionTitle admin-sell-queueIntegratedTitle">
-        MSF import queue
-      </h2>
+      <div className="admin-importQueueHeading">
+        <h2 id="admin-import-heading" className="sell-ride-applySectionTitle admin-sell-queueIntegratedTitle">
+          MSF import queue
+        </h2>
+        <button
+          type="button"
+          className="btn btn-secondary admin-importSyncBtn"
+          disabled={msfSyncing || publishing || actionBusy}
+          onClick={() => void runMsfSync()}
+        >
+          {msfSyncing ? "Importing…" : "Import new units"}
+        </button>
+      </div>
       <p className="admin-invPanelIntro">
-        Rows are filled by <code className="staff-code">npm run msf:queue</code> (service role in <code className="staff-code">.env.local</code>
-        ). Review each unit, adjust fields if needed, then post to the catalog. Images are downloaded from the source URLs into the inventory
-        bucket when you post.
+        Pull new listings from motorsportsfinancing.ca into the pending queue. Units already in your catalog or already
+        posted from the queue are skipped (no duplicates). Review each row, then post to the catalog.
       </p>
+      {msfSyncSummary ? (
+        <div className="admin-importSyncSummary" role="status" aria-live="polite">
+          <p className="admin-importSyncSuccessLead">{msfSyncSummary.headline}</p>
+          {msfSyncSummary.ignoredLines.length > 0 ? (
+            <ul className="admin-importSyncSummaryList">
+              {msfSyncSummary.ignoredLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
+          {msfSyncSummary.extraLines.map((line) => (
+            <p key={line} className="admin-importSyncSummaryExtra">
+              {line}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {msfSyncError ? (
+        <div className="sell-ride-applyErrorBanner" role="alert">
+          <p className="sell-ride-applyError">{msfSyncError}</p>
+        </div>
+      ) : null}
 
       <div className="admin-sell-queueQueueTabs" role="tablist" aria-label="Import queue status">
         <button
@@ -394,7 +484,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       ) : null}
 
       <div className="admin-sell-queueLayout">
-        <div className="sell-ride-applyForm admin-sell-queueCard" aria-label="Import queue list">
+        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel" aria-label="Import queue list">
           <h3 className="sell-ride-applyPhotosTitle">
             {queueTab === "pending" ? "Pending" : queueTab === "posted" ? "Posted" : "Skipped"}
           </h3>
@@ -427,7 +517,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           )}
         </div>
 
-        <div className="sell-ride-applyForm admin-sell-queueCard" aria-label="Import row detail">
+        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail" aria-label="Import row detail">
           {!selected ? (
             <p className="sell-ride-applyMuted">Select a row to view details.</p>
           ) : queueTab === "posted" ? (
@@ -687,6 +777,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
                   </div>
                 </div>
                 <p className="sell-ride-applyHint">Uses the vehicle fields above. Images are fetched from the source URLs (CORS must allow your site).</p>
+                {stockDuplicate ? <AdminStockDuplicateError stock={normalizeStockNumber(editStock)} match={stockDuplicate} /> : null}
                 {publishError ? (
                   <div className="sell-ride-applyErrorBanner" role="alert">
                     <p className="sell-ride-applyError">{publishError}</p>

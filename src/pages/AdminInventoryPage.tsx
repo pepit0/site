@@ -1,8 +1,9 @@
-import type { FormEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AdminCustomerUnitsPanel } from "../components/AdminCustomerUnitsPanel";
 import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
 import { AdminSellQueuePanel } from "../components/AdminSellQueuePanel";
+import { AdminStockDuplicateError } from "../components/AdminStockDuplicateError";
 import {
   INVENTORY_PHOTOS_BUCKET,
   INVENTORY_STATUS_VALUES,
@@ -15,6 +16,12 @@ import {
   type VehicleCategory
 } from "../data/inventory";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
+import {
+  findInventoryUnitByStock,
+  isStockNumberUniqueViolation,
+  normalizeStockNumber,
+  type StockDuplicateMatch
+} from "../lib/inventoryStockDuplicate";
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
 
@@ -35,6 +42,8 @@ type FormFields = {
   category: VehicleCategory;
   cost: string;
   status: InventoryStatus;
+  is_customer_unit: boolean;
+  vin: string;
 };
 
 const emptyForm = (): FormFields => ({
@@ -45,20 +54,31 @@ const emptyForm = (): FormFields => ({
   odometer_km: "",
   category: "Motorcycle",
   cost: "0",
-  status: "Available"
+  status: "Available",
+  is_customer_unit: false,
+  vin: ""
 });
 
-type AdminTab = "catalog" | "sell" | "import";
+type AdminTab = "catalog" | "sell" | "import" | "customer";
 
 export function AdminInventoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const editParam = searchParams.get("edit");
   const adminTab: AdminTab =
-    tabParam === "sell" ? "sell" : tabParam === "import" ? "import" : "catalog";
+    tabParam === "sell"
+      ? "sell"
+      : tabParam === "import"
+        ? "import"
+        : tabParam === "customer"
+          ? "customer"
+          : "catalog";
 
   const setAdminTab = (next: AdminTab) => {
     if (next === "sell") setSearchParams({ tab: "sell" }, { replace: true });
     else if (next === "import") setSearchParams({ tab: "import" }, { replace: true });
+    else if (next === "customer") setSearchParams({ tab: "customer" }, { replace: true });
+    else if (editParam) setSearchParams({ edit: editParam }, { replace: true });
     else setSearchParams({}, { replace: true });
   };
 
@@ -70,6 +90,7 @@ export function AdminInventoryPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
 
   const loadUnits = useCallback(async () => {
     setListLoading(true);
@@ -88,14 +109,7 @@ export function AdminInventoryPage() {
     void Promise.resolve().then(() => loadUnits());
   }, [loadUnits]);
 
-  const resetForm = () => {
-    setForm(emptyForm());
-    setEditingId(null);
-    setPendingFiles(null);
-    setFormError(null);
-  };
-
-  const startEdit = (row: InventoryUnitRow) => {
+  const startEdit = useCallback((row: InventoryUnitRow) => {
     setEditingId(row.id);
     setForm({
       stock_number: row.stock_number,
@@ -105,10 +119,30 @@ export function AdminInventoryPage() {
       odometer_km: row.odometer_km != null ? String(row.odometer_km) : "",
       category: row.category,
       cost: String(row.cost),
-      status: row.status
+      status: row.status,
+      is_customer_unit: row.is_customer_unit,
+      vin: row.vin ?? ""
     });
     setPendingFiles(null);
     setFormError(null);
+    setStockDuplicate(null);
+  }, []);
+
+  useEffect(() => {
+    if (!editParam || listLoading || adminTab !== "catalog") return;
+    const row = units.find((u) => u.id === editParam);
+    if (row && editingId !== editParam) {
+      startEdit(row);
+    }
+  }, [editParam, listLoading, units, adminTab, editingId, startEdit]);
+
+  const resetForm = () => {
+    setForm(emptyForm());
+    setEditingId(null);
+    setPendingFiles(null);
+    setFormError(null);
+    setStockDuplicate(null);
+    if (editParam) setSearchParams({}, { replace: true });
   };
 
   const uploadNewPhotos = async (unitId: string, existing: string[], files: FileList): Promise<string[]> => {
@@ -128,6 +162,7 @@ export function AdminInventoryPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
+    setStockDuplicate(null);
     const year = Number.parseInt(form.year, 10);
     if (!Number.isFinite(year) || year < 1900 || year > 2100) {
       setFormError("Enter a valid year.");
@@ -147,8 +182,22 @@ export function AdminInventoryPage() {
       setFormError("Enter a valid odometer (km) or leave blank.");
       return;
     }
-    if (!form.stock_number.trim() || !form.make.trim() || !form.model.trim()) {
+    const stock = normalizeStockNumber(form.stock_number);
+    if (!stock || !form.make.trim() || !form.model.trim()) {
       setFormError("Stock number, make, and model are required.");
+      return;
+    }
+
+    const vinPayload = form.is_customer_unit ? form.vin.trim() || null : null;
+
+    try {
+      const dup = await findInventoryUnitByStock(supabase, stock, editingId);
+      if (dup) {
+        setStockDuplicate(dup);
+        return;
+      }
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Could not verify stock number.");
       return;
     }
 
@@ -163,7 +212,7 @@ export function AdminInventoryPage() {
         const { error } = await supabase
           .from("inventory_units")
           .update({
-            stock_number: form.stock_number.trim(),
+            stock_number: stock,
             year,
             make: form.make.trim(),
             model: form.model.trim(),
@@ -171,15 +220,26 @@ export function AdminInventoryPage() {
             category: form.category,
             cost,
             status: form.status,
-            photo_paths
+            photo_paths,
+            is_customer_unit: form.is_customer_unit,
+            vin: vinPayload
           })
           .eq("id", editingId);
-        if (error) throw new Error(error.message);
+        if (error) {
+          if (isStockNumberUniqueViolation(error.message)) {
+            const dup = await findInventoryUnitByStock(supabase, stock, editingId);
+            if (dup) {
+              setStockDuplicate(dup);
+              return;
+            }
+          }
+          throw new Error(error.message);
+        }
       } else {
         const { data, error } = await supabase
           .from("inventory_units")
           .insert({
-            stock_number: form.stock_number.trim(),
+            stock_number: stock,
             year,
             make: form.make.trim(),
             model: form.model.trim(),
@@ -187,11 +247,22 @@ export function AdminInventoryPage() {
             category: form.category,
             cost,
             status: form.status,
-            photo_paths: []
+            photo_paths: [],
+            is_customer_unit: form.is_customer_unit,
+            vin: vinPayload
           })
           .select("*")
           .single();
-        if (error) throw new Error(error.message);
+        if (error) {
+          if (isStockNumberUniqueViolation(error.message)) {
+            const dup = await findInventoryUnitByStock(supabase, stock);
+            if (dup) {
+              setStockDuplicate(dup);
+              return;
+            }
+          }
+          throw new Error(error.message);
+        }
         const row = parseInventoryUnitRow(data);
         if (!row) throw new Error("Invalid response from server.");
         if (pendingFiles?.length) {
@@ -237,8 +308,10 @@ export function AdminInventoryPage() {
     }
   };
 
+  const wideAdminLayout = adminTab === "sell" || adminTab === "import" || adminTab === "customer";
+
   return (
-    <div className="admin-inv">
+    <div className={wideAdminLayout ? "admin-inv admin-inv--queues" : "admin-inv"}>
       <Seo title="Admin inventory" description="Internal inventory management for Temptation Motorsports." path="/admin/inventory" noindex />
       <header className="admin-invHeader page-header">
         <h1 className="page-title">Admin inventory</h1>
@@ -276,12 +349,23 @@ export function AdminInventoryPage() {
         >
           MSF import
         </button>
+        <span className="admin-invTabDivider" aria-hidden />
+        <button
+          type="button"
+          className={adminTab === "customer" ? "admin-invTab admin-invTabActive" : "admin-invTab"}
+          aria-current={adminTab === "customer" ? "page" : undefined}
+          onClick={() => setAdminTab("customer")}
+        >
+          Customer units
+        </button>
       </nav>
 
       {adminTab === "sell" ? (
         <AdminSellQueuePanel onInventoryChanged={() => void loadUnits()} />
       ) : adminTab === "import" ? (
         <AdminImportQueuePanel onInventoryChanged={() => void loadUnits()} />
+      ) : adminTab === "customer" ? (
+        <AdminCustomerUnitsPanel />
       ) : (
         <>
           <section className="sell-ride-applyForm admin-invFormPanel" aria-labelledby="admin-inv-form-heading">
@@ -403,6 +487,31 @@ export function AdminInventoryPage() {
                   </select>
                 </div>
                 <div className="form-row sell-ride-applyFullWidth">
+                  <label className="admin-checkRow">
+                    <input
+                      type="checkbox"
+                      checked={form.is_customer_unit}
+                      onChange={(e) => setForm((f) => ({ ...f, is_customer_unit: e.target.checked }))}
+                    />
+                    Customer unit
+                  </label>
+                  <p className="sell-ride-applyHint">Consignment or customer-owned unit you list for them. Tracked under Customer units.</p>
+                </div>
+                {form.is_customer_unit ? (
+                  <div className="form-row sell-ride-applyFullWidth">
+                    <label className="loginLabel" htmlFor="adm-vin">
+                      VIN
+                    </label>
+                    <input
+                      id="adm-vin"
+                      className="loginInput"
+                      value={form.vin}
+                      onChange={(e) => setForm((f) => ({ ...f, vin: e.target.value }))}
+                      placeholder="Optional — type none if not available"
+                    />
+                  </div>
+                ) : null}
+                <div className="form-row sell-ride-applyFullWidth">
                   <label className="loginLabel" htmlFor="adm-files">
                     Add photos
                   </label>
@@ -440,6 +549,9 @@ export function AdminInventoryPage() {
                   );
                 })() : null}
               </div>
+              {stockDuplicate ? (
+                <AdminStockDuplicateError stock={normalizeStockNumber(form.stock_number)} match={stockDuplicate} />
+              ) : null}
               {formError ? (
                 <div className="sell-ride-applyErrorBanner" role="alert">
                   <p className="sell-ride-applyError">{formError}</p>

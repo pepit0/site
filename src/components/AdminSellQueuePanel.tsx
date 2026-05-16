@@ -9,10 +9,49 @@ import {
   type VehicleCategory
 } from "../data/inventory";
 import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
+import { AdminStockDuplicateError } from "./AdminStockDuplicateError";
 import { SELL_RIDE_PHOTOS_BUCKET, parseSellRideSubmissionRow, type SellRideSubmissionRow } from "../data/sellRide";
+import {
+  findInventoryUnitByStock,
+  isStockNumberUniqueViolation,
+  normalizeStockNumber,
+  type StockDuplicateMatch
+} from "../lib/inventoryStockDuplicate";
+import {
+  getSellPublishRequirements,
+  sellPublishBlockerMessages,
+  validateSellPublishCompliance,
+  type SellPublishRequirement
+} from "../lib/sellPublishCompliance";
+
+function AdminSellPublishRequirements({ requirements }: { requirements: SellPublishRequirement[] }) {
+  const pending = requirements.filter((r) => !r.ok);
+  if (pending.length === 0) return null;
+  return (
+    <div id="sq-publish-requirements" className="admin-publishRequirements" role="status" aria-live="polite">
+      <p className="admin-publishRequirementsTitle">Before you can publish</p>
+      <ul className="admin-publishRequirementsList">
+        {requirements.map((r) => (
+          <li
+            key={r.id}
+            className={
+              r.ok ? "admin-publishRequirementsItem admin-publishRequirementsItemDone" : "admin-publishRequirementsItem"
+            }
+          >
+            <span className="admin-publishRequirementsMark" aria-hidden>
+              {r.ok ? "✓" : "○"}
+            </span>
+            {r.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 import { sellRidePhotoPublicUrl } from "../lib/sellRidePhotos";
 import { supabase } from "../lib/supabase";
 import { adminDeleteRejectedSellRideSubmission } from "../lib/adminDeleteRejectedSellRideSubmission";
+import { formatPhoneDisplay } from "../lib/formatPhone";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
@@ -50,15 +89,21 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
   const [editModel, setEditModel] = useState("");
   const [editKm, setEditKm] = useState("");
   const [editCategory, setEditCategory] = useState<VehicleCategory>("Motorcycle");
-  const [editNotes, setEditNotes] = useState("");
+  const [editAdminNotes, setEditAdminNotes] = useState("");
 
   const [pubStock, setPubStock] = useState("");
   const [pubCost, setPubCost] = useState("0");
   const [pubStatus, setPubStatus] = useState<InventoryStatus>("Available");
+  const [pubVin, setPubVin] = useState("");
+  const [pubHasRegistration, setPubHasRegistration] = useState(false);
+  const [pubHasInsurance, setPubHasInsurance] = useState(false);
+  const [pubNoRegInsurance, setPubNoRegInsurance] = useState(false);
+  const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
 
   const applyRowToForm = (row: SellRideSubmissionRow | null) => {
     setSaveError(null);
     setPublishError(null);
+    setStockDuplicate(null);
     if (!row) {
       setEditFirst("");
       setEditLast("");
@@ -69,10 +114,14 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
       setEditModel("");
       setEditKm("");
       setEditCategory("Motorcycle");
-      setEditNotes("");
+      setEditAdminNotes("");
       setPubStock("");
       setPubCost("0");
       setPubStatus("Available");
+      setPubVin("");
+      setPubHasRegistration(false);
+      setPubHasInsurance(false);
+      setPubNoRegInsurance(false);
       return;
     }
     setEditFirst(row.seller_first_name ?? "");
@@ -84,10 +133,14 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
     setEditModel(row.model ?? "");
     setEditKm(row.odometer_km != null ? String(row.odometer_km) : "");
     setEditCategory(row.category ?? "Motorcycle");
-    setEditNotes(row.seller_notes ?? "");
+    setEditAdminNotes(row.admin_notes ?? "");
     setPubStock("");
     setPubCost("0");
     setPubStatus("Available");
+    setPubVin("");
+    setPubHasRegistration(false);
+    setPubHasInsurance(false);
+    setPubNoRegInsurance(false);
   };
 
   const fetchRows = useCallback(async (tab: QueueTab): Promise<SellRideSubmissionRow[]> => {
@@ -121,6 +174,36 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
   }, [reloadCurrentTab]);
 
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
+
+  const publishRequirements = useMemo(
+    () =>
+      getSellPublishRequirements({
+        stock: pubStock,
+        vin: pubVin,
+        hasRegistration: pubHasRegistration,
+        hasInsurance: pubHasInsurance,
+        noRegInsurance: pubNoRegInsurance,
+        photoCount: selected?.photo_paths.length ?? 0,
+        year: editYear,
+        odometerKm: editKm,
+        cost: pubCost,
+        stockIsDuplicate: stockDuplicate != null
+      }),
+    [
+      pubStock,
+      pubVin,
+      pubHasRegistration,
+      pubHasInsurance,
+      pubNoRegInsurance,
+      selected?.photo_paths.length,
+      editYear,
+      editKm,
+      pubCost,
+      stockDuplicate
+    ]
+  );
+  const publishBlockers = useMemo(() => sellPublishBlockerMessages(publishRequirements), [publishRequirements]);
+  const canPublish = publishBlockers.length === 0;
 
   const setQueueTabAndReset = (tab: QueueTab) => {
     setQueueTab(tab);
@@ -173,7 +256,7 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
         model: editModel.trim(),
         odometer_km: km,
         category: editCategory,
-        seller_notes: editNotes.trim() || null
+        admin_notes: editAdminNotes.trim() || null
       })
       .eq("id", selected.id)
       .eq("status", "submitted");
@@ -211,9 +294,38 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
     event.preventDefault();
     if (!selected || selected.status !== "submitted") return;
     setPublishError(null);
-    const stock = pubStock.trim();
+    setStockDuplicate(null);
+    if (publishBlockers.length > 0) {
+      setPublishError(`Complete the following before publishing: ${publishBlockers.join("; ")}.`);
+      return;
+    }
+    const stock = normalizeStockNumber(pubStock);
     if (!stock) {
       setPublishError("Stock number is required.");
+      return;
+    }
+    const vin = pubVin.trim();
+    if (!vin) {
+      setPublishError("VIN is required (type none if not available).");
+      return;
+    }
+    const complianceErr = validateSellPublishCompliance({
+      hasRegistration: pubHasRegistration,
+      hasInsurance: pubHasInsurance,
+      noRegInsurance: pubNoRegInsurance
+    });
+    if (complianceErr) {
+      setPublishError(complianceErr);
+      return;
+    }
+    try {
+      const dup = await findInventoryUnitByStock(supabase, stock);
+      if (dup) {
+        setStockDuplicate(dup);
+        return;
+      }
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : "Could not verify stock number.");
       return;
     }
     const cost = Number.parseFloat(pubCost);
@@ -247,11 +359,26 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
           category: editCategory,
           cost,
           status: pubStatus,
-          photo_paths: []
+          photo_paths: [],
+          vin,
+          is_customer_unit: true,
+          sell_ride_submission_id: selected.id,
+          has_registration: pubNoRegInsurance ? false : pubHasRegistration,
+          has_insurance: pubNoRegInsurance ? false : pubHasInsurance,
+          no_reg_insurance: pubNoRegInsurance
         })
         .select("*")
         .single();
-      if (insErr) throw new Error(insErr.message);
+      if (insErr) {
+        if (isStockNumberUniqueViolation(insErr.message)) {
+          const dup = await findInventoryUnitByStock(supabase, stock);
+          if (dup) {
+            setStockDuplicate(dup);
+            return;
+          }
+        }
+        throw new Error(insErr.message);
+      }
       const row = parseInventoryUnitRow(inserted);
       if (!row) throw new Error("Invalid inventory response.");
       unitId = row.id;
@@ -432,7 +559,7 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
       ) : null}
 
       <div className="admin-sell-queueLayout">
-        <div className="sell-ride-applyForm admin-sell-queueCard" aria-label={queueTab === "submitted" ? "Submitted applications" : "Rejected applications"}>
+        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel" aria-label={queueTab === "submitted" ? "Submitted applications" : "Rejected applications"}>
           <h3 className="sell-ride-applyPhotosTitle">{queueTab === "submitted" ? "Submitted" : "Rejected"}</h3>
           {loading ? (
             <p className="sell-ride-applyMuted">Loading…</p>
@@ -442,35 +569,35 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
             </p>
           ) : (
             <ul className="admin-sell-queueItems">
-              {rows.map((r) => {
-                const title = rowTitle(r);
-                const active = r.id === selectedId;
-                return (
-                  <li key={r.id}>
-                    <button
-                      type="button"
-                      className={`admin-sell-queueItem${active ? " admin-sell-queueItemActive" : ""}`}
-                      onClick={() => selectRow(r.id)}
-                    >
-                      <span className="admin-sell-queueItemTitle">{title}</span>
-                      <span className="admin-sell-queueItemMeta">
-                        {r.seller_first_name} {r.seller_last_name} ·{" "}
-                        {queueTab === "submitted" && r.submitted_at
-                          ? new Date(r.submitted_at).toLocaleString()
-                          : new Date(r.updated_at).toLocaleString()}
-                        {queueTab === "rejected" && r.rejected_reason ? ` · ${r.rejected_reason}` : ""}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
+                {rows.map((r) => {
+                  const title = rowTitle(r);
+                  const active = r.id === selectedId;
+                  return (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        className={`admin-sell-queueItem${active ? " admin-sell-queueItemActive" : ""}`}
+                        onClick={() => selectRow(r.id)}
+                      >
+                        <span className="admin-sell-queueItemTitle">{title}</span>
+                        <span className="admin-sell-queueItemMeta">
+                          {r.seller_first_name} {r.seller_last_name} ·{" "}
+                          {queueTab === "submitted" && r.submitted_at
+                            ? new Date(r.submitted_at).toLocaleString()
+                            : new Date(r.updated_at).toLocaleString()}
+                          {queueTab === "rejected" && r.rejected_reason ? ` · ${r.rejected_reason}` : ""}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
             </ul>
           )}
         </div>
 
-        <div className="sell-ride-applyForm admin-sell-queueCard" aria-label="Submission detail">
+        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail" aria-label="Submission detail">
           {!selected ? (
-            <p className="sell-ride-applyMuted">Select a row to view details.</p>
+            <p className="sell-ride-applyMuted admin-sell-detailEmpty">Select a row to view details.</p>
           ) : queueTab === "rejected" ? (
             <>
               <h3 className="sell-ride-applyPhotosTitle">Rejected submission</h3>
@@ -486,7 +613,13 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                 </div>
                 <div className="sell-ride-applyDlRow">
                   <dt>Phone</dt>
-                  <dd>{selected.seller_phone ?? "—"}</dd>
+                  <dd>
+                    {selected.seller_phone ? (
+                      <a href={`tel:${selected.seller_phone.replace(/\D/g, "")}`}>{formatPhoneDisplay(selected.seller_phone)}</a>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
                 </div>
                 <div className="sell-ride-applyDlRow">
                   <dt>Email</dt>
@@ -506,12 +639,16 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                   <dt>Category</dt>
                   <dd>{selected.category ?? "—"}</dd>
                 </div>
-                {selected.seller_notes ? (
-                  <div className="sell-ride-applyDlRow">
-                    <dt>Notes</dt>
-                    <dd>{selected.seller_notes}</dd>
-                  </div>
-                ) : null}
+                <div className="sell-ride-applyDlRow">
+                  <dt>Customer note</dt>
+                  <dd className="admin-sellerNoteSolid admin-sellerNoteSolidInline">
+                    {selected.seller_notes?.trim() ? selected.seller_notes : "—"}
+                  </dd>
+                </div>
+                <div className="sell-ride-applyDlRow">
+                  <dt>Admin notes</dt>
+                  <dd>{selected.admin_notes?.trim() ? selected.admin_notes : "—"}</dd>
+                </div>
                 <div className="sell-ride-applyDlRow">
                   <dt>Submitted</dt>
                   <dd>{selected.submitted_at ? new Date(selected.submitted_at).toLocaleString() : "—"}</dd>
@@ -567,10 +704,29 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
               </div>
             </>
           ) : (
-            <>
-              <h3 className="sell-ride-applyPhotosTitle">Review</h3>
+            <div className="admin-sell-detail">
+              <header className="admin-sell-detailHeader">
+                <h3 className="admin-sell-detailTitle">{rowTitle(selected)}</h3>
+                <p className="admin-sell-detailMeta">
+                  {[editFirst, editLast].filter(Boolean).join(" ")}
+                  {editPhone ? (
+                    <>
+                      {" · "}
+                      <a className="admin-sell-detailPhone" href={`tel:${editPhone.replace(/\D/g, "")}`}>
+                        {formatPhoneDisplay(editPhone)}
+                      </a>
+                    </>
+                  ) : null}
+                  {selected.submitted_at ? ` · ${new Date(selected.submitted_at).toLocaleString()}` : ""}
+                </p>
+              </header>
+
+              <section className="admin-sell-detailSection" aria-labelledby="sq-review-heading">
+                <h4 id="sq-review-heading" className="admin-sell-detailSectionTitle">
+                  Seller &amp; vehicle
+                </h4>
               <form className="admin-sell-queueFormBlock" onSubmit={(e) => void saveEdits(e)}>
-                <div className="sell-ride-applyGrid">
+                <div className="sell-ride-applyGrid admin-sell-reviewGrid">
                   <div className="form-row">
                     <label className="loginLabel" htmlFor="sq-first">
                       First name
@@ -688,15 +844,22 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                     </select>
                   </div>
                   <div className="form-row sell-ride-applyFullWidth">
-                    <label className="loginLabel" htmlFor="sq-notes">
-                      Notes
+                    <p className="loginLabel">Customer note</p>
+                    <p className="admin-sellerNoteSolid">
+                      {selected.seller_notes?.trim() ? selected.seller_notes : "—"}
+                    </p>
+                  </div>
+                  <div className="form-row sell-ride-applyFullWidth">
+                    <label className="loginLabel" htmlFor="sq-admin-notes">
+                      Admin notes
                     </label>
                     <textarea
-                      id="sq-notes"
+                      id="sq-admin-notes"
                       className="loginInput textarea"
                       rows={3}
-                      value={editNotes}
-                      onChange={(e) => setEditNotes(e.target.value)}
+                      value={editAdminNotes}
+                      onChange={(e) => setEditAdminNotes(e.target.value)}
+                      placeholder="Internal notes for your team"
                     />
                   </div>
                 </div>
@@ -705,7 +868,7 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                     <p className="sell-ride-applyError">{saveError}</p>
                   </div>
                 ) : null}
-                <div className="sell-ride-applyActions sell-ride-applyActionsEnd">
+                <div className="sell-ride-applyActions admin-sell-detailSectionActions">
                   <button type="button" className="btn btn-secondary" disabled={saving || publishing} onClick={() => void rejectSelected()}>
                     Reject
                   </button>
@@ -714,8 +877,12 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                   </button>
                 </div>
               </form>
+              </section>
 
-              <h3 className="admin-sell-queuePhotosTitle">Photos</h3>
+              <section className="admin-sell-detailSection" aria-labelledby="sq-photos-heading">
+              <h4 id="sq-photos-heading" className="admin-sell-detailSectionTitle">
+                Photos
+              </h4>
               {selected.photo_paths.length === 0 ? (
                 <p className="sell-ride-applyMuted">No photos — at least one is required to publish.</p>
               ) : (
@@ -736,10 +903,14 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                   <p className="sell-ride-applyError">{photoRemoveError}</p>
                 </div>
               ) : null}
+              </section>
 
-              <h3 className="admin-sell-queuePhotosTitle">Publish to inventory</h3>
+              <section className="admin-sell-detailSection admin-sell-detailSectionPublish" aria-labelledby="sq-publish-heading">
+              <h4 id="sq-publish-heading" className="admin-sell-detailSectionTitle">
+                Publish to inventory
+              </h4>
               <form className="admin-sell-queueFormBlock" onSubmit={(e) => void publishSelected(e)}>
-                <div className="sell-ride-applyGrid">
+                <div className="sell-ride-applyGrid admin-sell-publishGrid">
                   <div className="form-row">
                     <label className="loginLabel" htmlFor="sq-stock">
                       Stock #
@@ -784,20 +955,78 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                       ))}
                     </select>
                   </div>
+                  <div className="form-row sell-ride-applyFullWidth">
+                    <label className="loginLabel" htmlFor="sq-vin">
+                      VIN
+                    </label>
+                    <input
+                      id="sq-vin"
+                      className="loginInput"
+                      value={pubVin}
+                      onChange={(e) => setPubVin(e.target.value)}
+                      placeholder="Required — type none if not available"
+                      required
+                    />
+                  </div>
+                <fieldset className="admin-publishCompliance sell-ride-applyFullWidth">
+                  <legend className="loginLabel">Registration &amp; insurance</legend>
+                  <label className="admin-checkRow">
+                    <input
+                      type="checkbox"
+                      checked={pubHasRegistration}
+                      disabled={pubNoRegInsurance}
+                      onChange={(e) => setPubHasRegistration(e.target.checked)}
+                    />
+                    Registration received
+                  </label>
+                  <label className="admin-checkRow">
+                    <input
+                      type="checkbox"
+                      checked={pubHasInsurance}
+                      disabled={pubNoRegInsurance}
+                      onChange={(e) => setPubHasInsurance(e.target.checked)}
+                    />
+                    Insurance received
+                  </label>
+                  <label className="admin-checkRow">
+                    <input
+                      type="checkbox"
+                      checked={pubNoRegInsurance}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPubNoRegInsurance(checked);
+                        if (checked) {
+                          setPubHasRegistration(false);
+                          setPubHasInsurance(false);
+                        }
+                      }}
+                    />
+                    No registration / insurance on file
+                  </label>
+                </fieldset>
                 </div>
-                <p className="sell-ride-applyHint">Photos are copied into the inventory bucket. Cost is saved on the new unit.</p>
+                <p className="sell-ride-applyHint sell-ride-applyFullWidth">Photos are copied into the inventory bucket. Cost is saved on the new unit.</p>
+                <AdminSellPublishRequirements requirements={publishRequirements} />
+                {stockDuplicate ? <AdminStockDuplicateError stock={normalizeStockNumber(pubStock)} match={stockDuplicate} /> : null}
                 {publishError ? (
                   <div className="sell-ride-applyErrorBanner" role="alert">
                     <p className="sell-ride-applyError">{publishError}</p>
                   </div>
                 ) : null}
-                <div className="sell-ride-applyActions sell-ride-applyActionsEnd">
-                  <button type="submit" className="btn btn-primary" disabled={publishing || saving}>
+                <div className="sell-ride-applyActions admin-sell-detailSectionActions">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={publishing || saving}
+                    title={!canPublish ? publishBlockers.join(" · ") : undefined}
+                    aria-describedby={!canPublish ? "sq-publish-requirements" : undefined}
+                  >
                     {publishing ? "Publishing…" : "Publish unit"}
                   </button>
                 </div>
               </form>
-            </>
+              </section>
+            </div>
           )}
         </div>
       </div>
