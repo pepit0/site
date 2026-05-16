@@ -961,6 +961,10 @@ p {
   .home-lede {
     color: var(--text);
   }
+
+  .home-unitsSidebarDock {
+    display: none;
+  }
 }
 
 /* Shorter desktop/laptop: push full-size showroom photo down so CTAs clear layer 7 */
