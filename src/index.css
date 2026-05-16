@@ -963,6 +963,25 @@ p {
   }
 }
 
+/* Shorter desktop/laptop: push full-size showroom photo down so CTAs clear layer 7 */
+@media (min-width: 769px) and (max-height: 900px) {
+  .home-backdropLedger {
+    flex: 0 0 clamp(7.5rem, 30vh, 14rem);
+  }
+
+  .home-backdropStage {
+    margin-top: clamp(1.25rem, 5vh, 3rem);
+  }
+
+  .home-hero {
+    padding-top: 2rem;
+  }
+
+  .home-lede {
+    margin-bottom: 1.35rem;
+  }
+}
+
 /* ——— Page headers ——— */
 .page-header {
   margin-bottom: 2rem;
