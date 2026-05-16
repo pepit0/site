@@ -8,6 +8,7 @@ import {
   type InventoryStatus,
   type VehicleCategory
 } from "../data/inventory";
+import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
 import { SELL_RIDE_PHOTOS_BUCKET, parseSellRideSubmissionRow, type SellRideSubmissionRow } from "../data/sellRide";
 import { sellRidePhotoPublicUrl } from "../lib/sellRidePhotos";
 import { supabase } from "../lib/supabase";
@@ -37,6 +38,8 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [removingPhotoPath, setRemovingPhotoPath] = useState<string | null>(null);
+  const [photoRemoveError, setPhotoRemoveError] = useState<string | null>(null);
 
   const [editFirst, setEditFirst] = useState("");
   const [editLast, setEditLast] = useState("");
@@ -326,6 +329,40 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
     setDeleting(false);
   };
 
+  const removeSubmissionPhoto = async (path: string) => {
+    if (!selected || (selected.status !== "submitted" && selected.status !== "rejected")) return;
+    if (!window.confirm("Remove this photo from the submission? It will be deleted from storage.")) return;
+
+    setRemovingPhotoPath(path);
+    setPhotoRemoveError(null);
+    const status = selected.status;
+    const id = selected.id;
+    const nextPaths = selected.photo_paths.filter((p) => p !== path);
+
+    const { error: rmErr } = await supabase.storage.from(SELL_RIDE_PHOTOS_BUCKET).remove([path]);
+    if (rmErr) {
+      console.warn("sell-ride-photos remove:", rmErr.message);
+    }
+
+    const { error } = await supabase
+      .from("sell_ride_submissions")
+      .update({ photo_paths: nextPaths })
+      .eq("id", id)
+      .eq("status", status);
+    if (error) {
+      setPhotoRemoveError(error.message);
+      setRemovingPhotoPath(null);
+      return;
+    }
+
+    const next = await reloadCurrentTab();
+    setSelectedId(id);
+    if (status === "submitted") {
+      applyRowToForm(next.find((r) => r.id === id) ?? null);
+    }
+    setRemovingPhotoPath(null);
+  };
+
   const restoreRejectedToSubmitted = async () => {
     if (!selected || selected.status !== "rejected") return;
     if (
@@ -490,10 +527,13 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                   <h3 className="admin-sell-queuePhotosTitle">Photos</h3>
                   <div className="sell-ride-applyReviewGrid">
                     {selected.photo_paths.map((p) => (
-                      <figure key={p} className="sell-ride-applyReviewFigure">
-                        <img src={sellRidePhotoPublicUrl(supabase, p)} alt="" className="sell-ride-applyReviewImg" />
-                        <figcaption className="sell-ride-applyReviewCaption">{p}</figcaption>
-                      </figure>
+                      <AdminQueuePhotoTile
+                        key={p}
+                        src={sellRidePhotoPublicUrl(supabase, p)}
+                        label={p}
+                        busy={removingPhotoPath === p}
+                        onRemove={() => void removeSubmissionPhoto(p)}
+                      />
                     ))}
                   </div>
                 </>
@@ -676,14 +716,26 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
               </form>
 
               <h3 className="admin-sell-queuePhotosTitle">Photos</h3>
-              <div className="sell-ride-applyReviewGrid">
-                {selected.photo_paths.map((p) => (
-                  <figure key={p} className="sell-ride-applyReviewFigure">
-                    <img src={sellRidePhotoPublicUrl(supabase, p)} alt="" className="sell-ride-applyReviewImg" />
-                    <figcaption className="sell-ride-applyReviewCaption">{p}</figcaption>
-                  </figure>
-                ))}
-              </div>
+              {selected.photo_paths.length === 0 ? (
+                <p className="sell-ride-applyMuted">No photos — at least one is required to publish.</p>
+              ) : (
+                <div className="sell-ride-applyReviewGrid">
+                  {selected.photo_paths.map((p) => (
+                    <AdminQueuePhotoTile
+                      key={p}
+                      src={sellRidePhotoPublicUrl(supabase, p)}
+                      label={p}
+                      busy={removingPhotoPath === p}
+                      onRemove={() => void removeSubmissionPhoto(p)}
+                    />
+                  ))}
+                </div>
+              )}
+              {photoRemoveError ? (
+                <div className="sell-ride-applyErrorBanner" role="alert">
+                  <p className="sell-ride-applyError">{photoRemoveError}</p>
+                </div>
+              ) : null}
 
               <h3 className="admin-sell-queuePhotosTitle">Publish to inventory</h3>
               <form className="admin-sell-queueFormBlock" onSubmit={(e) => void publishSelected(e)}>

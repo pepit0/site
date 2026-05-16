@@ -576,7 +576,7 @@ begin
 
   v_metadata := jsonb_strip_nulls(jsonb_build_object(
     'source', 'marketing',
-    'lead_profile', 'Website Lead',
+    'creator_display', 'System - Website app',
     'marketing_lead_id', v_marketing_id::text,
     'street', v_street,
     'line2', v_line2,
@@ -683,6 +683,7 @@ begin
     if v_customer_id is null then
       insert into public.crm_customers (
         created_by,
+        created_by_email,
         display_name,
         email,
         phone,
@@ -694,6 +695,7 @@ begin
       )
       values (
         null,
+        'System - Website app',
         v_name,
         v_email,
         v_phone,
@@ -878,7 +880,7 @@ begin
       values (
         v_customer_id,
         null,
-        'Website Lead',
+        'System - Website app',
         'comment',
         v_comment_body
       );

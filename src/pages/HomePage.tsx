@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
@@ -9,10 +9,24 @@ import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
 import { Seo } from "../seo/Seo";
 
+const HOME_STACK_MQ = "(max-width: 900px), (max-height: 820px)";
+
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(HOME_STACK_MQ).matches : false
+  );
   const sidebarNavRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia(HOME_STACK_MQ);
+    const apply = () => {
+      if (mq.matches) setSidebarCollapsed(true);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarCollapsed((collapsed) => {

@@ -223,6 +223,7 @@ export function AdminInventoryPage() {
   };
 
   const removePhoto = async (row: InventoryUnitRow, path: string) => {
+    if (!window.confirm("Remove this photo from the unit? It will be deleted from storage.")) return;
     await supabase.storage.from(INVENTORY_PHOTOS_BUCKET).remove([path]);
     const next = row.photo_paths.filter((p) => p !== path);
     const { error } = await supabase.from("inventory_units").update({ photo_paths: next }).eq("id", row.id);

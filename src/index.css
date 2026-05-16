@@ -878,6 +878,122 @@ p {
   gap: 0.75rem;
 }
 
+/* Stacked hero: copy on solid bg, showroom photo below (mobile + short viewports) */
+@media (max-width: 900px), (max-height: 820px) {
+  .home {
+    display: flex;
+    flex-direction: column;
+    margin-top: -2rem;
+  }
+
+  .home-backdrop {
+    display: contents;
+  }
+
+  .home-backdropLedger {
+    order: 0;
+    flex: 0 0 3.75rem;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .home-content {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    order: 1;
+    z-index: 2;
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    padding: 1.25rem 1.25rem 1.5rem;
+    background: var(--bg);
+    box-sizing: border-box;
+  }
+
+  .home-backdropStage {
+    order: 2;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .home-reviewsBelt {
+    order: 3;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .home-hero {
+    max-width: none;
+    padding: 0 0 0.5rem;
+  }
+
+  .home-heroLogo {
+    position: static;
+    display: block;
+    right: auto;
+    top: auto;
+    width: clamp(7.5rem, 42vw, 11rem);
+    max-height: none;
+    margin: 0 auto 1rem;
+  }
+
+  .home-eyebrow,
+  .home-title,
+  .home-tagline,
+  .home-lede {
+    text-shadow: none;
+  }
+
+  .home-tagline {
+    filter: none;
+  }
+
+  .home-title {
+    color: transparent;
+  }
+
+  .home-tagline {
+    color: transparent;
+  }
+
+  .home-lede {
+    color: var(--text);
+  }
+}
+
+/* Medium laptop: keep overlay, add scrim and more top ledger (not when stacked) */
+@media (min-width: 901px) and (max-width: 1280px) and (min-height: 821px),
+  (min-width: 901px) and (min-height: 821px) and (max-height: 900px) {
+  .home-backdropLedger {
+    flex: 0 0 clamp(6rem, 22vh, 12rem);
+  }
+
+  .home-content {
+    padding-right: min(16rem, 38vw);
+  }
+
+  .home-hero {
+    background: rgba(12, 13, 16, 0.82);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1.35rem 1.25rem;
+    box-shadow: var(--shadow);
+  }
+
+  .home-backdropImg {
+    display: block;
+    width: 100%;
+    max-height: min(52vh, 520px);
+    height: auto;
+    object-fit: contain;
+    object-position: center bottom;
+    margin: 0 auto;
+    background: var(--bg);
+  }
+}
+
 /* ——— Page headers ——— */
 .page-header {
   margin-bottom: 2rem;
@@ -1382,6 +1498,45 @@ p {
   white-space: nowrap;
 }
 
+.admin-queuePhotoFigure {
+  position: relative;
+}
+
+.admin-queuePhotoRemove {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(12, 13, 16, 0.72);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-queuePhotoRemove:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.92);
+}
+
+.admin-queuePhotoRemove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.admin-queuePhotoRemove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .sell-ride-applyDialog {
   position: fixed;
   inset: 0;
@@ -1726,7 +1881,10 @@ p {
 
 .inventory-card {
   min-width: 0;
-  padding: 1.2rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1738,6 +1896,38 @@ p {
 .inventory-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow);
+}
+
+.inventory-cardLink {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1rem 1.15rem 1.15rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.inventory-cardLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.inventory-cardLink .inventory-cardMeta {
+  margin-bottom: 0.55rem;
+}
+
+.inventory-cardYearKm {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+
+.inventory-cardStock {
+  margin-top: auto;
+  padding-top: 0.65rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
 }
 
 .inventory-cardMeta {
@@ -1788,18 +1978,229 @@ p {
   margin-bottom: 0.25rem;
 }
 
-.inventory-cardYear {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
+.inventory-photoCarousel {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
-.inventory-cardDetail {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
+.inventory-photoCarouselCard {
+  aspect-ratio: 16 / 10;
 }
 
+.inventory-photoCarouselDetail {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.inventory-photoCarouselFill {
+  position: absolute;
+  inset: 0;
+}
+
+.inventory-photoCarouselSold .inventory-photoCarouselFill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 13, 16, 0.42);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.inventory-photoCarouselFill img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.inventory-photoCarouselFill .inventory-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.inventory-photoNav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(12, 13, 16, 0.55);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.inventory-photoNav:hover {
+  background: rgba(12, 13, 16, 0.78);
+}
+
+.inventory-photoNav:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.inventory-photoNavPrev {
+  left: 0.45rem;
+}
+
+.inventory-photoNavNext {
+  right: 0.45rem;
+}
+
+.inventory-photoCounter {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.5rem;
+  z-index: 3;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(12, 13, 16, 0.6);
+  pointer-events: none;
+}
+
+.inventory-detail {
+  max-width: min(92rem, 100%);
+}
+
+.inventory-detailBack {
+  margin: 0 0 1rem;
+}
+
+.inventory-detailBackLink {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.inventory-detailBackLink:hover {
+  color: var(--accent);
+}
+
+.inventory-detailArticle {
+  margin: 0;
+}
+
+.inventory-detailHero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .inventory-detailHero {
+    grid-template-columns: minmax(0, 1.85fr) minmax(16.5rem, 1fr);
+    gap: 2rem;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 1100px) {
+  .inventory-detailHero {
+    grid-template-columns: minmax(0, 2.1fr) minmax(18rem, 1fr);
+    gap: 2.25rem;
+  }
+}
+
+.inventory-detailHero .inventory-photoCarouselDetail {
+  margin-bottom: 0;
+  aspect-ratio: auto;
+  width: 100%;
+  min-height: clamp(16rem, 42vw, 22rem);
+  height: clamp(18rem, 52vh, 38rem);
+}
+
+.inventory-detailAside {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.inventory-detailHeader {
+  margin-bottom: 1rem;
+}
+
+.inventory-detailMeta {
+  margin-bottom: 0.65rem;
+}
+
+.inventory-detailTitle {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  margin: 0 0 0.35rem;
+}
+
+.inventory-detailYearKm {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.inventory-detailSectionTitle {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.inventory-detailDescription {
+  margin-bottom: 1.25rem;
+}
+
+.inventory-detailDescriptionText {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.inventory-detailDescriptionCtas {
+  margin: 1rem 0 0;
+  line-height: 1.65;
+}
+
+.inventory-detailDescriptionCtas a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inventory-detailDescriptionCtas a:hover {
+  text-decoration: underline;
+}
+
+.inventory-detailDescriptionPlaceholder {
+  margin: 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.inventory-detailStock {
+  margin: auto 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Legacy card media (admin previews may still use) */
 .inventory-cardMedia {
   position: relative;
   aspect-ratio: 16 / 10;

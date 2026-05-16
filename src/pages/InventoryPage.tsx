@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { InventoryPlaceholder } from "../components/InventoryPlaceholder";
+import { InventoryUnitCard } from "../components/InventoryUnitCard";
 import {
   inventoryDisplayTitle,
-  inventoryStatusPillModifier,
   parseInventoryCategoryFromQuery,
   parseInventoryPublicRow,
   VEHICLE_CATEGORIES,
   type InventoryPublicRow,
   type VehicleCategory
 } from "../data/inventory";
-import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
 
@@ -144,41 +142,8 @@ export function InventoryPage() {
       ) : (
         <ul className="inventory-grid">
           {filteredSorted.map((item) => (
-            <li key={item.id} className="inventory-card">
-              <div
-                className={`inventory-cardMedia${item.status === "Sold" ? " inventory-cardMediaSold" : ""}`}
-              >
-                <div className="inventory-cardMediaFill">
-                  {item.photo_paths.length > 0 ? (
-                    <img
-                      src={inventoryPhotoPublicUrl(supabase, item.photo_paths[0]!)}
-                      alt={`${inventoryDisplayTitle(item)} photo`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <InventoryPlaceholder category={item.category} />
-                  )}
-                </div>
-                {item.status === "Sold" ? (
-                  <span className="inventory-soldRibbon" aria-hidden>
-                    Sold
-                  </span>
-                ) : null}
-              </div>
-              <p className="inventory-cardMeta">
-                <span className="inventory-cardCategory">{item.category}</span>
-                <span
-                  className={`inventory-status inventory-status${inventoryStatusPillModifier(item.status)}`}
-                >
-                  {item.status}
-                </span>
-              </p>
-              <h2 className="inventory-cardTitle">{inventoryDisplayTitle(item)}</h2>
-              <p className="inventory-cardYear">{item.year}</p>
-              <p className="inventory-cardDetail">Stock #{item.stock_number}</p>
-              <p className="inventory-cardDetail">
-                {item.odometer_km != null ? `${item.odometer_km.toLocaleString()} km` : "Kms TBD"}
-              </p>
+            <li key={item.id}>
+              <InventoryUnitCard item={item} fromCategory={category} />
             </li>
           ))}
         </ul>
@@ -186,3 +151,4 @@ export function InventoryPage() {
     </div>
   );
 }
+

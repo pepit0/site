@@ -67,8 +67,31 @@ export const VEHICLE_CATEGORIES: VehicleCategory[] = [
 
 export const INVENTORY_PHOTOS_BUCKET = "inventory-photos" as const;
 
+/** Shared copy on every public unit detail page (set once, redeploy). CTAs rendered in InventoryUnitDetailPage. */
+export const INVENTORY_UNIT_DESCRIPTION = `Get Approved & Ride Regionally or Nationwide! 🏁
+
+We finance all Motorsports, RVs, Marine, and Autos with $0 down options and delivery available across Canada. Whether you have pristine credit or need a subprime approval, our team gets it done.
+
+No Down Payment? No problem.
+
+Bad Credit? We accept all credit tiers.
+
+Far Away? We deliver Canada-wide.`;
+
 export function inventoryDisplayTitle(row: Pick<InventoryPublicRow, "make" | "model">): string {
   return `${row.make} ${row.model}`.trim();
+}
+
+export function inventoryMakeModelTitle(row: Pick<InventoryPublicRow, "make" | "model">): string {
+  return inventoryDisplayTitle(row);
+}
+
+export function inventoryOdometerLabel(row: Pick<InventoryPublicRow, "odometer_km">): string {
+  return row.odometer_km != null ? `${row.odometer_km.toLocaleString()} km` : "Kms TBD";
+}
+
+export function inventoryYearKmLine(row: Pick<InventoryPublicRow, "year" | "odometer_km">): string {
+  return `${row.year} · ${inventoryOdometerLabel(row)}`;
 }
 
 export function isVehicleCategory(value: string): value is VehicleCategory {

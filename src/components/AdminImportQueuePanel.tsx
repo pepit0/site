@@ -10,6 +10,7 @@ import {
 } from "../data/inventory";
 import { parseInventoryImportQueueRow, type InventoryImportQueueRow, type InventoryImportQueueStatus } from "../data/inventoryImportQueue";
 import { supabase } from "../lib/supabase";
+import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
 
 function guessImageExt(url: string, contentType: string | null): string {
   const path = (url.split("?")[0] ?? "").toLowerCase();
@@ -57,6 +58,8 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
   const [publishing, setPublishing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [removingPhotoUrl, setRemovingPhotoUrl] = useState<string | null>(null);
+  const [photoRemoveError, setPhotoRemoveError] = useState<string | null>(null);
 
   const [editStock, setEditStock] = useState("");
   const [editYear, setEditYear] = useState("");
@@ -183,6 +186,29 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       applyRowToForm(next.find((x) => x.id === sid) ?? null);
     }
     setSaving(false);
+  };
+
+  const removeSourcePhoto = async (url: string) => {
+    if (!selected || selected.status !== "pending") return;
+    if (!window.confirm("Remove this image from the import row? It will not be downloaded when you post to catalog.")) return;
+
+    setRemovingPhotoUrl(url);
+    setPhotoRemoveError(null);
+    const nextUrls = selected.source_photo_urls.filter((u) => u !== url);
+    const { error } = await supabase
+      .from("inventory_import_queue")
+      .update({ source_photo_urls: nextUrls })
+      .eq("id", selected.id)
+      .eq("status", "pending");
+    if (error) {
+      setPhotoRemoveError(error.message);
+      setRemovingPhotoUrl(null);
+      return;
+    }
+    const next = await reloadCurrentTab();
+    const sid = selected.id;
+    applyRowToForm(next.find((x) => x.id === sid) ?? null);
+    setRemovingPhotoUrl(null);
   };
 
   const skipSelected = async () => {
@@ -605,16 +631,24 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
 
               <h3 className="admin-sell-queuePhotosTitle">Source images ({selected.source_photo_urls.length})</h3>
               {selected.source_photo_urls.length === 0 ? (
-                <p className="sell-ride-applyMuted">No images on this row.</p>
+                <p className="sell-ride-applyMuted">No images on this row — at least one is required to post.</p>
               ) : (
                 <div className="sell-ride-applyReviewGrid">
                   {selected.source_photo_urls.map((u) => (
-                    <figure key={u} className="sell-ride-applyReviewFigure">
-                      <img src={u} alt="" className="sell-ride-applyReviewImg" referrerPolicy="no-referrer" />
-                    </figure>
+                    <AdminQueuePhotoTile
+                      key={u}
+                      src={u}
+                      busy={removingPhotoUrl === u}
+                      onRemove={() => void removeSourcePhoto(u)}
+                    />
                   ))}
                 </div>
               )}
+              {photoRemoveError ? (
+                <div className="sell-ride-applyErrorBanner" role="alert">
+                  <p className="sell-ride-applyError">{photoRemoveError}</p>
+                </div>
+              ) : null}
 
               <h3 className="admin-sell-queuePhotosTitle">Post to catalog</h3>
               <form className="admin-sell-queueFormBlock" onSubmit={(e) => void publishSelected(e)}>

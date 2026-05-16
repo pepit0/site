@@ -4,6 +4,7 @@ import { SiteLayout } from "./layout/SiteLayout";
 import { AdminInventoryPage } from "./pages/AdminInventoryPage";
 import { HomePage } from "./pages/HomePage";
 import { InventoryPage } from "./pages/InventoryPage";
+import { InventoryUnitDetailPage } from "./pages/InventoryUnitDetailPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PreApprovalPage } from "./pages/PreApprovalPage";
 import { SellYourRideApplyPage } from "./pages/SellYourRideApplyPage";
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/" element={<SiteLayout />}>
         <Route index element={<HomePage />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="inventory/:unitId" element={<InventoryUnitDetailPage />} />
         <Route path="sell-your-ride" element={<SellYourRidePage />} />
         <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
         <Route path="pre-approval" element={<PreApprovalPage />} />
