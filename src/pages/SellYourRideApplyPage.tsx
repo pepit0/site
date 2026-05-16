@@ -4,6 +4,16 @@ import { Link } from "react-router-dom";
 import { VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
 import { SELL_RIDE_PHOTOS_BUCKET } from "../data/sellRide";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
+import {
+  clearSellRideApplyFileDraft,
+  clearSellRideApplySessionDraft,
+  MAX_FILE_BYTES,
+  readSellRideApplyFileDraft,
+  readSellRideApplySessionDraft,
+  writeSellRideApplyFileDraft,
+  writeSellRideApplySessionDraft,
+  type FileDraftItem
+} from "../lib/sellRideApplyDraft";
 import { sellRideBeginDraft, sellRideSubmit } from "../lib/sellRideSubmission";
 import { supabase } from "../lib/supabase";
 
@@ -46,10 +56,60 @@ const emptyForm = (): FormState => ({
   sellerNotes: ""
 });
 
+function loadInitialForm(): FormState {
+  const d = readSellRideApplySessionDraft();
+  if (!d) return emptyForm();
+  return { ...emptyForm(), ...d.form };
+}
+
+function loadInitialStep(): Step {
+  const d = readSellRideApplySessionDraft();
+  return d?.step === 2 ? 2 : 1;
+}
+
+const ACCEPT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif", "image/jpg"]);
+
+function looksLikeImageFile(file: File): boolean {
+  const t = (file.type || "").toLowerCase();
+  if (ACCEPT_TYPES.has(t)) return true;
+  return /\.(jpe?g|png|webp|gif|hei[cf])$/i.test(file.name);
+}
+
+function isRetriableStorageMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("network") ||
+    m.includes("fetch") ||
+    m.includes("timeout") ||
+    m.includes("502") ||
+    m.includes("503") ||
+    m.includes("504") ||
+    m.includes("429") ||
+    m.includes("failed to fetch")
+  );
+}
+
+async function uploadSellRidePhotoWithRetry(path: string, file: File): Promise<void> {
+  let last = "Upload failed.";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { error } = await supabase.storage.from(SELL_RIDE_PHOTOS_BUCKET).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false
+    });
+    if (!error) return;
+    last = error.message || last;
+    if (!isRetriableStorageMessage(last) || attempt === 2) break;
+    await new Promise((r) => setTimeout(r, 500 * 2 ** attempt));
+  }
+  throw new Error(last);
+}
+
 export function SellYourRideApplyPage() {
-  const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<FormState>(() => emptyForm());
-  const [files, setFiles] = useState<File[]>([]);
+  const [step, setStep] = useState<Step>(loadInitialStep);
+  const [form, setForm] = useState<FormState>(loadInitialForm);
+  const [fileItems, setFileItems] = useState<FileDraftItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -64,7 +124,33 @@ export function SellYourRideApplyPage() {
     };
   }, []);
 
-  const previewUrls = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const restored = await readSellRideApplyFileDraft();
+        if (!cancelled && restored.length > 0) {
+          setFileItems(restored);
+        }
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const t = window.setTimeout(() => {
+      writeSellRideApplySessionDraft({ version: 1, step, form });
+      void writeSellRideApplyFileDraft(fileItems);
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [hydrated, form, step, fileItems]);
+
+  const previewUrls = useMemo(() => fileItems.map((item) => URL.createObjectURL(item.file)), [fileItems]);
 
   useEffect(() => {
     const urls = previewUrls;
@@ -75,12 +161,36 @@ export function SellYourRideApplyPage() {
 
   const addFiles = (list: FileList | null) => {
     if (!list?.length) return;
-    setFiles((prev) => [...prev, ...Array.from(list)]);
+    const additions: FileDraftItem[] = [];
+    const problems: string[] = [];
+    for (const file of Array.from(list)) {
+      if (!looksLikeImageFile(file)) {
+        problems.push(`${file.name} is not a supported image type.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        problems.push(`${file.name} is over 5 MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        problems.push(`${file.name} is empty.`);
+        continue;
+      }
+      additions.push({ clientId: crypto.randomUUID(), file });
+    }
+    if (problems.length) {
+      setPhotoError(problems.slice(0, 3).join(" ") + (problems.length > 3 ? " …" : ""));
+    } else {
+      setPhotoError(null);
+    }
+    if (additions.length) {
+      setFileItems((prev) => [...prev, ...additions]);
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeFileAt = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFileById = (clientId: string) => {
+    setFileItems((prev) => prev.filter((x) => x.clientId !== clientId));
   };
 
   const validateStep1 = (): string | null => {
@@ -96,7 +206,7 @@ export function SellYourRideApplyPage() {
     if (!form.make.trim() || !form.model.trim()) return "Make and model are required.";
     const km = Number.parseInt(form.odometerKm, 10);
     if (!Number.isFinite(km) || km < 0) return "Enter odometer (km).";
-    if (files.length < 3) return "Add at least three photos of your ride.";
+    if (fileItems.length < 3) return "Add at least three photos of your ride.";
     return null;
   };
 
@@ -145,13 +255,9 @@ export function SellYourRideApplyPage() {
     const uploadedPaths: string[] = [];
 
     try {
-      for (const file of files) {
-        const path = `${submissionId}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
-        const { error: upErr } = await supabase.storage.from(SELL_RIDE_PHOTOS_BUCKET).upload(path, file, {
-          cacheControl: "3600",
-          upsert: false
-        });
-        if (upErr) throw new Error(upErr.message);
+      for (const item of fileItems) {
+        const path = `${submissionId}/${crypto.randomUUID()}-${sanitizeFileName(item.file.name)}`;
+        await uploadSellRidePhotoWithRetry(path, item.file);
         uploadedPaths.push(path);
       }
 
@@ -174,9 +280,12 @@ export function SellYourRideApplyPage() {
         throw new Error(submit.error);
       }
 
+      clearSellRideApplySessionDraft();
+      void clearSellRideApplyFileDraft();
+
       setSuccessOpen(true);
       setForm(emptyForm());
-      setFiles([]);
+      setFileItems([]);
       setStep(1);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Submission failed.");
@@ -210,11 +319,20 @@ export function SellYourRideApplyPage() {
         <p className="page-subtitle sell-ride-applyIntro">
           {`We will contact you at the number you provide. We may ask for your driver's licence and registration to confirm ownership before we list your unit.`}
         </p>
+        <p className="sell-ride-applyHint">
+          Your answers and selected photos are saved on this device until you submit (refresh or come back later). This is not sent to our team until you finish step 2.
+        </p>
       </header>
 
       {formError ? (
         <div className="sell-ride-applyErrorBanner" role="alert">
           <p className="sell-ride-applyError">{formError}</p>
+        </div>
+      ) : null}
+
+      {photoError ? (
+        <div className="sell-ride-applyErrorBanner" role="status" aria-live="polite">
+          <p className="sell-ride-applyError">{photoError}</p>
         </div>
       ) : null}
 
@@ -371,28 +489,39 @@ export function SellYourRideApplyPage() {
           </div>
 
           <h2 className="sell-ride-applySectionTitle">Photos (minimum 3)</h2>
-          <p className="sell-ride-applyHint">Clear exterior shots help us respond faster.</p>
+          <p className="sell-ride-applyHint">Clear exterior shots help us respond faster. You can also drag files onto the box below.</p>
           <div className="sell-ride-applyPhotos">
-            <label className="sell-ride-applyDropzone">
+            <label
+              className="sell-ride-applyDropzone"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addFiles(e.dataTransfer.files);
+              }}
+            >
               <span className="sell-ride-applyDropzoneText">Choose photos</span>
-              <span className="sell-ride-applyDropzoneHint">JPEG, PNG, WebP, or GIF · up to 5 MB each</span>
+              <span className="sell-ride-applyDropzoneHint">JPEG, PNG, WebP, GIF, HEIC · up to 5 MB each</span>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
                 multiple
                 className="sell-ride-applyFileInput"
                 onChange={(e) => addFiles(e.target.files)}
               />
             </label>
-            {files.length ? (
+            {fileItems.length ? (
               <ul className="sell-ride-applyPhotoList">
-                {files.map((f, i) => (
-                  <li key={`${f.name}-${i}`} className="sell-ride-applyPhotoItem">
+                {fileItems.map((item, i) => (
+                  <li key={item.clientId} className="sell-ride-applyPhotoItem">
                     <img src={previewUrls[i]} alt="" className="sell-ride-applyPhotoThumb" />
                     <div className="sell-ride-applyPhotoMeta">
-                      <span className="sell-ride-applyPhotoName">{f.name}</span>
-                      <button type="button" className="btn btn-secondary sell-ride-applyPhotoRemove" onClick={() => removeFileAt(i)}>
+                      <span className="sell-ride-applyPhotoName">{item.file.name}</span>
+                      <button type="button" className="btn btn-secondary sell-ride-applyPhotoRemove" onClick={() => removeFileById(item.clientId)}>
                         Remove
                       </button>
                     </div>
@@ -459,10 +588,10 @@ export function SellYourRideApplyPage() {
 
           <h3 className="sell-ride-applyPhotosTitle">Photos</h3>
           <div className="sell-ride-applyReviewGrid">
-            {files.map((f, i) => (
-              <figure key={`${f.name}-rv-${i}`} className="sell-ride-applyReviewFigure">
-                <img src={previewUrls[i]} alt={f.name} className="sell-ride-applyReviewImg" />
-                <figcaption className="sell-ride-applyReviewCaption">{f.name}</figcaption>
+            {fileItems.map((item, i) => (
+              <figure key={`${item.clientId}-rv`} className="sell-ride-applyReviewFigure">
+                <img src={previewUrls[i]} alt={item.file.name} className="sell-ride-applyReviewImg" />
+                <figcaption className="sell-ride-applyReviewCaption">{item.file.name}</figcaption>
               </figure>
             ))}
           </div>

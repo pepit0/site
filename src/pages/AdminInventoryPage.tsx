@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
 import { AdminSellQueuePanel } from "../components/AdminSellQueuePanel";
 import {
   INVENTORY_PHOTOS_BUCKET,
@@ -46,15 +47,17 @@ const emptyForm = (): FormFields => ({
   status: "Available"
 });
 
-type AdminTab = "catalog" | "sell";
+type AdminTab = "catalog" | "sell" | "import";
 
 export function AdminInventoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const adminTab: AdminTab = tabParam === "sell" ? "sell" : "catalog";
+  const adminTab: AdminTab =
+    tabParam === "sell" ? "sell" : tabParam === "import" ? "import" : "catalog";
 
   const setAdminTab = (next: AdminTab) => {
     if (next === "sell") setSearchParams({ tab: "sell" }, { replace: true });
+    else if (next === "import") setSearchParams({ tab: "import" }, { replace: true });
     else setSearchParams({}, { replace: true });
   };
 
@@ -237,7 +240,7 @@ export function AdminInventoryPage() {
       <header className="admin-invHeader page-header">
         <h1 className="page-title">Admin inventory</h1>
         <p className="page-subtitle admin-invHeaderSubtitle">
-          Manage the public catalog and process sell-your-ride submissions in one place. Cost stays admin-only. Use{" "}
+          Manage the public catalog, sell-your-ride submissions, and staged MSF imports in one place. Cost stays admin-only. Use{" "}
           <strong>Unlisted</strong> to hide a unit without deleting it; use <strong>Sold</strong> for the sold banner
           on the site.
         </p>
@@ -261,10 +264,21 @@ export function AdminInventoryPage() {
         >
           Sell submissions
         </button>
+        <span className="admin-invTabDivider" aria-hidden />
+        <button
+          type="button"
+          className={adminTab === "import" ? "admin-invTab admin-invTabActive" : "admin-invTab"}
+          aria-current={adminTab === "import" ? "page" : undefined}
+          onClick={() => setAdminTab("import")}
+        >
+          MSF import
+        </button>
       </nav>
 
       {adminTab === "sell" ? (
         <AdminSellQueuePanel onInventoryChanged={() => void loadUnits()} />
+      ) : adminTab === "import" ? (
+        <AdminImportQueuePanel onInventoryChanged={() => void loadUnits()} />
       ) : (
         <>
           <section className="sell-ride-applyForm admin-invFormPanel" aria-labelledby="admin-inv-form-heading">
