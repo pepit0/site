@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { VehicleSilhouette } from "../components/VehicleSilhouette";
 import { PREAPPROVAL_FAQ, preapprovalFaqJsonLd } from "../data/preapprovalFaq";
 import { parseInventoryPublicRow, VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
 import { formatInventoryUnitInterest } from "../lib/inventoryUnitInterest";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
+import { markPreApprovalConversion } from "../lib/preapprovalConversion";
 import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead";
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
@@ -252,10 +253,10 @@ function validateStep(step: number, w: WizardState): string | null {
 }
 
 export function PreApprovalPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unitParam = searchParams.get("unit")?.trim() || null;
 
-  const [submitted, setSubmitted] = useState(false);
   const [step, setStep] = useState(0);
   const [w, setW] = useState<WizardState>(() => emptyWizard());
   const [skipVehicleStep, setSkipVehicleStep] = useState(false);
@@ -403,35 +404,9 @@ export function PreApprovalPage() {
       return;
     }
 
-    setSubmitted(true);
-    setW(emptyWizard());
-    setSkipVehicleStep(false);
-    setStep(0);
+    markPreApprovalConversion();
+    navigate("/pre-approval/complete", { replace: true });
   };
-
-  if (submitted) {
-    return (
-      <div className="preapproval">
-        <Seo
-          title="Thank you"
-          description="We received your financing application. Temptation Motorsports will contact you soon about motorcycle, ATV, snowmobile, and powersports loan options."
-          path="/pre-approval"
-        />
-        <div className="preapproval-success card card-pad" role="status">
-          <h1 className="page-title">Thank you</h1>
-          <p className="page-subtitle">
-            We’ve received your pre-approval request. A member of our team will contact you shortly to discuss next
-            steps.
-          </p>
-          <div className="home-actions preapproval-successActions">
-            <Link to="/" className="btn btn-secondary">
-              Back to home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 

@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { InventoryUnitDetailPage } from "./pages/InventoryUnitDetailPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PreApprovalCompletePage } from "./pages/PreApprovalCompletePage";
 import { PreApprovalPage } from "./pages/PreApprovalPage";
 import { SellYourRideApplyPage } from "./pages/SellYourRideApplyPage";
 import { SellYourRidePage } from "./pages/SellYourRidePage";
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="sell-your-ride" element={<SellYourRidePage />} />
         <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
         <Route path="pre-approval" element={<PreApprovalPage />} />
+        <Route path="pre-approval/complete" element={<PreApprovalCompletePage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
         <Route

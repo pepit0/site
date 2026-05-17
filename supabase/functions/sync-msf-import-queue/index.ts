@@ -37,6 +37,7 @@ type QueueRow = {
 type CatalogUnitRow = {
   id: string;
   stock_number: string;
+  category: string;
   status: string;
   admin_notes: string | null;
 };
@@ -101,6 +102,7 @@ function mapCategory(cats: unknown): string {
   if (matchSlug("side-by-side", "side_by_side", "side-by-sides")) return "Side by side";
   if (matchSlug("atv", "atvs")) return "ATV";
   if (matchSlug("snowmobile", "snowmobiles")) return "Snowmobile";
+  if (matchSlug("trailers", "trailer")) return "Trailer";
   if (matchSlug("motorcycle", "motorcycles")) return "Motorcycle";
   if (matchSlug("marine", "watercraft", "jetski", "jetskis", "pontoon", "pontoons", "boat", "boats")) {
     return "Watercraft";
@@ -113,6 +115,7 @@ function mapCategory(cats: unknown): string {
     if (n.includes("side by side") || n.includes("side-by-side")) return "Side by side";
     if (s.includes("atv") || n === "atv") return "ATV";
     if (s.includes("snowmobile") || n.includes("snowmobile")) return "Snowmobile";
+    if (s.includes("trailer") || n.includes("trailer")) return "Trailer";
     if (s.includes("motorcycle") || n.includes("motorcycle")) return "Motorcycle";
     if (s.includes("marine") || s.includes("water") || n.includes("marine") || n.includes("jetski")) {
       return "Watercraft";
@@ -225,7 +228,7 @@ async function loadCatalogUnits(supabase: SupabaseClient): Promise<CatalogUnitRo
   for (;;) {
     const { data, error } = await supabase
       .from("inventory_units")
-      .select("id,stock_number,status,admin_notes")
+      .select("id,stock_number,category,status,admin_notes")
       .range(from, from + page - 1);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
@@ -234,6 +237,7 @@ async function loadCatalogUnits(supabase: SupabaseClient): Promise<CatalogUnitRo
       out.push({
         id: r.id,
         stock_number: r.stock_number.trim(),
+        category: typeof r.category === "string" ? r.category : "Motorcycle",
         status: typeof r.status === "string" ? r.status : "Available",
         admin_notes: typeof r.admin_notes === "string" ? r.admin_notes : null
       });
@@ -251,6 +255,53 @@ function catalogPidSet(units: CatalogUnitRow[]): Set<string> {
     if (m) set.add(m[1]!);
   }
   return set;
+}
+
+function resolveCatalogUnit(
+  pid: string,
+  stockNumber: string,
+  catalogById: Map<string, CatalogUnitRow>,
+  catalogByMsfPid: Map<string, CatalogUnitRow>,
+  importedUnitIdByPid: Map<string, string>
+): CatalogUnitRow | null {
+  const linkedId = importedUnitIdByPid.get(pid);
+  if (linkedId) {
+    const linked = catalogById.get(linkedId);
+    if (linked) return linked;
+  }
+  const stockPid = stockNumber.match(MSF_STOCK_RE)?.[1];
+  if (stockPid) {
+    const byStock = catalogByMsfPid.get(stockPid);
+    if (byStock) return byStock;
+  }
+  return catalogByMsfPid.get(pid) ?? null;
+}
+
+async function applyCatalogCategoryUpdates(
+  supabase: SupabaseClient,
+  updates: Map<string, string>
+): Promise<number> {
+  const byCategory = new Map<string, string[]>();
+  for (const [id, category] of updates) {
+    const ids = byCategory.get(category) ?? [];
+    ids.push(id);
+    byCategory.set(category, ids);
+  }
+  let updated = 0;
+  for (const [category, ids] of byCategory) {
+    const ch = 100;
+    for (let i = 0; i < ids.length; i += ch) {
+      const part = ids.slice(i, i + ch);
+      const { data, error } = await supabase
+        .from("inventory_units")
+        .update({ category })
+        .in("id", part)
+        .select("id");
+      if (error) throw new Error(error.message);
+      updated += data?.length ?? 0;
+    }
+  }
+  return updated;
 }
 
 function isAlreadyInCatalog(
@@ -347,6 +398,12 @@ async function runSync(supabase: SupabaseClient) {
   const catalogUnits = await loadCatalogUnits(supabase);
   const catalogPids = catalogPidSet(catalogUnits);
   const catalogUnitIds = new Set(catalogUnits.map((u) => u.id));
+  const catalogById = new Map(catalogUnits.map((u) => [u.id, u]));
+  const catalogByMsfPid = new Map<string, CatalogUnitRow>();
+  for (const u of catalogUnits) {
+    const m = u.stock_number.match(MSF_STOCK_RE);
+    if (m) catalogByMsfPid.set(m[1]!, u);
+  }
 
   const firstUrl = `${STORE_BASE}?per_page=${PER_PAGE}&page=1`;
   const { data: firstPage, total, totalPages } = await fetchJson(firstUrl);
@@ -368,11 +425,15 @@ async function runSync(supabase: SupabaseClient) {
 
   const activePids = new Set<string>();
   const byPid = new Map<string, QueueRow>();
+  const queueRefresh: QueueRow[] = [];
+  const catalogCategoryUpdates = new Map<string, string>();
   let importedNew = 0;
   let alreadyPending = 0;
+  let queueRefreshed = 0;
   let alreadySkipped = 0;
   let ignoredPosted = 0;
   let ignoredInCatalog = 0;
+  let catalogCategoriesUpdated = 0;
   let skippedUnmapped = 0;
   let duplicateWooInFetch = 0;
 
@@ -396,19 +457,36 @@ async function runSync(supabase: SupabaseClient) {
       importedUnitIdByPid
     );
 
+    const st = statusByPid.get(mapped.source_product_id);
+
     if (inCatalog) {
-      if (statusByPid.get(mapped.source_product_id) === "posted") ignoredPosted += 1;
+      if (st === "posted") ignoredPosted += 1;
       else ignoredInCatalog += 1;
+
+      const unit = resolveCatalogUnit(
+        mapped.source_product_id,
+        mapped.stock_number,
+        catalogById,
+        catalogByMsfPid,
+        importedUnitIdByPid
+      );
+      if (unit && unit.category !== mapped.category) {
+        catalogCategoryUpdates.set(unit.id, mapped.category);
+      }
+      if (st === "pending" || st === "posted" || st === "skipped") {
+        queueRefresh.push({ ...mapped, status: st });
+      }
       continue;
     }
 
-    const st = statusByPid.get(mapped.source_product_id);
     if (st === "pending") {
       alreadyPending += 1;
+      queueRefresh.push({ ...mapped, status: "pending" });
       continue;
     }
     if (st === "skipped") {
       alreadySkipped += 1;
+      queueRefresh.push({ ...mapped, status: "skipped" });
       continue;
     }
     importedNew += 1;
@@ -418,7 +496,7 @@ async function runSync(supabase: SupabaseClient) {
     });
   }
 
-  const toUpsert = [...byPid.values()];
+  const toUpsert = [...byPid.values(), ...queueRefresh];
   const chunk = 80;
   for (let i = 0; i < toUpsert.length; i += chunk) {
     const part = toUpsert.slice(i, i + chunk);
@@ -426,6 +504,11 @@ async function runSync(supabase: SupabaseClient) {
       onConflict: "import_source,source_product_id"
     });
     if (error) throw new Error(error.message);
+  }
+  queueRefreshed = queueRefresh.length;
+
+  if (catalogCategoryUpdates.size > 0) {
+    catalogCategoriesUpdated = await applyCatalogCategoryUpdates(supabase, catalogCategoryUpdates);
   }
 
   let removedStale = 0;
@@ -453,6 +536,8 @@ async function runSync(supabase: SupabaseClient) {
     wooProducts: allProducts.length,
     importedNew,
     alreadyPending,
+    queueRefreshed,
+    catalogCategoriesUpdated,
     alreadySkipped,
     ignoredPosted,
     ignoredInCatalog,

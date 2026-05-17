@@ -62,6 +62,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 Disallow: /staff
+Disallow: /pre-approval/complete
 
 Sitemap: ${origin}/sitemap.xml
 `;

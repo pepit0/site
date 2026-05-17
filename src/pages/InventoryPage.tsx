@@ -71,7 +71,7 @@ export function InventoryPage() {
     <div className="inventory">
       <Seo
         title="Inventory"
-        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, and more. Sold units marked; unlisted units hidden. Financing available through Temptation Motorsports."
+        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, trailers, and more. Sold units marked; unlisted units hidden. Financing available through Temptation Motorsports."
         path="/inventory"
       />
       <header className="page-header">

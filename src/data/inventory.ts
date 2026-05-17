@@ -3,7 +3,8 @@ export type VehicleCategory =
   | "ATV"
   | "Snowmobile"
   | "Side by side"
-  | "Watercraft";
+  | "Watercraft"
+  | "Trailer";
 
 export const INVENTORY_STATUS_VALUES = ["Available", "Pending", "Sold", "Unlisted"] as const;
 
@@ -83,7 +84,8 @@ export const VEHICLE_CATEGORIES: VehicleCategory[] = [
   "ATV",
   "Snowmobile",
   "Side by side",
-  "Watercraft"
+  "Watercraft",
+  "Trailer"
 ];
 
 export const INVENTORY_PHOTOS_BUCKET = "inventory-photos" as const;
@@ -132,7 +134,9 @@ const CATEGORY_QUERY_ALIASES: Record<string, VehicleCategory> = {
   sidebyside: "Side by side",
   watercraft: "Watercraft",
   jetski: "Watercraft",
-  jetskis: "Watercraft"
+  jetskis: "Watercraft",
+  trailer: "Trailer",
+  trailers: "Trailer"
 };
 
 /** Reads `?category=` from inventory links (exact label or common slug). */
