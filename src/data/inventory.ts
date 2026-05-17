@@ -136,7 +136,9 @@ const CATEGORY_QUERY_ALIASES: Record<string, VehicleCategory> = {
   jetski: "Watercraft",
   jetskis: "Watercraft",
   trailer: "Trailer",
-  trailers: "Trailer"
+  trailers: "Trailer",
+  rv: "Trailer",
+  rvs: "Trailer"
 };
 
 /** Reads `?category=` from inventory links (exact label or common slug). */

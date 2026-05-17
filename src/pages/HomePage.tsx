@@ -27,8 +27,9 @@ export function HomePage() {
   const spotsWithLayer = useMemo(
     () =>
       HOME_HERO_HOTSPOTS.flatMap((h) => {
+        if (!h.layerFile || !h.placement) return [];
         const url = getHomeHeroLayerUrl(h.layerFile);
-        return url ? [{ ...h, layerUrl: url }] : [];
+        return url ? [{ ...h, layerUrl: url, placement: h.placement }] : [];
       }),
     []
   );
@@ -37,7 +38,7 @@ export function HomePage() {
     <div className="home">
       <Seo
         title="Powersports financing in Edmonton"
-        description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, and boat financing. Fast, friendly credit help from Edmonton for riders across Canada."
+        description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, boat, trailer, and RV financing. Fast, friendly credit help from Edmonton for riders across Canada."
         path="/"
       />
       <LocalBusinessJsonLd />
@@ -120,8 +121,9 @@ export function HomePage() {
           <h1 className="home-title">Temptation Motorsports</h1>
           <p className="home-tagline">Serving motorsports customers since 2015</p>
           <p className="home-lede">
-            Fast, friendly financing for motorcycles, sleds, snowmobiles, jet skis, boats, ATVs, and side-by-sides. We are
-            based in Edmonton and work with riders all over Canada who want to ride, not fight paperwork.
+            Fast, friendly financing for motorcycles, sleds, snowmobiles, jet skis, boats, ATVs, side-by-sides, trailers,
+            and RVs. We are based in Edmonton and work with riders all over Canada who want to ride, not fight
+            paperwork.
           </p>
           <div className="home-actions">
             <Link to="/pre-approval" className="btn btn-primary">

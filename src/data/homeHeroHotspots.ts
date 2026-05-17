@@ -20,8 +20,9 @@ export type HomeHeroHotspot = {
   unitName: string;
   /** Inventory filter (`inventory_units_public.category`) */
   inventoryCategory: VehicleCategory;
-  layerFile: string;
-  placement: HomeHeroPlacement;
+  /** Omit for sidebar-only rows (no hero glow). */
+  layerFile?: string;
+  placement?: HomeHeroPlacement;
   /** Sidebar list order (low → high) */
   sidebarOrder: number;
 };
@@ -82,6 +83,12 @@ export const HOME_HERO_HOTSPOTS: HomeHeroHotspot[] = [
     layerFile: "ATV_0006_Layer-7.png",
     sidebarOrder: 7,
     placement: { left: "23.2%", top: "24.93%", width: "51.25%", height: "32.06%" }
+  },
+  {
+    id: "trailers-rvs",
+    unitName: "Trailers & RVs",
+    inventoryCategory: "Trailer",
+    sidebarOrder: 8
   }
 ];
 

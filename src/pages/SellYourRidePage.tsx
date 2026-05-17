@@ -7,7 +7,7 @@ export function SellYourRidePage() {
     <div className="sell-ride">
       <Seo
         title="Sell your ride"
-        description="List your motorcycle, ATV, sled, or powersports unit. Temptation Motorsports helps buyers who need financing while you keep control of your sale."
+        description="List your motorcycle, ATV, sled, trailer, RV, or other powersports unit. Temptation Motorsports helps buyers who need financing while you keep control of your sale."
         path="/sell-your-ride"
       />
       <div className="sell-ride-layout">

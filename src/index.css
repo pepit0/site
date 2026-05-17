@@ -2179,8 +2179,59 @@ p {
   border-radius: var(--radius);
 }
 
+.inventory-search {
+  width: 100%;
+}
+
+.inventory-searchField {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.inventory-searchInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.inventory-searchClear {
+  flex-shrink: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.inventory-searchClear:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.inventory-searchClear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.inventory-searchStatus {
+  margin: 0.55rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.inventory-toolbarRow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
 @media (min-width: 768px) {
-  .inventory-toolbar {
+  .inventory-toolbarRow {
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;

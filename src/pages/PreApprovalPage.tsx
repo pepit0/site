@@ -419,7 +419,7 @@ export function PreApprovalPage() {
     <div className="preapproval">
       <Seo
         title="Credit pre-approval"
-        description="Apply for powersports financing: motorcycles, bikes, snowmobiles, sleds, ATVs, side-by-sides, jet skis, and boats. Edmonton-based team serving riders across Canada."
+        description="Apply for powersports financing: motorcycles, bikes, snowmobiles, sleds, ATVs, side-by-sides, jet skis, boats, trailers, and RVs. Edmonton-based team serving riders across Canada."
         path="/pre-approval"
       />
       <Helmet>
