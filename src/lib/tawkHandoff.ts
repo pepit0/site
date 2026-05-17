@@ -5,6 +5,7 @@ import {
   buildUnitDetailsForTawk,
   type ChatSuggestedUnit
 } from "./chatSuggestInventory";
+import { readSavedChatVisitorContact, saveChatVisitorContact } from "./chatVisitorContact";
 import { primeTawkVisitorOpeningMessage } from "./tawkOpeningMessage";
 import { normalizeNanpTo10Digits } from "./phoneFormat";
 
@@ -205,6 +206,7 @@ export async function applyTawkVisitorContext(params: TawkHandoffParams): Promis
   const api = getApi();
   if (!api) return;
 
+  saveChatVisitorContact(params.name, params.phone);
   persistUnitSession(params);
   await setAttributesAsync(buildAttributes(params));
   recordUnitInChat(params);
@@ -221,12 +223,25 @@ export async function applyTawkVisitorContext(params: TawkHandoffParams): Promis
 
 /** Re-apply pending unit context when the Tawk chat session starts. */
 export function applyPendingTawkVisitorContext(): void {
-  if (!pendingHandoff) return;
-  void applyTawkVisitorContext(pendingHandoff);
-  // Second pass after the session UI mounts (attributes sometimes apply only after start).
-  window.setTimeout(() => {
-    if (pendingHandoff) void applyTawkVisitorContext(pendingHandoff);
-  }, 600);
+  if (pendingHandoff) {
+    void applyTawkVisitorContext(pendingHandoff);
+    window.setTimeout(() => {
+      if (pendingHandoff) void applyTawkVisitorContext(pendingHandoff);
+    }, 600);
+    return;
+  }
+  applySavedVisitorContactToTawk();
+}
+
+/** Name + phone from site intake localStorage (when not in an active unit handoff). */
+export function applySavedVisitorContactToTawk(): void {
+  if (pendingHandoff) return;
+  const saved = readSavedChatVisitorContact();
+  if (!saved) return;
+  void setAttributesAsync({
+    name: saved.name,
+    phone: phoneForTawk(saved.phone)
+  });
 }
 
 /** Wait until Tawk embed API is callable (after onLoad). */

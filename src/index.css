@@ -831,6 +831,9 @@ p {
 }
 
 .home-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -838,6 +841,15 @@ p {
   color: var(--accent);
   margin-bottom: 1rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 0, 0, 0.35);
+}
+
+.home-eyebrowLeaf {
+  flex-shrink: 0;
+  width: 1.40rem;
+  margin-left: -0.15rem;
+  margin-top: -0.15rem;
+  height: auto;
+  display: block;
 }
 
 .home-title {
@@ -3928,6 +3940,13 @@ img.vehicle-category-icon {
   font-size: 0.82rem;
   line-height: 1.45;
   color: var(--text-muted);
+}
+
+.site-chatWelcomeBack {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffb088;
 }
 
 .site-chatHandoffHint kbd,

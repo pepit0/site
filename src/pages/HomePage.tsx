@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
 import logoUrl from "../assets/logo.png";
+import mapleLeafUrl from "../assets/maple-leaf.png";
 import { HomeReviewsConveyor } from "../components/HomeReviewsConveyor";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
@@ -112,7 +113,10 @@ export function HomePage() {
             height={200}
             decoding="async"
           />
-          <p className="home-eyebrow">Motorsports financing</p>
+          <p className="home-eyebrow">
+            Motorsports financing{" "}
+            <img src={mapleLeafUrl} alt="" className="home-eyebrowLeaf" decoding="async" />
+          </p>
           <h1 className="home-title">Temptation Motorsports</h1>
           <p className="home-tagline">Serving motorsports customers since 2015</p>
           <p className="home-lede">

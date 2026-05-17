@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getTawkEmbedPath } from "../../lib/tawkConfig";
-import { applyPendingTawkVisitorContext } from "../../lib/tawkHandoff";
+import { applyPendingTawkVisitorContext, applySavedVisitorContactToTawk } from "../../lib/tawkHandoff";
 import { useTawkContext, type TawkAgentStatus } from "./tawkContext";
 
 declare global {
@@ -71,6 +71,7 @@ export function TawkLoader() {
       previousOnLoad?.();
       setTawkReady(true);
       hideTawkBubbleInitially();
+      applySavedVisitorContactToTawk();
     };
     window.Tawk_API.onChatStarted = () => {
       previousOnChatStarted?.();

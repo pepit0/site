@@ -1,6 +1,12 @@
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchInventoryUnitsByIds, type ChatSuggestedUnit } from "../../lib/chatSuggestInventory";
+import {
+  clearSavedChatVisitorContact,
+  readSavedChatVisitorContact,
+  saveChatVisitorContact,
+  savedContactFirstName
+} from "../../lib/chatVisitorContact";
 import { buildUnitPickIds } from "../../lib/recentInventoryViews";
 import { submitPublicChatLead } from "../../lib/submitChatLead";
 import { CHAT_HANDOFF_FADE_MS } from "../../lib/chatTheme";
@@ -53,15 +59,25 @@ function stepTitle(step: Step): string {
   }
 }
 
-function stepSubtitle(step: Step, tawkConfigured: boolean): string {
+function stepSubtitle(step: Step, tawkConfigured: boolean, hasSavedContact: boolean): string {
   switch (step) {
     case "contact":
+      if (hasSavedContact) {
+        return tawkConfigured
+          ? "Welcome back — confirm your info or continue to chat."
+          : "Welcome back — confirm your info or send a new message.";
+      }
       return tawkConfigured
         ? "Share your info, then continue in our chat."
         : "Leave your info and tell us what you’re looking for.";
     case "loading":
       return "Loading your recent views…";
     case "unitPick":
+      if (hasSavedContact) {
+        return tawkConfigured
+          ? "Which unit are you asking about? We’ll open chat next."
+          : "Which unit are you asking about?";
+      }
       return tawkConfigured
         ? "Did you have a specific unit in mind? We’ll open chat next."
         : "Did you have a specific unit in mind?";
@@ -76,6 +92,11 @@ function stepSubtitle(step: Step, tawkConfigured: boolean): string {
     default:
       return "";
   }
+}
+
+function initialContactFields(): { name: string; phone: string } {
+  const saved = readSavedChatVisitorContact();
+  return { name: saved?.name ?? "", phone: saved?.phone ?? "" };
 }
 
 export function OfflineChatWidget() {
@@ -93,8 +114,8 @@ export function OfflineChatWidget() {
 
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("contact");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(() => initialContactFields().name);
+  const [phone, setPhone] = useState(() => initialContactFields().phone);
   const [pickOptions, setPickOptions] = useState<ChatSuggestedUnit[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<ChatSuggestedUnit | null>(null);
   const [skippedUnitPick, setSkippedUnitPick] = useState(false);
@@ -103,10 +124,20 @@ export function OfflineChatWidget() {
   const [submitting, setSubmitting] = useState(false);
   const [handoffClosing, setHandoffClosing] = useState(false);
 
+  const restoreContactFields = useCallback(() => {
+    const saved = readSavedChatVisitorContact();
+    if (saved) {
+      setName(saved.name);
+      setPhone(saved.phone);
+    } else {
+      setName("");
+      setPhone("");
+    }
+  }, []);
+
   const resetFlow = useCallback((opts?: { keepHandoff?: boolean }) => {
     setStep("contact");
-    setName("");
-    setPhone("");
+    restoreContactFields();
     setPickOptions([]);
     setSelectedUnit(null);
     setSkippedUnitPick(false);
@@ -117,14 +148,14 @@ export function OfflineChatWidget() {
     if (!opts?.keepHandoff) {
       setHandedOffToTawk(false);
     }
-  }, []);
+  }, [restoreContactFields]);
 
   const close = useCallback(() => {
     setOpen(false);
     resetFlow();
   }, [resetFlow]);
 
-  const loadUnitPick = async () => {
+  const loadUnitPick = useCallback(async () => {
     setStep("loading");
     setError(null);
     try {
@@ -136,7 +167,28 @@ export function OfflineChatWidget() {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       setStep("contact");
     }
-  };
+  }, [currentUnitId]);
+
+  const openChatPanel = useCallback(() => {
+    const saved = readSavedChatVisitorContact();
+    if (saved) {
+      setName(saved.name);
+      setPhone(saved.phone);
+      setOpen(true);
+      void loadUnitPick();
+      return;
+    }
+    setOpen(true);
+    setStep("contact");
+  }, [loadUnitPick]);
+
+  const toggleChatPanel = useCallback(() => {
+    if (open) {
+      close();
+      return;
+    }
+    openChatPanel();
+  }, [open, close, openChatPanel]);
 
   const onContactSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -149,7 +201,15 @@ export function OfflineChatWidget() {
       setError("Please enter a valid phone number.");
       return;
     }
+    saveChatVisitorContact(name, phone);
     void loadUnitPick();
+  };
+
+  const clearSavedContactAndForm = () => {
+    clearSavedChatVisitorContact();
+    setName("");
+    setPhone("");
+    setError(null);
   };
 
   const saveIntakeLead = (unit: ChatSuggestedUnit | null, skipped: boolean, note: string) => {
@@ -193,6 +253,7 @@ export function OfflineChatWidget() {
     setSelectedUnit(unit);
     setSkippedUnitPick(skipped);
     setError(null);
+    saveChatVisitorContact(name, phone);
 
     if (!tawkConfigured) {
       setStep("message");
@@ -265,8 +326,12 @@ export function OfflineChatWidget() {
       setError(save.error);
       return;
     }
+    saveChatVisitorContact(name, phone);
     setStep("done");
   };
+
+  const storedContact = readSavedChatVisitorContact();
+  const hasSavedContact = Boolean(storedContact);
 
   const preApprovalHref = selectedUnit
     ? `/pre-approval?unit=${encodeURIComponent(selectedUnit.id)}`
@@ -295,7 +360,7 @@ export function OfflineChatWidget() {
               <h2 id="site-chat-title" className="site-chatPanelTitle">
                 {stepTitle(step)}
               </h2>
-              <p className="site-chatPanelSubtitle">{stepSubtitle(step, tawkConfigured)}</p>
+              <p className="site-chatPanelSubtitle">{stepSubtitle(step, tawkConfigured, hasSavedContact)}</p>
             </div>
             <button type="button" className="site-chatClose" onClick={close} aria-label="Close chat">
               ×
@@ -305,6 +370,11 @@ export function OfflineChatWidget() {
           <div className="site-chatPanelBody">
             {step === "contact" ? (
               <form className="site-chatForm" onSubmit={onContactSubmit}>
+                {storedContact ? (
+                  <p className="site-chatWelcomeBack">
+                    Welcome back, {savedContactFirstName(storedContact.name)}.
+                  </p>
+                ) : null}
                 <div className="site-chatField">
                   <label className="site-chatLabel" htmlFor="chat-name">
                     Your name
@@ -342,6 +412,11 @@ export function OfflineChatWidget() {
                 <button type="submit" className="btn btn-primary site-chatSubmitBtn">
                   Continue
                 </button>
+                {storedContact ? (
+                  <button type="button" className="site-chatTextBtn" onClick={clearSavedContactAndForm}>
+                    Not you? Clear saved info
+                  </button>
+                ) : null}
                 <p className="site-chatFinePrint">
                   Availability subject to confirmation. No obligation to apply.
                 </p>
@@ -398,6 +473,16 @@ export function OfflineChatWidget() {
                 ) : null}
                 <button type="button" className="btn btn-secondary site-chatNotReallyBtn" onClick={onNotReally}>
                   {tawkConfigured ? "No specific unit — continue to chat" : "Not really"}
+                </button>
+                <button
+                  type="button"
+                  className="site-chatTextBtn"
+                  onClick={() => {
+                    setError(null);
+                    setStep("contact");
+                  }}
+                >
+                  Change name or phone
                 </button>
               </div>
             ) : null}
@@ -504,7 +589,7 @@ export function OfflineChatWidget() {
       <button
         type="button"
         className={`site-chatFab${open ? " site-chatFabOpen" : ""}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleChatPanel}
         aria-expanded={open}
         aria-controls="site-chat-title"
       >
