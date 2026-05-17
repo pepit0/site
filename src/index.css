@@ -3930,6 +3930,62 @@ img.vehicle-category-icon {
   color: var(--text-muted);
 }
 
+.site-chatHandoffHint kbd,
+.site-tawkPasteHintBody kbd {
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+}
+
+.site-tawkPasteHint {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 6.5rem;
+  z-index: 10060;
+  width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(12, 13, 16, 0.96);
+  border: 1px solid rgba(240, 93, 34, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  animation: site-chat-teaser-in 0.35s ease-out;
+}
+
+.site-tawkPasteHintTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.site-tawkPasteHintBody {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.site-tawkPasteHintActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.site-tawkPasteHintBtn {
+  flex: 1 1 auto;
+  min-width: 7rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.site-tawkPasteHintDismiss {
+  margin: 0;
+}
+
 .inventory-detailApplyBtn {
   display: block;
   width: 100%;

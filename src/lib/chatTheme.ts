@@ -34,37 +34,35 @@ export const TAWK_WIDGET_APPEARANCE = [
 export const CHAT_HANDOFF_FADE_MS = 340;
 
 /**
- * Paste into Tawk → AI Assist → your agent → Base Prompt (replace or append to existing instructions).
- * Required: without this, the bot ignores visitor profile fields even when they appear in the dashboard.
+ * Why Bob ignores unitinterest in the desktop app
+ * -----------------------------------------------
+ * Tawk AI Assist does NOT read visitor custom fields from the sidebar (unitinterest, unitdetails, etc.).
+ * Those fields are for human agents only. FAQs only help when the visitor’s question closely matches the FAQ text —
+ * they are not tied to profile attributes. Triggers cannot insert custom-attribute values into messages (feature gap).
+ *
+ * What works: text in the live chat thread (visitor or agent messages), crawled website pages, and shortcuts/FAQs.
+ * Our site copies a pre-filled visitor message to the clipboard when they pick a unit; they paste once in Tawk.
  */
-export const TAWK_AI_UNIT_CONTEXT_PROMPT = `CRITICAL — Website intake before chat
 
-Many visitors complete our site intake before chatting. Their visitor profile (visible to you in the sidebar) includes custom fields such as:
-- unitinterest / unit-interest
-- unitdetails / unit-details (year, make, model, category, status, km, stock #, listing URL)
-- stocknumber / stock-number
-- unitid / unit-id
-- listingurl / unit-url
-- Display name may show "First Last · Stock #MSF-XXXX"
+/**
+ * Optional add-on (do NOT replace Bob’s full Base Prompt if Tawk warns you).
+ * Paste under AI Assist → Knowledge / Additional instructions / Custom training — wherever Tawk allows a short add-on.
+ */
+export const TAWK_AI_ADDON_INSTRUCTION = `Website visitors often complete intake before chat. If their first message mentions a stock number or listing URL, use that as their selected unit. Never say you cannot see their unit when they already sent year/make/model/stock or a temptmotorsports.com/inventory/ link. For price or financing, offer pre-approval or callback at (587) 741-1945.`;
 
-When unitinterest OR unitdetails OR stocknumber is populated:
-1. The visitor ALREADY selected that unit. NEVER say you do not have access or ask them to repeat the stock number.
-2. Read unitdetails (or unitinterest) and answer using those facts: year, make, model, category, mileage, availability status, stock number.
-3. Share the listingurl so they can view photos on the site.
-4. We do not put price in these fields — for price, payment, or financing, offer pre-approval at temptmotorsports.com/pre-approval or a callback from our team at (587) 741-1945.
-5. If they ask "details on the unit I chose", summarize from unitdetails — do not deflect.
+/** Legacy full prompt — use TAWK_AI_ADDON_INSTRUCTION instead of replacing Base Prompt when possible. */
+export const TAWK_AI_UNIT_CONTEXT_PROMPT = TAWK_AI_ADDON_INSTRUCTION;
 
-Only ask which unit they want if ALL unit fields are empty.`;
-
-/** FAQ answer to add under AI Assist → Data Sources → FAQs (optional backup). */
+/** FAQ backup — still requires the visitor to mention the unit in chat; profile fields alone will not trigger it. */
 export const TAWK_FAQ_SELECTED_UNIT = {
-  question:
-    "Visitor asks about the unit they chose on the website before chat (unitinterest, unitdetails, stocknumber in profile)",
+  question: "Visitor asks for details on the unit they chose on the website (stock number or listing link in their message)",
   answer:
-    "Read unitdetails and unitinterest from the visitor profile. Summarize year, make, model, category, km, status, and stock number. Give them the listingurl. For price or financing, direct to pre-approval or a phone callback — never claim you cannot see their selected unit."
+    "Use the year, make, model, stock number, and listing URL from their chat message. Summarize availability and mileage if they included it. For price or financing, direct to pre-approval at temptmotorsports.com/pre-approval or a callback — do not claim you cannot see their unit when they already named it."
 };
 
 /**
- * Tawk Automation (optional): trigger on event "website-unit-selected" → AI sends first message in thread.
+ * Optional Tawk trigger (static message — cannot pull unitdetails from attributes):
+ * Run when Visitor starts a chat AND Page URL contains /inventory/
+ * Action: Send message — "I see you're on a listing page. Tell me what you'd like to know about this unit."
  */
 export const TAWK_AUTOMATION_UNIT_EVENT = "website-unit-selected";

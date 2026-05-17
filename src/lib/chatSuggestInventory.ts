@@ -39,7 +39,7 @@ type FeaturedUnitJson = {
   category: string;
 };
 
-/** One-line facts for Tawk AI (unit-details attribute) — bot cannot read the sidebar unless told to use this. */
+/** One-line facts for Tawk visitor profile (agents) and the opening chat message (AI Assist). */
 export function buildUnitDetailsForTawk(unit: ChatSuggestedUnit): string {
   return [
     `${unit.year} ${unit.make} ${unit.model}`,
@@ -49,6 +49,11 @@ export function buildUnitDetailsForTawk(unit: ChatSuggestedUnit): string {
     `Stock #${unit.stock_number}`,
     unit.href
   ].join(" | ");
+}
+
+/** Message visitors paste/send in Tawk — this is what AI Assist actually reads. */
+export function buildTawkVisitorOpeningMessage(unit: ChatSuggestedUnit): string {
+  return `I'm interested in this unit from your website: ${buildUnitDetailsForTawk(unit)}. Can you help with details?`;
 }
 
 export function inventoryRowToChatSuggested(row: InventoryPublicRow): ChatSuggestedUnit {

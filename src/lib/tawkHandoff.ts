@@ -1,6 +1,11 @@
 /** Open Tawk after site intake (name, phone, optional unit). */
 
-import { buildUnitDetailsForTawk, type ChatSuggestedUnit } from "./chatSuggestInventory";
+import {
+  buildTawkVisitorOpeningMessage,
+  buildUnitDetailsForTawk,
+  type ChatSuggestedUnit
+} from "./chatSuggestInventory";
+import { primeTawkVisitorOpeningMessage } from "./tawkOpeningMessage";
 import { normalizeNanpTo10Digits } from "./phoneFormat";
 
 export type TawkHandoffParams = {
@@ -12,8 +17,10 @@ export type TawkHandoffParams = {
   unitId?: string | null;
   unitHref?: string | null;
   stockNumber?: string | null;
-  /** Full unit facts string for AI (from buildUnitDetailsForTawk). */
+  /** Full unit facts string for agents (sidebar). */
   unitDetails?: string | null;
+  /** Copied for the visitor to paste into Tawk — AI reads the chat thread, not sidebar fields. */
+  openingVisitorMessage?: string | null;
 };
 
 const TAWK_UNIT_SESSION_KEY = "tm_tawk_selected_unit";
@@ -42,10 +49,7 @@ function phoneForTawk(raw: string): string {
   return trimmed;
 }
 
-/**
- * AI Assist often reads the visitor display name in-thread but not custom attribute panels.
- * Append a short unit hint to name while keeping full detail in unit-interest / stock-number.
- */
+/** Short unit hint on the display name (for human agents in the sidebar). */
 function displayNameForTawk(params: TawkHandoffParams): string {
   const base = params.name.trim();
   const label = params.unitLabel?.trim();
@@ -125,7 +129,15 @@ export function tawkHandoffFromUnit(
   unit: ChatSuggestedUnit | null
 ): TawkHandoffParams {
   if (!unit) {
-    return { ...base, unitLabel: null, unitId: null, unitHref: null, stockNumber: null, unitDetails: null };
+    return {
+      ...base,
+      unitLabel: null,
+      unitId: null,
+      unitHref: null,
+      stockNumber: null,
+      unitDetails: null,
+      openingVisitorMessage: null
+    };
   }
   const label = `${unit.year} ${unit.title} — Stock #${unit.stock_number}`;
   return {
@@ -134,7 +146,8 @@ export function tawkHandoffFromUnit(
     unitId: unit.id,
     unitHref: unit.href,
     stockNumber: unit.stock_number,
-    unitDetails: buildUnitDetailsForTawk(unit)
+    unitDetails: buildUnitDetailsForTawk(unit),
+    openingVisitorMessage: buildTawkVisitorOpeningMessage(unit)
   };
 }
 
@@ -147,7 +160,8 @@ function recordUnitInChat(params: TawkHandoffParams): void {
     unitDetails: params.unitDetails?.trim() ?? params.unitLabel.trim(),
     unitId: params.unitId?.trim() ?? "",
     listingUrl: params.unitHref?.trim() ?? "",
-    stockNumber: params.stockNumber?.trim() ?? ""
+    stockNumber: params.stockNumber?.trim() ?? "",
+    openingMessage: params.openingVisitorMessage?.trim() ?? ""
   };
 
   api.addEvent?.("website-unit-selected", metadata, () => {});
@@ -194,6 +208,15 @@ export async function applyTawkVisitorContext(params: TawkHandoffParams): Promis
   persistUnitSession(params);
   await setAttributesAsync(buildAttributes(params));
   recordUnitInChat(params);
+
+  const opening = params.openingVisitorMessage?.trim();
+  if (opening) {
+    primeTawkVisitorOpeningMessage({
+      message: opening,
+      stockNumber: params.stockNumber?.trim() ?? null,
+      at: Date.now()
+    });
+  }
 }
 
 /** Re-apply pending unit context when the Tawk chat session starts. */

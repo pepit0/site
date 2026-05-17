@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FormEvent } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchInventoryUnitsByIds, type ChatSuggestedUnit } from "../../lib/chatSuggestInventory";
 import { buildUnitPickIds } from "../../lib/recentInventoryViews";
 import { submitPublicChatLead } from "../../lib/submitChatLead";
@@ -80,6 +80,7 @@ function stepSubtitle(step: Step, tawkConfigured: boolean): string {
 
 export function OfflineChatWidget() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAgentOnline, tawkConfigured, tawkReady } = useTawkAgentStatus();
   const [handedOffToTawk, setHandedOffToTawk] = useState(false);
   /** Intake FAB: always when Tawk is set up; otherwise only when agents are away (no live Tawk). */
@@ -196,6 +197,11 @@ export function OfflineChatWidget() {
     if (!tawkConfigured) {
       setStep("message");
       return;
+    }
+
+    if (unit && currentUnitId !== unit.id) {
+      navigate(`/inventory/${unit.id}`, { replace: true });
+      await new Promise((r) => window.setTimeout(r, 250));
     }
 
     setStep("handoff");
@@ -352,9 +358,17 @@ export function OfflineChatWidget() {
                 {step === "handoff" ? (
                   <>
                     <p className="site-chatHandoffLead">Opening live chat</p>
-                    <p className="site-chatHandoffHint">
-                      Same team and assistant — continuing in our chat window…
-                    </p>
+                    {selectedUnit ? (
+                      <p className="site-chatHandoffHint">
+                        We copied a message about Stock #{selectedUnit.stock_number}. When chat opens, paste (
+                        <kbd>Ctrl</kbd>+<kbd>V</kbd>) and send — that is how the assistant knows which unit you
+                        picked.
+                      </p>
+                    ) : (
+                      <p className="site-chatHandoffHint">
+                        Same team and assistant — continuing in our chat window…
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p>Loading…</p>
