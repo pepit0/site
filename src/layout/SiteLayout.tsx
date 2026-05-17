@@ -6,7 +6,6 @@ import { supabase } from "../lib/supabase";
 import { isMarketingOnlySite } from "../siteMode";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
-import { initMetaPixel } from "../lib/metaPixel";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
@@ -173,10 +172,6 @@ function SiteNavMarketing() {
 }
 
 export function SiteLayout() {
-  useEffect(() => {
-    initMetaPixel();
-  }, []);
-
   const chrome = isMarketingOnlySite() ? (
     <SiteLayoutChrome navVariant="marketing" />
   ) : (
