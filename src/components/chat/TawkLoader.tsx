@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getTawkEmbedPath } from "../../lib/tawkConfig";
+import { applyPendingTawkVisitorContext } from "../../lib/tawkHandoff";
 import { useTawkContext, type TawkAgentStatus } from "./tawkContext";
 
 declare global {
@@ -12,8 +13,15 @@ declare global {
       maximize?: () => void;
       setAttributes?: (
         attributes: Record<string, string>,
-        callback?: (error?: Error) => void
+        callback?: (error?: unknown) => void
       ) => void;
+      addEvent?: (
+        eventName: string,
+        metadata: Record<string, string>,
+        callback?: (error?: unknown) => void
+      ) => void;
+      addTags?: (tags: string[], callback?: (error?: unknown) => void) => void;
+      onChatStarted?: () => void;
     };
     Tawk_LoadStart?: Date;
   }
@@ -58,10 +66,15 @@ export function TawkLoader() {
 
     window.Tawk_API = window.Tawk_API || {};
     const previousOnLoad = window.Tawk_API.onLoad;
+    const previousOnChatStarted = window.Tawk_API.onChatStarted;
     window.Tawk_API.onLoad = () => {
       previousOnLoad?.();
       setTawkReady(true);
       hideTawkBubbleInitially();
+    };
+    window.Tawk_API.onChatStarted = () => {
+      previousOnChatStarted?.();
+      applyPendingTawkVisitorContext();
     };
     window.Tawk_API.onStatusChange = onStatus;
 

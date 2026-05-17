@@ -176,6 +176,8 @@ export function OfflineChatWidget() {
       phone,
       unitLabel: label,
       unitId: unit?.id ?? null,
+      unitHref: unit?.href ?? null,
+      stockNumber: unit?.stock_number ?? null,
       revealDelayMs
     });
   };
