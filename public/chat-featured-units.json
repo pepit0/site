@@ -1,0 +1,28 @@
+{
+  "units": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "stock_number": "EXAMPLE-1",
+      "year": 2024,
+      "make": "Example",
+      "model": "ATV",
+      "category": "ATV"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "stock_number": "EXAMPLE-2",
+      "year": 2023,
+      "make": "Example",
+      "model": "Sled",
+      "category": "Snowmobile"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "stock_number": "EXAMPLE-3",
+      "year": 2022,
+      "make": "Example",
+      "model": "Bike",
+      "category": "Motorcycle"
+    }
+  ]
+}

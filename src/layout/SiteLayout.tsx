@@ -4,6 +4,8 @@ import { useAuth } from "../auth/useAuth";
 import { fetchUserCanManageInventory } from "../lib/inventoryAdminAccess";
 import { supabase } from "../lib/supabase";
 import { isMarketingOnlySite } from "../siteMode";
+import { SiteChatMount } from "../components/chat/SiteChatMount";
+import { TawkProvider } from "../components/chat/tawkContext";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
@@ -83,6 +85,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
           </div>
         </div>
       </footer>
+      <SiteChatMount />
     </div>
   );
 }
@@ -169,8 +172,10 @@ function SiteNavMarketing() {
 }
 
 export function SiteLayout() {
-  if (isMarketingOnlySite()) {
-    return <SiteLayoutChrome navVariant="marketing" />;
-  }
-  return <SiteLayoutChrome navVariant="crm" />;
+  const chrome = isMarketingOnlySite() ? (
+    <SiteLayoutChrome navVariant="marketing" />
+  ) : (
+    <SiteLayoutChrome navVariant="crm" />
+  );
+  return <TawkProvider>{chrome}</TawkProvider>;
 }

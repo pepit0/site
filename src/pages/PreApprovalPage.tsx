@@ -1,11 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { VehicleSilhouette } from "../components/VehicleSilhouette";
 import { PREAPPROVAL_FAQ, preapprovalFaqJsonLd } from "../data/preapprovalFaq";
-import { VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
+import { parseInventoryPublicRow, VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
+import { formatInventoryUnitInterest } from "../lib/inventoryUnitInterest";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
 import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead";
+import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
 
 const TOTAL_STEPS = 7;
@@ -250,13 +252,42 @@ function validateStep(step: number, w: WizardState): string | null {
 }
 
 export function PreApprovalPage() {
+  const [searchParams] = useSearchParams();
+  const unitParam = searchParams.get("unit")?.trim() || null;
+
   const [submitted, setSubmitted] = useState(false);
   const [step, setStep] = useState(0);
   const [w, setW] = useState<WizardState>(() => emptyWizard());
+  const [skipVehicleStep, setSkipVehicleStep] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const otherIncomeParsed = parseMoney(w.otherIncome);
   const showOtherIncomeDescription = otherIncomeParsed.ok && otherIncomeParsed.value > 0;
+
+  useEffect(() => {
+    if (!unitParam) return;
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("inventory_units_public")
+        .select("*")
+        .eq("id", unitParam)
+        .maybeSingle();
+      if (cancelled || error) return;
+      const parsed = data ? parseInventoryPublicRow(data) : null;
+      if (!parsed) return;
+      setW((prev) => ({
+        ...prev,
+        vehicleInterest: formatInventoryUnitInterest(parsed),
+        hasChosenVehicle: true
+      }));
+      setSkipVehicleStep(true);
+      setStep(1);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [unitParam]);
 
   const update = useCallback(<K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setW((prev) => ({ ...prev, [key]: value }));
@@ -304,7 +335,8 @@ export function PreApprovalPage() {
 
   const goBack = () => {
     setErrorMessage(null);
-    setStep((s) => Math.max(0, s - 1));
+    const minStep = skipVehicleStep ? 1 : 0;
+    setStep((s) => Math.max(minStep, s - 1));
   };
 
   const onSubmit = async () => {
@@ -373,6 +405,7 @@ export function PreApprovalPage() {
 
     setSubmitted(true);
     setW(emptyWizard());
+    setSkipVehicleStep(false);
     setStep(0);
   };
 
@@ -436,6 +469,20 @@ export function PreApprovalPage() {
         {errorMessage ? (
           <p className="preapproval-error" role="alert">
             {errorMessage}
+          </p>
+        ) : null}
+
+        {skipVehicleStep && w.vehicleInterest ? (
+          <p className="preapproval-unitBanner" role="status">
+            Applying for: <strong>{w.vehicleInterest}</strong>
+            {unitParam ? (
+              <>
+                {" "}
+                <Link to={`/inventory/${unitParam}`} className="preapproval-unitBannerLink">
+                  View listing
+                </Link>
+              </>
+            ) : null}
           </p>
         ) : null}
 

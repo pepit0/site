@@ -10,6 +10,7 @@ import {
   type InventoryPublicRow,
   type VehicleCategory
 } from "../data/inventory";
+import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
 
@@ -22,18 +23,21 @@ function inventoryBackHref(fromCategory: VehicleCategory | "all" | undefined): s
   return "/inventory";
 }
 
-function InventoryUnitDescriptionBlock() {
+function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
   return (
     <>
       <p className="inventory-detailDescriptionText">{INVENTORY_UNIT_DESCRIPTION}</p>
       <p className="inventory-detailDescriptionCtas">
         Take Next Steps:
         <br />
-        👉 APPLY NOW:{" "}
-        <Link to="/pre-approval">temptmotorsports.com/pre-approval</Link>
-        <br />
         📱 CALL / TEXT: <a href="tel:+15878064214">587-806-4214</a>
       </p>
+      <Link
+        to={`/pre-approval?unit=${encodeURIComponent(unitId)}`}
+        className="btn btn-primary inventory-detailApplyBtn"
+      >
+        Apply Now!
+      </Link>
     </>
   );
 }
@@ -73,6 +77,7 @@ export function InventoryUnitDetailPage() {
       setLoadError(null);
     } else {
       setRow(parsed);
+      recordInventoryView(parsed.id);
     }
     setIsLoading(false);
   }, [unitId]);
@@ -145,7 +150,7 @@ export function InventoryUnitDetailPage() {
                 <h2 id="inventory-detail-desc-heading" className="inventory-detailSectionTitle">
                   About this unit
                 </h2>
-                <InventoryUnitDescriptionBlock />
+                <InventoryUnitDescriptionBlock unitId={row.id} />
               </section>
 
               <p className="inventory-detailStock">Stock #{row.stock_number}</p>
