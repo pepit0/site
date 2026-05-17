@@ -37,10 +37,19 @@ export const CHAT_HANDOFF_FADE_MS = 340;
  * Paste into Tawk → AI Assist → your agent → Base Prompt (in addition to your main instructions).
  * AI Assist does not always read custom attributes unless you tell it to.
  */
-export const TAWK_AI_UNIT_CONTEXT_PROMPT = `Before answering, check the visitor profile custom attributes:
-- unit-interest (and unitinterest): the exact unit they selected on our website before chat
-- unit-id: inventory listing UUID
-- unit-url: link to the listing
-- stock-number: stock number
+export const TAWK_AI_UNIT_CONTEXT_PROMPT = `Before answering, check the visitor profile:
+- Their display name may end with "· Stock #XXXX" — that is the unit they picked on our site before chat.
+- Custom attributes: unit-interest, stock-number, selected-unit, unit-id, unit-url.
 
-If unit-interest is set, they already chose that unit during intake. Greet them about THAT unit by name and stock number. Do not ask which unit they want unless they say they changed their mind.`;
+If any unit field is set, they already chose that unit during intake. Greet them about THAT unit by name and stock number. Do not ask which unit they want unless they say they changed their mind.`;
+
+/**
+ * Tawk Automation (recommended so the bot sees unit text IN the chat thread):
+ * 1) Automation → Add trigger → Event = "website-unit-selected" (from our site JS).
+ * 2) Action = AI Assist sends a message, e.g.:
+ *    "I see you're interested in {{unitInterest}} — how can I help with financing or details?"
+ * 3) Enable the automation and save.
+ *
+ * Also set AI Assist → Greeting to reference the visitor's selected unit when attributes exist.
+ */
+export const TAWK_AUTOMATION_UNIT_EVENT = "website-unit-selected";

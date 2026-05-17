@@ -13,6 +13,8 @@ export type TawkHandoffParams = {
   stockNumber?: string | null;
 };
 
+const TAWK_UNIT_SESSION_KEY = "tm_tawk_selected_unit";
+
 /** Kept until chat starts so onChatStarted can re-apply unit context for AI Assist. */
 let pendingHandoff: TawkHandoffParams | null = null;
 
@@ -37,11 +39,54 @@ function phoneForTawk(raw: string): string {
   return trimmed;
 }
 
+/**
+ * AI Assist often reads the visitor display name in-thread but not custom attribute panels.
+ * Append a short unit hint to name while keeping full detail in unit-interest / stock-number.
+ */
+function displayNameForTawk(params: TawkHandoffParams): string {
+  const base = params.name.trim();
+  const label = params.unitLabel?.trim();
+  if (!label) return base;
+  const stock = params.stockNumber?.trim();
+  const short = stock ? `Stock #${stock}` : label.length > 48 ? `${label.slice(0, 45)}…` : label;
+  return `${base} · ${short}`;
+}
+
+function unitContextSentence(params: TawkHandoffParams): string | null {
+  const label = params.unitLabel?.trim();
+  if (!label) return null;
+  return `Website intake: visitor selected unit — ${label}.`;
+}
+
+function persistUnitSession(params: TawkHandoffParams): void {
+  if (typeof window === "undefined" || !params.unitLabel?.trim()) return;
+  try {
+    window.sessionStorage.setItem(
+      TAWK_UNIT_SESSION_KEY,
+      JSON.stringify({
+        label: params.unitLabel.trim(),
+        id: params.unitId?.trim() ?? null,
+        stock: params.stockNumber?.trim() ?? null,
+        href: params.unitHref?.trim() ?? null,
+        savedAt: Date.now()
+      })
+    );
+  } catch {
+    /* private mode */
+  }
+}
+
 function buildAttributes(params: TawkHandoffParams): Record<string, string> {
   const attrs: Record<string, string> = {
-    name: params.name.trim(),
+    name: displayNameForTawk(params),
     phone: phoneForTawk(params.phone)
   };
+
+  const sentence = unitContextSentence(params);
+  if (sentence) {
+    attrs["selected-unit"] = sentence;
+  }
+
   if (params.unitLabel?.trim()) {
     const label = params.unitLabel.trim();
     attrs["unit-interest"] = label;
@@ -113,6 +158,7 @@ export async function applyTawkVisitorContext(params: TawkHandoffParams): Promis
   const api = getApi();
   if (!api) return;
 
+  persistUnitSession(params);
   await setAttributesAsync(buildAttributes(params));
   recordUnitInChat(params);
 }
@@ -121,6 +167,10 @@ export async function applyTawkVisitorContext(params: TawkHandoffParams): Promis
 export function applyPendingTawkVisitorContext(): void {
   if (!pendingHandoff) return;
   void applyTawkVisitorContext(pendingHandoff);
+  // Second pass after the session UI mounts (attributes sometimes apply only after start).
+  window.setTimeout(() => {
+    if (pendingHandoff) void applyTawkVisitorContext(pendingHandoff);
+  }, 600);
 }
 
 /** Wait until Tawk embed API is callable (after onLoad). */
@@ -161,7 +211,7 @@ function revealTawkWidget(delayMs = 0): void {
 
 /**
  * Pass visitor + unit context into Tawk, then open the widget.
- * Unit fields: unit-interest, unit-id, unit-url, stock-number (dashboard + AI base prompt).
+ * Unit fields: unit-interest, unit-id, unit-url, stock-number, selected-unit, name suffix.
  */
 export async function openTawkHandoff(params: TawkHandoffParams): Promise<boolean> {
   pendingHandoff = params;
