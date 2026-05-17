@@ -51,7 +51,9 @@ function AdminSellPublishRequirements({ requirements }: { requirements: SellPubl
 import { sellRidePhotoPublicUrl } from "../lib/sellRidePhotos";
 import { supabase } from "../lib/supabase";
 import { adminDeleteRejectedSellRideSubmission } from "../lib/adminDeleteRejectedSellRideSubmission";
+import { publishSellSubmissionRow, stockNumberForMassSellIndex } from "../lib/adminPublishSellSubmission";
 import { formatPhoneDisplay } from "../lib/formatPhone";
+import { AdminQueueMassSubmitBar } from "./AdminQueueMassSubmitBar";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
@@ -99,6 +101,13 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
   const [pubHasInsurance, setPubHasInsurance] = useState(false);
   const [pubNoRegInsurance, setPubNoRegInsurance] = useState(false);
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
+  const [massSubmitting, setMassSubmitting] = useState(false);
+  const [massError, setMassError] = useState<string | null>(null);
+  const [massResultSummary, setMassResultSummary] = useState<string | null>(null);
+  const [massStartStock, setMassStartStock] = useState("");
+  const [massVin, setMassVin] = useState("none");
+  const [massNoRegInsurance, setMassNoRegInsurance] = useState(true);
 
   const applyRowToForm = (row: SellRideSubmissionRow | null) => {
     setSaveError(null);
@@ -175,6 +184,17 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
 
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
 
+  const clearChecked = () => setCheckedIds(new Set());
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const publishRequirements = useMemo(
     () =>
       getSellPublishRequirements({
@@ -211,6 +231,9 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
     setDeleteError(null);
     setSaveError(null);
     setPublishError(null);
+    clearChecked();
+    setMassError(null);
+    setMassResultSummary(null);
     applyRowToForm(null);
   };
 
@@ -426,6 +449,80 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
     setPublishing(false);
   };
 
+  const runMassSubmit = () => {
+    const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "submitted");
+    if (targets.length === 0) return;
+
+    const startStock = normalizeStockNumber(massStartStock);
+    if (!startStock) {
+      setMassError("Enter a starting stock number for the batch.");
+      return;
+    }
+    const cost = Number.parseFloat(pubCost);
+    if (!Number.isFinite(cost) || cost < 0) {
+      setMassError("Enter a valid cost.");
+      return;
+    }
+    const vin = massVin.trim();
+    if (!vin) {
+      setMassError("Enter a VIN (type none if not available).");
+      return;
+    }
+    const complianceErr = validateSellPublishCompliance({
+      hasRegistration: false,
+      hasInsurance: false,
+      noRegInsurance: massNoRegInsurance
+    });
+    if (complianceErr) {
+      setMassError(complianceErr);
+      return;
+    }
+
+    const ok = window.confirm(
+      `Publish ${targets.length} selected submission${targets.length === 1 ? "" : "s"} to inventory?\n\n` +
+        `Stock numbers run from ${startStock} (${targets.length} unit${targets.length === 1 ? "" : "s"}). ` +
+        `Shared cost ($${cost}), status (${pubStatus}), and VIN (${vin}) apply. ` +
+        `${massNoRegInsurance ? "No reg/insurance on file is marked for each unit." : ""}\n\n` +
+        `Each row must have photos and valid year/odometer. Failures are listed in the summary.\n\n` +
+        `Continue?`
+    );
+    if (!ok) return;
+
+    void (async () => {
+      setMassSubmitting(true);
+      setMassError(null);
+      setMassResultSummary(null);
+      let okCount = 0;
+      const failures: string[] = [];
+      for (let i = 0; i < targets.length; i += 1) {
+        const row = targets[i]!;
+        const stock = stockNumberForMassSellIndex(startStock, i);
+        const result = await publishSellSubmissionRow(supabase, row, {
+          stock,
+          cost,
+          status: pubStatus,
+          vin,
+          hasRegistration: false,
+          hasInsurance: false,
+          noRegInsurance: massNoRegInsurance
+        });
+        if (result.ok) okCount += 1;
+        else failures.push(`${result.stock}: ${result.error}`);
+      }
+      clearChecked();
+      setSelectedId(null);
+      applyRowToForm(null);
+      await reloadCurrentTab();
+      onInventoryChanged?.();
+      const parts = [`Published ${okCount} of ${targets.length}.`];
+      if (failures.length > 0) {
+        parts.push(`Failed: ${failures.slice(0, 5).join("; ")}${failures.length > 5 ? ` (+${failures.length - 5} more)` : ""}`);
+      }
+      setMassResultSummary(parts.join(" "));
+      setMassSubmitting(false);
+    })();
+  };
+
   const deleteRejectedPermanent = async () => {
     if (!selected || selected.status !== "rejected") return;
     if (
@@ -558,6 +655,87 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
         </div>
       ) : null}
 
+      {queueTab === "submitted" ? (
+        <AdminQueueMassSubmitBar
+          selectedCount={checkedIds.size}
+          itemLabel="submission"
+          onClearSelection={clearChecked}
+          onMassSubmit={runMassSubmit}
+          massSubmitting={massSubmitting}
+          massError={massError}
+          massResultSummary={massResultSummary}
+          submitLabel="Mass publish to catalog"
+        >
+          <div className="admin-massSubmitBarGrid">
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="sq-mass-start-stock">
+                Starting stock #
+              </label>
+              <input
+                id="sq-mass-start-stock"
+                className="loginInput"
+                value={massStartStock}
+                onChange={(e) => setMassStartStock(e.target.value)}
+                placeholder="e.g. 1001"
+              />
+            </div>
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="sq-mass-cost">
+                Cost (CAD)
+              </label>
+              <input
+                id="sq-mass-cost"
+                className="loginInput"
+                type="number"
+                min={0}
+                step="0.01"
+                value={pubCost}
+                onChange={(e) => setPubCost(e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="sq-mass-status">
+                Status
+              </label>
+              <select
+                id="sq-mass-status"
+                className="select sell-ride-applySelect"
+                value={pubStatus}
+                onChange={(e) => setPubStatus(e.target.value as InventoryStatus)}
+              >
+                {INVENTORY_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="sq-mass-vin">
+                VIN (all units)
+              </label>
+              <input
+                id="sq-mass-vin"
+                className="loginInput"
+                value={massVin}
+                onChange={(e) => setMassVin(e.target.value)}
+                placeholder="none"
+              />
+            </div>
+            <div className="form-row sell-ride-applyFullWidth">
+              <label className="admin-checkRow">
+                <input
+                  type="checkbox"
+                  checked={massNoRegInsurance}
+                  onChange={(e) => setMassNoRegInsurance(e.target.checked)}
+                />
+                No reg/insurance on file (all units)
+              </label>
+            </div>
+          </div>
+        </AdminQueueMassSubmitBar>
+      ) : null}
+
       <div className="admin-sell-queueLayout">
         <div
           className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel admin-invListPanel"
@@ -577,7 +755,17 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                   const title = rowTitle(r);
                   const active = r.id === selectedId;
                   return (
-                    <li key={r.id}>
+                    <li key={r.id} className={queueTab === "submitted" ? "admin-sell-queueItemWithCheck" : undefined}>
+                      {queueTab === "submitted" ? (
+                        <input
+                          type="checkbox"
+                          className="admin-queueItemCheck"
+                          checked={checkedIds.has(r.id)}
+                          onChange={() => toggleChecked(r.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${title} for mass publish`}
+                        />
+                      ) : null}
                       <button
                         type="button"
                         className={`admin-sell-queueItem${active ? " admin-sell-queueItemActive" : ""}`}

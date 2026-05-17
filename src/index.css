@@ -1688,6 +1688,77 @@ p {
   line-height: 1.35;
 }
 
+.admin-sell-queueItemWithCheck {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.admin-queueItemCheck {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.85rem;
+  margin-left: 0.15rem;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.admin-sell-queueItemWithCheck .admin-sell-queueItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-massSubmitBar {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(240, 93, 34, 0.35);
+  background: rgba(240, 93, 34, 0.08);
+}
+
+.admin-massSubmitBarHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+.admin-massSubmitBarCount {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-massSubmitBarActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-massSubmitBarFields {
+  margin-top: 0.85rem;
+}
+
+.admin-massSubmitBarGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.admin-massSubmitBarMessage {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.admin-massSubmitBarSummary {
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 .admin-sell-queueIntegrated {
   margin-top: 0.25rem;
 }

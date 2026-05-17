@@ -285,6 +285,34 @@ export function AdminInventoryPage() {
     setIsSaving(false);
   };
 
+  const unlistUnit = async () => {
+    if (!editingId) return;
+    const row = units.find((u) => u.id === editingId);
+    if (!row) return;
+    if (row.status === "Unlisted") {
+      resetForm();
+      return;
+    }
+    if (
+      !window.confirm(
+        `Unlist stock #${row.stock_number} (${inventoryDisplayTitle(row)})? It will be hidden from the public site but stays in the catalog here.`
+      )
+    ) {
+      return;
+    }
+    setIsSaving(true);
+    setFormError(null);
+    const { error } = await supabase.from("inventory_units").update({ status: "Unlisted" }).eq("id", editingId);
+    if (error) {
+      setFormError(error.message);
+      setIsSaving(false);
+      return;
+    }
+    await loadUnits();
+    resetForm();
+    setIsSaving(false);
+  };
+
   const deleteUnit = async (row: InventoryUnitRow) => {
     if (!window.confirm(`Delete stock #${row.stock_number} (${inventoryDisplayTitle(row)})?`)) return;
     if (row.photo_paths.length) {
@@ -657,6 +685,11 @@ export function AdminInventoryPage() {
                     <button type="button" className="btn btn-secondary" onClick={resetForm} disabled={isSaving}>
                       Cancel edit
                     </button>
+                    {units.find((u) => u.id === editingId)?.status !== "Unlisted" ? (
+                      <button type="button" className="btn btn-secondary" disabled={isSaving} onClick={() => void unlistUnit()}>
+                        Unlist
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="btn btn-secondary"

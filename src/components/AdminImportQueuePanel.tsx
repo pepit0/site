@@ -1,47 +1,18 @@
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  INVENTORY_PHOTOS_BUCKET,
-  INVENTORY_STATUS_VALUES,
-  VEHICLE_CATEGORIES,
-  parseInventoryUnitRow,
-  type InventoryStatus,
-  type VehicleCategory
-} from "../data/inventory";
+import { INVENTORY_STATUS_VALUES, VEHICLE_CATEGORIES, type InventoryStatus, type VehicleCategory } from "../data/inventory";
 import { parseInventoryImportQueueRow, type InventoryImportQueueRow, type InventoryImportQueueStatus } from "../data/inventoryImportQueue";
-import {
-  findInventoryUnitByStock,
-  isStockNumberUniqueViolation,
-  normalizeStockNumber,
-  type StockDuplicateMatch
-} from "../lib/inventoryStockDuplicate";
+import { findInventoryUnitByStock, normalizeStockNumber, type StockDuplicateMatch } from "../lib/inventoryStockDuplicate";
 import {
   formatMsfImportSyncSummary,
   syncMsfImportQueue,
   type MsfImportSyncSummary
 } from "../lib/syncMsfImportQueue";
+import { publishImportQueueRow } from "../lib/adminPublishImportRow";
 import { supabase } from "../lib/supabase";
+import { AdminQueueMassSubmitBar } from "./AdminQueueMassSubmitBar";
 import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
 import { AdminStockDuplicateError } from "./AdminStockDuplicateError";
-
-function guessImageExt(url: string, contentType: string | null): string {
-  const path = (url.split("?")[0] ?? "").toLowerCase();
-  if (path.endsWith(".png")) return "png";
-  if (path.endsWith(".webp")) return "webp";
-  if (path.endsWith(".gif")) return "gif";
-  if (path.endsWith(".jpeg") || path.endsWith(".jpg")) return "jpg";
-  const ct = contentType?.toLowerCase() ?? "";
-  if (ct.includes("png")) return "png";
-  if (ct.includes("webp")) return "webp";
-  if (ct.includes("gif")) return "gif";
-  return "jpg";
-}
-
-async function downloadUrlAsBlob(url: string): Promise<Blob> {
-  const res = await fetch(url, { mode: "cors", credentials: "omit", cache: "no-store" });
-  if (!res.ok) throw new Error(`Image download failed (${res.status}) for ${url.slice(0, 80)}…`);
-  return res.blob();
-}
 
 type QueueTab = "pending" | "posted" | "skipped";
 
@@ -87,6 +58,10 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
   const [pubStatus, setPubStatus] = useState<InventoryStatus>("Available");
   const [pubAdminNotes, setPubAdminNotes] = useState("");
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
+  const [massSubmitting, setMassSubmitting] = useState(false);
+  const [massError, setMassError] = useState<string | null>(null);
+  const [massResultSummary, setMassResultSummary] = useState<string | null>(null);
 
   const applyRowToForm = (row: InventoryImportQueueRow | null) => {
     setSaveError(null);
@@ -147,12 +122,26 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
 
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
 
+  const clearChecked = () => setCheckedIds(new Set());
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const setQueueTabAndReset = (tab: QueueTab) => {
     setQueueTab(tab);
     setSelectedId(null);
     setActionError(null);
     setSaveError(null);
     setPublishError(null);
+    clearChecked();
+    setMassError(null);
+    setMassResultSummary(null);
     applyRowToForm(null);
   };
 
@@ -314,99 +303,88 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       setPublishError("Stock number is required.");
       return;
     }
-    try {
-      const dup = await findInventoryUnitByStock(supabase, stock);
-      if (dup) {
-        setStockDuplicate(dup);
-        return;
-      }
-    } catch (e) {
-      setPublishError(e instanceof Error ? e.message : "Could not verify stock number.");
-      return;
-    }
     if (!editMake.trim() || !editModel.trim()) {
       setPublishError("Make and model are required.");
       return;
     }
-    if (selected.source_photo_urls.length < 1) {
-      setPublishError("This row has no source image URLs. Re-run the import script or fix the listing on the source site.");
-      return;
-    }
+
+    const rowToPublish: InventoryImportQueueRow = {
+      ...selected,
+      stock_number: stock,
+      year,
+      make: editMake.trim(),
+      model: editModel.trim(),
+      odometer_km,
+      category: editCategory
+    };
 
     setPublishing(true);
-    let unitId: string | null = null;
-    const newPaths: string[] = [];
-    try {
-      const { data: inserted, error: insErr } = await supabase
-        .from("inventory_units")
-        .insert({
-          stock_number: stock,
-          year,
-          make: editMake.trim(),
-          model: editModel.trim(),
-          odometer_km,
-          category: editCategory,
-          cost,
-          status: pubStatus,
-          photo_paths: [],
-          admin_notes: pubAdminNotes.trim() || null
-        })
-        .select("*")
-        .single();
-      if (insErr) {
-        if (isStockNumberUniqueViolation(insErr.message)) {
-          const dup = await findInventoryUnitByStock(supabase, stock);
-          if (dup) {
-            setStockDuplicate(dup);
-            setPublishing(false);
-            return;
-          }
-        }
-        throw new Error(insErr.message);
-      }
-      const row = parseInventoryUnitRow(inserted);
-      if (!row) throw new Error("Invalid inventory response.");
-      unitId = row.id;
-
-      let i = 0;
-      for (const imageUrl of selected.source_photo_urls) {
-        const blob = await downloadUrlAsBlob(imageUrl);
-        const ext = guessImageExt(imageUrl, blob.type || null);
-        const nextPath = `${unitId}/import-${String(i).padStart(2, "0")}.${ext}`;
-        const { error: upErr } = await supabase.storage.from(INVENTORY_PHOTOS_BUCKET).upload(nextPath, blob, {
-          cacheControl: "3600",
-          upsert: false
-        });
-        if (upErr) throw new Error(upErr.message);
-        newPaths.push(nextPath);
-        i += 1;
-      }
-
-      const { error: upRowErr } = await supabase.from("inventory_units").update({ photo_paths: newPaths }).eq("id", unitId);
-      if (upRowErr) throw new Error(upRowErr.message);
-
-      const { error: qErr } = await supabase
-        .from("inventory_import_queue")
-        .update({ status: "posted", imported_inventory_id: unitId })
-        .eq("id", selected.id)
-        .eq("status", "pending");
-      if (qErr) throw new Error(qErr.message);
-
+    const result = await publishImportQueueRow(supabase, rowToPublish, {
+      cost,
+      status: pubStatus,
+      adminNotes: pubAdminNotes.trim() || null
+    });
+    if (result.ok) {
       setSelectedId(null);
       applyRowToForm(null);
       await reloadCurrentTab();
       onInventoryChanged?.();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Publish failed.";
-      setPublishError(msg);
-      if (unitId) {
-        if (newPaths.length) {
-          await supabase.storage.from(INVENTORY_PHOTOS_BUCKET).remove(newPaths);
-        }
-        await supabase.from("inventory_units").delete().eq("id", unitId);
+    } else {
+      setPublishError(result.error);
+      if (result.error.includes("already in catalog")) {
+        const dup = await findInventoryUnitByStock(supabase, result.stock);
+        if (dup) setStockDuplicate(dup);
       }
     }
     setPublishing(false);
+  };
+
+  const runMassSubmit = () => {
+    const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "pending");
+    if (targets.length === 0) return;
+
+    const cost = Number.parseFloat(pubCost);
+    if (!Number.isFinite(cost) || cost < 0) {
+      setMassError("Enter a valid cost in the post settings below (or in the detail panel).");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Post ${targets.length} selected import${targets.length === 1 ? "" : "s"} to the catalog?\n\n` +
+        `Each row uses its queue stock # and vehicle fields. Shared cost ($${cost}) and status (${pubStatus}) apply. ` +
+        `Photos are downloaded from MSF source URLs.\n\n` +
+        `This cannot be undone in one step. Rows that fail (duplicate stock, missing photos) are listed in the summary.\n\n` +
+        `Continue?`
+    );
+    if (!ok) return;
+
+    void (async () => {
+      setMassSubmitting(true);
+      setMassError(null);
+      setMassResultSummary(null);
+      let okCount = 0;
+      const failures: string[] = [];
+      for (const row of targets) {
+        const result = await publishImportQueueRow(supabase, row, {
+          cost,
+          status: pubStatus,
+          adminNotes: pubAdminNotes.trim() || null
+        });
+        if (result.ok) okCount += 1;
+        else failures.push(`${result.stock}: ${result.error}`);
+      }
+      clearChecked();
+      setSelectedId(null);
+      applyRowToForm(null);
+      await reloadCurrentTab();
+      onInventoryChanged?.();
+      const parts = [`Posted ${okCount} of ${targets.length}.`];
+      if (failures.length > 0) {
+        parts.push(`Failed: ${failures.slice(0, 5).join("; ")}${failures.length > 5 ? ` (+${failures.length - 5} more)` : ""}`);
+      }
+      setMassResultSummary(parts.join(" "));
+      setMassSubmitting(false);
+    })();
   };
 
   return (
@@ -487,6 +465,53 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
         </div>
       ) : null}
 
+      {queueTab === "pending" ? (
+        <AdminQueueMassSubmitBar
+          selectedCount={checkedIds.size}
+          itemLabel="pending import"
+          onClearSelection={clearChecked}
+          onMassSubmit={runMassSubmit}
+          massSubmitting={massSubmitting}
+          massError={massError}
+          massResultSummary={massResultSummary}
+          submitLabel="Mass post to catalog"
+        >
+          <div className="admin-massSubmitBarGrid">
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="iq-mass-cost">
+                Cost (CAD)
+              </label>
+              <input
+                id="iq-mass-cost"
+                className="loginInput"
+                type="number"
+                min={0}
+                step="0.01"
+                value={pubCost}
+                onChange={(e) => setPubCost(e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="iq-mass-status">
+                Status
+              </label>
+              <select
+                id="iq-mass-status"
+                className="select sell-ride-applySelect"
+                value={pubStatus}
+                onChange={(e) => setPubStatus(e.target.value as InventoryStatus)}
+              >
+                {INVENTORY_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </AdminQueueMassSubmitBar>
+      ) : null}
+
       <div className="admin-sell-queueLayout">
         <div
           className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel admin-invListPanel"
@@ -506,7 +531,17 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
                 const title = rowTitle(r);
                 const active = r.id === selectedId;
                 return (
-                  <li key={r.id}>
+                  <li key={r.id} className={queueTab === "pending" ? "admin-sell-queueItemWithCheck" : undefined}>
+                    {queueTab === "pending" ? (
+                      <input
+                        type="checkbox"
+                        className="admin-queueItemCheck"
+                        checked={checkedIds.has(r.id)}
+                        onChange={() => toggleChecked(r.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${title} for mass post`}
+                      />
+                    ) : null}
                     <button
                       type="button"
                       className={`admin-sell-queueItem${active ? " admin-sell-queueItemActive" : ""}`}
@@ -621,6 +656,20 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
                   <dd>{selected.category}</dd>
                 </div>
               </dl>
+              {selected.source_photo_urls.length > 0 ? (
+                <>
+                  <h3 className="admin-sell-queuePhotosTitle">Source images</h3>
+                  <div className="sell-ride-applyReviewGrid">
+                    {selected.source_photo_urls.map((u) => (
+                      <figure key={u} className="sell-ride-applyReviewFigure">
+                        <img src={u} alt="" className="sell-ride-applyReviewImg" referrerPolicy="no-referrer" />
+                      </figure>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="sell-ride-applyMuted">No source images on this row.</p>
+              )}
               {actionError ? (
                 <div className="sell-ride-applyErrorBanner" role="alert">
                   <p className="sell-ride-applyError">{actionError}</p>
