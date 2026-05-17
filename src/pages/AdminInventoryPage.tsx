@@ -1,8 +1,10 @@
 ﻿import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdminCustomerUnitsPanel } from "../components/AdminCustomerUnitsPanel";
+import { AdminInventoryCountSummary } from "../components/AdminInventoryCountSummary";
 import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
 import { AdminSellQueuePanel } from "../components/AdminSellQueuePanel";
+import { fetchAdminInventoryCounts, formatAdminCount, type AdminInventoryCounts } from "../lib/adminInventoryCounts";
 import { AdminStockDuplicateError } from "../components/AdminStockDuplicateError";
 import {
   INVENTORY_PHOTOS_BUCKET,
@@ -123,6 +125,10 @@ export function AdminInventoryPage() {
 
   const catalogSearchActive = catalogSearch.trim().length > 0;
 
+  const [counts, setCounts] = useState<AdminInventoryCounts | null>(null);
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [countsError, setCountsError] = useState<string | null>(null);
+
   const loadUnits = useCallback(async () => {
     setListLoading(true);
     setLoadError(null);
@@ -136,9 +142,28 @@ export function AdminInventoryPage() {
     setListLoading(false);
   }, []);
 
+  const loadCounts = useCallback(async () => {
+    setCountsLoading(true);
+    setCountsError(null);
+    try {
+      setCounts(await fetchAdminInventoryCounts(supabase));
+    } catch (e) {
+      setCounts(null);
+      setCountsError(e instanceof Error ? e.message : "Failed to load counts.");
+    }
+    setCountsLoading(false);
+  }, []);
+
+  const refreshInventory = useCallback(async () => {
+    await Promise.all([loadUnits(), loadCounts()]);
+  }, [loadUnits, loadCounts]);
+
   useEffect(() => {
-    void Promise.resolve().then(() => loadUnits());
-  }, [loadUnits]);
+    void Promise.resolve().then(() => refreshInventory());
+  }, [refreshInventory]);
+
+  const catalogTotal = counts?.catalog.total ?? null;
+  const catalogListCapped = catalogTotal != null && !listLoading && units.length < catalogTotal;
 
   const startEdit = useCallback((row: InventoryUnitRow) => {
     setEditingId(row.id);
@@ -306,7 +331,7 @@ export function AdminInventoryPage() {
           if (upErr) throw new Error(upErr.message);
         }
       }
-      await loadUnits();
+      await refreshInventory();
       resetForm();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Save failed.");
@@ -337,7 +362,7 @@ export function AdminInventoryPage() {
       setIsSaving(false);
       return;
     }
-    await loadUnits();
+    await refreshInventory();
     resetForm();
     setIsSaving(false);
   };
@@ -353,7 +378,7 @@ export function AdminInventoryPage() {
       return;
     }
     if (editingId === row.id) resetForm();
-    void loadUnits();
+    void refreshInventory();
   };
 
   const removePhoto = async (row: InventoryUnitRow, path: string) => {
@@ -365,7 +390,7 @@ export function AdminInventoryPage() {
       window.alert(error.message);
       return;
     }
-    void loadUnits();
+    void refreshInventory();
     if (editingId === row.id) {
       setForm((f) => ({ ...f }));
     }
@@ -394,6 +419,7 @@ export function AdminInventoryPage() {
           onClick={() => setAdminTab("catalog")}
         >
           Catalog
+          <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.catalog.total)}</span>
         </button>
         <span className="admin-invTabDivider" aria-hidden />
         <button
@@ -403,6 +429,7 @@ export function AdminInventoryPage() {
           onClick={() => setAdminTab("sell")}
         >
           Sell submissions
+          <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.sell.total)}</span>
         </button>
         <span className="admin-invTabDivider" aria-hidden />
         <button
@@ -412,6 +439,7 @@ export function AdminInventoryPage() {
           onClick={() => setAdminTab("import")}
         >
           MSF import
+          <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.import.total)}</span>
         </button>
         <span className="admin-invTabDivider" aria-hidden />
         <button
@@ -421,15 +449,24 @@ export function AdminInventoryPage() {
           onClick={() => setAdminTab("customer")}
         >
           Customer units
+          <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.customer)}</span>
         </button>
       </nav>
 
+      <AdminInventoryCountSummary counts={counts} loading={countsLoading} error={countsError} />
+
       {adminTab === "sell" ? (
-        <AdminSellQueuePanel onInventoryChanged={() => void loadUnits()} />
+        <AdminSellQueuePanel
+          queueCounts={counts?.sell}
+          onInventoryChanged={() => void refreshInventory()}
+        />
       ) : adminTab === "import" ? (
-        <AdminImportQueuePanel onInventoryChanged={() => void loadUnits()} />
+        <AdminImportQueuePanel
+          queueCounts={counts?.import}
+          onInventoryChanged={() => void refreshInventory()}
+        />
       ) : adminTab === "customer" ? (
-        <AdminCustomerUnitsPanel />
+        <AdminCustomerUnitsPanel onInventoryChanged={() => void refreshInventory()} />
       ) : (
         <div className="admin-invCatalogLayout">
           <section
@@ -439,9 +476,11 @@ export function AdminInventoryPage() {
             <div className="admin-invListPanelHead">
               <h2 id="admin-inv-list-heading" className="sell-ride-applyPhotosTitle">
                 Units
-                {!listLoading && units.length > 0 ? (
+                {!countsLoading && catalogTotal != null ? (
                   <span className="admin-invListCount">
-                    {catalogSearchActive ? `${filteredUnits.length} / ${units.length}` : units.length}
+                    {catalogSearchActive
+                      ? `${formatAdminCount(filteredUnits.length)} shown`
+                      : formatAdminCount(catalogTotal)}
                   </span>
                 ) : null}
               </h2>
@@ -453,6 +492,12 @@ export function AdminInventoryPage() {
                 Add new
               </button>
             </div>
+            {catalogListCapped ? (
+              <p className="sell-ride-applyHint admin-invListCapHint" role="status">
+                Showing the first {formatAdminCount(units.length)} units in this list. Total in catalog:{" "}
+                {formatAdminCount(catalogTotal)}.
+              </p>
+            ) : null}
             <div className="admin-invCatalogSearchWrap">
               <label className="loginLabel admin-invCatalogSearchLabel" htmlFor="admin-inv-catalog-search">
                 Search

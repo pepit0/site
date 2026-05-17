@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AdminButtonBusyLabel } from "./AdminButtonBusyLabel";
 
 export type AdminQueueMassSubmitBarProps = {
   selectedCount: number;
@@ -46,11 +47,15 @@ export function AdminQueueMassSubmitBar({
           </button>
           {onMassSkip ? (
             <button type="button" className="btn btn-secondary admin-invMiniBtn" disabled={massBusy} onClick={onMassSkip}>
-              {massSkipping ? "Skipping…" : skipLabel}
+              {massSkipping ? <AdminButtonBusyLabel>Skipping…</AdminButtonBusyLabel> : skipLabel}
             </button>
           ) : null}
           <button type="button" className="btn btn-primary admin-invMiniBtn" disabled={massBusy} onClick={onMassSubmit}>
-            {massSubmitting ? "Submitting…" : submitLabel}
+            {massSubmitting ? (
+              <AdminButtonBusyLabel>{submitLabel.toLowerCase().includes("post") ? "Posting…" : "Submitting…"}</AdminButtonBusyLabel>
+            ) : (
+              submitLabel
+            )}
           </button>
         </div>
       </div>

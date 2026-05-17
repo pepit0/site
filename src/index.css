@@ -3025,6 +3025,112 @@ img.vehicle-category-icon {
   border-color: rgba(240, 93, 34, 0.35);
 }
 
+.admin-invTabCount {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+.admin-invCountSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.admin-invCountSummaryError {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.admin-invCountSummaryBlock {
+  min-width: 0;
+}
+
+.admin-invCountSummaryTitle {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.admin-invCountSummaryTotal {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.admin-invCountSummaryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.admin-invCountSummaryList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.admin-invCountSummaryLabel {
+  color: var(--text-muted);
+}
+
+.admin-invCountSummaryValue {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-sell-queueQueueTabCount {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-invListCapHint {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+}
+
+.admin-btnBusy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.admin-btnSpinner {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.92;
+  animation: admin-btn-spin 0.72s linear infinite;
+}
+
+@keyframes admin-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .admin-invTabDivider {
   width: 1.25rem;
   height: 1px;

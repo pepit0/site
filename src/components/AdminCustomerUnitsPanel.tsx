@@ -46,7 +46,11 @@ function sellerLabel(row: CustomerUnitRow): string {
   return row.submission.seller_email ?? "Sell your ride";
 }
 
-export function AdminCustomerUnitsPanel() {
+export type AdminCustomerUnitsPanelProps = {
+  onInventoryChanged?: () => void;
+};
+
+export function AdminCustomerUnitsPanel({ onInventoryChanged: _onInventoryChanged }: AdminCustomerUnitsPanelProps) {
   const [rows, setRows] = useState<CustomerUnitRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

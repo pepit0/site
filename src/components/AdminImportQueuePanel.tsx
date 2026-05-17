@@ -9,7 +9,9 @@ import {
   type MsfImportSyncSummary
 } from "../lib/syncMsfImportQueue";
 import { publishImportQueueRow } from "../lib/adminPublishImportRow";
+import { formatAdminCount, type AdminInventoryCounts } from "../lib/adminInventoryCounts";
 import { supabase } from "../lib/supabase";
+import { AdminButtonBusyLabel } from "./AdminButtonBusyLabel";
 import { AdminQueueMassSubmitBar } from "./AdminQueueMassSubmitBar";
 import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
 import { AdminStockDuplicateError } from "./AdminStockDuplicateError";
@@ -18,6 +20,7 @@ type QueueTab = "pending" | "posted" | "skipped";
 
 export type AdminImportQueuePanelProps = {
   onInventoryChanged?: () => void;
+  queueCounts?: AdminInventoryCounts["import"];
 };
 
 function rowTitle(r: InventoryImportQueueRow): string {
@@ -29,7 +32,7 @@ function rowTitle(r: InventoryImportQueueRow): string {
   return r.source_product_name?.trim() || `Woo #${r.source_product_id}`;
 }
 
-export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePanelProps) {
+export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: AdminImportQueuePanelProps) {
   const [queueTab, setQueueTab] = useState<QueueTab>("pending");
   const [rows, setRows] = useState<InventoryImportQueueRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -135,8 +138,13 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
   };
 
   const pendingRows = useMemo(() => rows.filter((r) => r.status === "pending"), [rows]);
+  const pendingDbTotal = queueCounts?.pending ?? null;
+  const postedDbTotal = queueCounts?.posted ?? null;
+  const skippedDbTotal = queueCounts?.skipped ?? null;
+  const pendingListCapped = queueTab === "pending" && pendingDbTotal != null && !loading && rows.length < pendingDbTotal;
   const allPendingSelected =
     pendingRows.length > 0 && pendingRows.every((r) => checkedIds.has(r.id));
+  const postAllPendingCount = pendingDbTotal ?? pendingRows.length;
 
   const selectAllPending = () => setCheckedIds(new Set(pendingRows.map((r) => r.id)));
 
@@ -405,7 +413,17 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     );
   };
 
-  const postAllPending = () => executeMassPost(pendingRows, "all pending");
+  const postAllPending = () => {
+    if (pendingListCapped && pendingDbTotal != null) {
+      const ok = window.confirm(
+        `Only ${formatAdminCount(rows.length)} pending rows are loaded here (database has ${formatAdminCount(pendingDbTotal)}).\n\n` +
+          `This run will post the loaded rows only. Refresh counts after each batch; run again until Pending reaches 0.\n\n` +
+          `Continue?`
+      );
+      if (!ok) return;
+    }
+    executeMassPost(pendingRows, "all pending");
+  };
 
   const runMassSkip = () => {
     const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "pending");
@@ -463,7 +481,11 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
               disabled={msfSyncing || publishing || actionBusy || massSubmitting || massSkipping || loading}
               onClick={postAllPending}
             >
-              {massSubmitting ? "Posting…" : `Post all pending (${pendingRows.length})`}
+              {massSubmitting ? (
+                <AdminButtonBusyLabel>Posting…</AdminButtonBusyLabel>
+              ) : (
+                `Post all pending (${formatAdminCount(postAllPendingCount)})`
+              )}
             </button>
           ) : null}
         </div>
@@ -504,6 +526,9 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           onClick={() => setQueueTabAndReset("pending")}
         >
           Pending
+          {pendingDbTotal != null ? (
+            <span className="admin-sell-queueQueueTabCount">{formatAdminCount(pendingDbTotal)}</span>
+          ) : null}
         </button>
         <button
           type="button"
@@ -513,6 +538,9 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           onClick={() => setQueueTabAndReset("posted")}
         >
           Posted
+          {postedDbTotal != null ? (
+            <span className="admin-sell-queueQueueTabCount">{formatAdminCount(postedDbTotal)}</span>
+          ) : null}
         </button>
         <button
           type="button"
@@ -522,6 +550,9 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           onClick={() => setQueueTabAndReset("skipped")}
         >
           Skipped
+          {skippedDbTotal != null ? (
+            <span className="admin-sell-queueQueueTabCount">{formatAdminCount(skippedDbTotal)}</span>
+          ) : null}
         </button>
       </div>
 
@@ -652,6 +683,12 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
               </button>
             ) : null}
           </div>
+          {pendingListCapped ? (
+            <p className="sell-ride-applyHint admin-invListCapHint" role="status">
+              Showing {formatAdminCount(rows.length)} of {formatAdminCount(pendingDbTotal)} pending in the list. Total
+              posted from MSF: {formatAdminCount(postedDbTotal)}. Use counts above the tabs for full database totals.
+            </p>
+          ) : null}
           {loading ? (
             <p className="sell-ride-applyMuted">Loading…</p>
           ) : rows.length === 0 ? (

@@ -52,6 +52,7 @@ import { sellRidePhotoPublicUrl } from "../lib/sellRidePhotos";
 import { supabase } from "../lib/supabase";
 import { adminDeleteRejectedSellRideSubmission } from "../lib/adminDeleteRejectedSellRideSubmission";
 import { publishSellSubmissionRow, stockNumberForMassSellIndex } from "../lib/adminPublishSellSubmission";
+import { formatAdminCount, type AdminInventoryCounts } from "../lib/adminInventoryCounts";
 import { formatPhoneDisplay } from "../lib/formatPhone";
 import { AdminQueueMassSubmitBar } from "./AdminQueueMassSubmitBar";
 
@@ -64,9 +65,10 @@ type QueueTab = "submitted" | "rejected";
 export type AdminSellQueuePanelProps = {
   /** Called after a submission is published to inventory so the catalog list can refresh. */
   onInventoryChanged?: () => void;
+  queueCounts?: AdminInventoryCounts["sell"];
 };
 
-export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelProps) {
+export function AdminSellQueuePanel({ onInventoryChanged, queueCounts }: AdminSellQueuePanelProps) {
   const [queueTab, setQueueTab] = useState<QueueTab>("submitted");
   const [rows, setRows] = useState<SellRideSubmissionRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -637,6 +639,9 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
           onClick={() => setQueueTabAndReset("submitted")}
         >
           Submitted
+          {queueCounts ? (
+            <span className="admin-sell-queueQueueTabCount">{formatAdminCount(queueCounts.submitted)}</span>
+          ) : null}
         </button>
         <button
           type="button"
@@ -646,6 +651,9 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
           onClick={() => setQueueTabAndReset("rejected")}
         >
           Rejected
+          {queueCounts ? (
+            <span className="admin-sell-queueQueueTabCount">{formatAdminCount(queueCounts.rejected)}</span>
+          ) : null}
         </button>
       </div>
 
