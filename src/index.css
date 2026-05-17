@@ -2403,10 +2403,13 @@ p {
 }
 
 .inventory-photoCarouselDetail {
+  width: 100%;
   aspect-ratio: auto;
   height: auto;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
   margin-bottom: 1.25rem;
 }
 
@@ -2419,9 +2422,31 @@ p {
   position: relative;
   inset: auto;
   width: 100%;
+  display: grid;
 }
 
-.inventory-photoCarouselSold .inventory-photoCarouselFill::after {
+.inventory-photoCarouselDetail .inventory-photoCarouselFill > * {
+  grid-area: 1 / 1;
+}
+
+.inventory-photoCarouselDetail .inventory-photoCarouselFill--loading {
+  min-height: min(36vh, 18rem);
+}
+
+.inventory-photoCarouselDetail .inventory-photoCarouselPhoto {
+  z-index: 0;
+}
+
+.inventory-photoCarouselDetail.inventory-photoCarouselSold .inventory-photoCarouselFill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 13, 16, 0.42);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.inventory-photoCarouselCard.inventory-photoCarouselSold .inventory-photoCarouselFill::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2443,6 +2468,24 @@ p {
   height: auto;
   object-fit: unset;
   object-position: center;
+}
+
+.inventory-photoCarouselDetail .inventory-photoSpinner {
+  place-self: center;
+  z-index: 4;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: inventory-photoSpin 0.7s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes inventory-photoSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .inventory-photoWatermark {
