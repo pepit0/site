@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState, type FormEvent } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdminCustomerUnitsPanel } from "../components/AdminCustomerUnitsPanel";
 import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
@@ -31,6 +31,27 @@ function formatMoney(n: number): string {
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
+}
+
+function unitMatchesCatalogSearch(row: InventoryUnitRow, query: string): boolean {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+  const haystack = [
+    row.stock_number,
+    row.make,
+    row.model,
+    inventoryDisplayTitle(row),
+    String(row.year),
+    row.status,
+    row.category,
+    row.vin ?? "",
+    row.admin_notes ?? "",
+    row.odometer_km != null ? String(row.odometer_km) : "",
+    row.is_customer_unit ? "customer" : ""
+  ]
+    .join(" ")
+    .toLowerCase();
+  return terms.every((term) => haystack.includes(term));
 }
 
 type FormFields = {
@@ -93,6 +114,14 @@ export function AdminInventoryPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
+  const [catalogSearch, setCatalogSearch] = useState("");
+
+  const filteredUnits = useMemo(
+    () => units.filter((row) => unitMatchesCatalogSearch(row, catalogSearch)),
+    [units, catalogSearch]
+  );
+
+  const catalogSearchActive = catalogSearch.trim().length > 0;
 
   const loadUnits = useCallback(async () => {
     setListLoading(true);
@@ -410,6 +439,11 @@ export function AdminInventoryPage() {
             <div className="admin-invListPanelHead">
               <h2 id="admin-inv-list-heading" className="sell-ride-applyPhotosTitle">
                 Units
+                {!listLoading && units.length > 0 ? (
+                  <span className="admin-invListCount">
+                    {catalogSearchActive ? `${filteredUnits.length} / ${units.length}` : units.length}
+                  </span>
+                ) : null}
               </h2>
               <button
                 type="button"
@@ -419,6 +453,32 @@ export function AdminInventoryPage() {
                 Add new
               </button>
             </div>
+            <div className="admin-invCatalogSearchWrap">
+              <label className="loginLabel admin-invCatalogSearchLabel" htmlFor="admin-inv-catalog-search">
+                Search
+              </label>
+              <div className="admin-invCatalogSearchRow">
+                <input
+                  id="admin-inv-catalog-search"
+                  type="search"
+                  className="loginInput admin-invCatalogSearch"
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  placeholder="Stock #, make, model, status…"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {catalogSearchActive ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary admin-invMiniBtn"
+                    onClick={() => setCatalogSearch("")}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+            </div>
             {loadError ? (
               <div className="sell-ride-applyErrorBanner" role="alert">
                 <p className="sell-ride-applyError">{loadError}</p>
@@ -427,10 +487,12 @@ export function AdminInventoryPage() {
               <p className="sell-ride-applyMuted">Loading…</p>
             ) : units.length === 0 ? (
               <p className="sell-ride-applyMuted">No units yet.</p>
+            ) : filteredUnits.length === 0 ? (
+              <p className="sell-ride-applyMuted">No units match your search.</p>
             ) : (
               <div className="admin-invUnitListScroll">
                 <ul className="admin-invUnitItems">
-                  {units.map((row) => {
+                  {filteredUnits.map((row) => {
                     const active = row.id === editingId;
                     return (
                       <li key={row.id}>

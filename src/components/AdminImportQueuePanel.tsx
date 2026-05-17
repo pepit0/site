@@ -60,6 +60,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
   const [massSubmitting, setMassSubmitting] = useState(false);
+  const [massSkipping, setMassSkipping] = useState(false);
   const [massError, setMassError] = useState<string | null>(null);
   const [massResultSummary, setMassResultSummary] = useState<string | null>(null);
 
@@ -387,6 +388,40 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     })();
   };
 
+  const runMassSkip = () => {
+    const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "pending");
+    if (targets.length === 0) return;
+
+    const ok = window.confirm(
+      `Skip ${targets.length} selected import${targets.length === 1 ? "" : "s"}?\n\n` +
+        `They move to the Skipped tab and can be restored to pending later.\n\n` +
+        `Continue?`
+    );
+    if (!ok) return;
+
+    void (async () => {
+      setMassSkipping(true);
+      setMassError(null);
+      setMassResultSummary(null);
+      const ids = targets.map((r) => r.id);
+      const { error } = await supabase
+        .from("inventory_import_queue")
+        .update({ status: "skipped" })
+        .in("id", ids)
+        .eq("status", "pending");
+      if (error) {
+        setMassError(error.message);
+      } else {
+        clearChecked();
+        setSelectedId(null);
+        applyRowToForm(null);
+        await reloadCurrentTab();
+        setMassResultSummary(`Skipped ${targets.length} import${targets.length === 1 ? "" : "s"}.`);
+      }
+      setMassSkipping(false);
+    })();
+  };
+
   return (
     <section className="admin-sell-queueIntegrated" aria-labelledby="admin-import-heading">
       <div className="admin-importQueueHeading">
@@ -471,10 +506,13 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           itemLabel="pending import"
           onClearSelection={clearChecked}
           onMassSubmit={runMassSubmit}
+          onMassSkip={runMassSkip}
           massSubmitting={massSubmitting}
+          massSkipping={massSkipping}
           massError={massError}
           massResultSummary={massResultSummary}
           submitLabel="Mass post to catalog"
+          skipLabel="Skip selected"
         >
           <div className="admin-massSubmitBarGrid">
             <div className="form-row">

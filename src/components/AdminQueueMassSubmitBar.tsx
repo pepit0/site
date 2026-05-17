@@ -10,6 +10,9 @@ export type AdminQueueMassSubmitBarProps = {
   massResultSummary: string | null;
   children?: ReactNode;
   submitLabel?: string;
+  onMassSkip?: () => void;
+  skipLabel?: string;
+  massSkipping?: boolean;
 };
 
 export function AdminQueueMassSubmitBar({
@@ -21,9 +24,14 @@ export function AdminQueueMassSubmitBar({
   massError,
   massResultSummary,
   children,
-  submitLabel = "Mass submit"
+  submitLabel = "Mass submit",
+  onMassSkip,
+  skipLabel = "Skip selected",
+  massSkipping = false
 }: AdminQueueMassSubmitBarProps) {
   if (selectedCount === 0) return null;
+
+  const massBusy = massSubmitting || massSkipping;
 
   return (
     <div className="admin-massSubmitBar" role="region" aria-label="Mass submit">
@@ -33,10 +41,15 @@ export function AdminQueueMassSubmitBar({
           {selectedCount === 1 ? "" : "s"} selected
         </p>
         <div className="admin-massSubmitBarActions">
-          <button type="button" className="btn btn-secondary admin-invMiniBtn" disabled={massSubmitting} onClick={onClearSelection}>
+          <button type="button" className="btn btn-secondary admin-invMiniBtn" disabled={massBusy} onClick={onClearSelection}>
             Clear selection
           </button>
-          <button type="button" className="btn btn-primary admin-invMiniBtn" disabled={massSubmitting} onClick={onMassSubmit}>
+          {onMassSkip ? (
+            <button type="button" className="btn btn-secondary admin-invMiniBtn" disabled={massBusy} onClick={onMassSkip}>
+              {massSkipping ? "Skipping…" : skipLabel}
+            </button>
+          ) : null}
+          <button type="button" className="btn btn-primary admin-invMiniBtn" disabled={massBusy} onClick={onMassSubmit}>
             {massSubmitting ? "Submitting…" : submitLabel}
           </button>
         </div>
