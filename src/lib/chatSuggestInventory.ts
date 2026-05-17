@@ -39,6 +39,18 @@ type FeaturedUnitJson = {
   category: string;
 };
 
+/** One-line facts for Tawk AI (unit-details attribute) — bot cannot read the sidebar unless told to use this. */
+export function buildUnitDetailsForTawk(unit: ChatSuggestedUnit): string {
+  return [
+    `${unit.year} ${unit.make} ${unit.model}`,
+    unit.category,
+    unit.status,
+    unit.yearKm.replace(" · ", ", "),
+    `Stock #${unit.stock_number}`,
+    unit.href
+  ].join(" | ");
+}
+
 export function inventoryRowToChatSuggested(row: InventoryPublicRow): ChatSuggestedUnit {
   return {
     id: row.id,

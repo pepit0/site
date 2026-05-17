@@ -4,7 +4,7 @@ import { fetchInventoryUnitsByIds, type ChatSuggestedUnit } from "../../lib/chat
 import { buildUnitPickIds } from "../../lib/recentInventoryViews";
 import { submitPublicChatLead } from "../../lib/submitChatLead";
 import { CHAT_HANDOFF_FADE_MS } from "../../lib/chatTheme";
-import { openTawkHandoff } from "../../lib/tawkHandoff";
+import { openTawkHandoff, tawkHandoffFromUnit } from "../../lib/tawkHandoff";
 import { useTawkAgentStatus } from "../../hooks/useTawkAgentStatus";
 
 type Step = "contact" | "loading" | "unitPick" | "handoff" | "handoffRetry" | "message" | "done";
@@ -170,16 +170,7 @@ export function OfflineChatWidget() {
   };
 
   const handoffToTawk = async (unit: ChatSuggestedUnit | null, revealDelayMs?: number): Promise<boolean> => {
-    const label = unit ? unitPickLabel(unit) : null;
-    return openTawkHandoff({
-      name,
-      phone,
-      unitLabel: label,
-      unitId: unit?.id ?? null,
-      unitHref: unit?.href ?? null,
-      stockNumber: unit?.stock_number ?? null,
-      revealDelayMs
-    });
+    return openTawkHandoff(tawkHandoffFromUnit({ name, phone, revealDelayMs }, unit));
   };
 
   const finishTawkHandoff = async (unit: ChatSuggestedUnit | null) => {

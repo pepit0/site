@@ -1,5 +1,6 @@
 /** Open Tawk after site intake (name, phone, optional unit). */
 
+import { buildUnitDetailsForTawk, type ChatSuggestedUnit } from "./chatSuggestInventory";
 import { normalizeNanpTo10Digits } from "./phoneFormat";
 
 export type TawkHandoffParams = {
@@ -11,6 +12,8 @@ export type TawkHandoffParams = {
   unitId?: string | null;
   unitHref?: string | null;
   stockNumber?: string | null;
+  /** Full unit facts string for AI (from buildUnitDetailsForTawk). */
+  unitDetails?: string | null;
 };
 
 const TAWK_UNIT_SESSION_KEY = "tm_tawk_selected_unit";
@@ -65,6 +68,7 @@ function persistUnitSession(params: TawkHandoffParams): void {
       TAWK_UNIT_SESSION_KEY,
       JSON.stringify({
         label: params.unitLabel.trim(),
+        details: params.unitDetails?.trim() ?? null,
         id: params.unitId?.trim() ?? null,
         stock: params.stockNumber?.trim() ?? null,
         href: params.unitHref?.trim() ?? null,
@@ -92,18 +96,46 @@ function buildAttributes(params: TawkHandoffParams): Record<string, string> {
     attrs["unit-interest"] = label;
     attrs.unitinterest = label;
   }
+  if (params.unitDetails?.trim()) {
+    const details = params.unitDetails.trim();
+    attrs["unit-details"] = details;
+    attrs.unitdetails = details;
+  }
   if (params.unitId?.trim()) {
     const id = params.unitId.trim();
     attrs["unit-id"] = id;
     attrs.unitid = id;
   }
   if (params.unitHref?.trim()) {
-    attrs["unit-url"] = params.unitHref.trim();
+    const url = params.unitHref.trim();
+    attrs["unit-url"] = url;
+    attrs.listingurl = url;
   }
   if (params.stockNumber?.trim()) {
-    attrs["stock-number"] = params.stockNumber.trim();
+    const stock = params.stockNumber.trim();
+    attrs["stock-number"] = stock;
+    attrs.stocknumber = stock;
   }
   return attrs;
+}
+
+/** Build handoff params from a picked inventory unit card. */
+export function tawkHandoffFromUnit(
+  base: Pick<TawkHandoffParams, "name" | "phone" | "revealDelayMs">,
+  unit: ChatSuggestedUnit | null
+): TawkHandoffParams {
+  if (!unit) {
+    return { ...base, unitLabel: null, unitId: null, unitHref: null, stockNumber: null, unitDetails: null };
+  }
+  const label = `${unit.year} ${unit.title} — Stock #${unit.stock_number}`;
+  return {
+    ...base,
+    unitLabel: label,
+    unitId: unit.id,
+    unitHref: unit.href,
+    stockNumber: unit.stock_number,
+    unitDetails: buildUnitDetailsForTawk(unit)
+  };
 }
 
 function recordUnitInChat(params: TawkHandoffParams): void {
@@ -112,6 +144,7 @@ function recordUnitInChat(params: TawkHandoffParams): void {
 
   const metadata: Record<string, string> = {
     unitInterest: params.unitLabel.trim(),
+    unitDetails: params.unitDetails?.trim() ?? params.unitLabel.trim(),
     unitId: params.unitId?.trim() ?? "",
     listingUrl: params.unitHref?.trim() ?? "",
     stockNumber: params.stockNumber?.trim() ?? ""

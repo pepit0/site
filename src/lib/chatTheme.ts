@@ -34,22 +34,37 @@ export const TAWK_WIDGET_APPEARANCE = [
 export const CHAT_HANDOFF_FADE_MS = 340;
 
 /**
- * Paste into Tawk → AI Assist → your agent → Base Prompt (in addition to your main instructions).
- * AI Assist does not always read custom attributes unless you tell it to.
+ * Paste into Tawk → AI Assist → your agent → Base Prompt (replace or append to existing instructions).
+ * Required: without this, the bot ignores visitor profile fields even when they appear in the dashboard.
  */
-export const TAWK_AI_UNIT_CONTEXT_PROMPT = `Before answering, check the visitor profile:
-- Their display name may end with "· Stock #XXXX" — that is the unit they picked on our site before chat.
-- Custom attributes: unit-interest, stock-number, selected-unit, unit-id, unit-url.
+export const TAWK_AI_UNIT_CONTEXT_PROMPT = `CRITICAL — Website intake before chat
 
-If any unit field is set, they already chose that unit during intake. Greet them about THAT unit by name and stock number. Do not ask which unit they want unless they say they changed their mind.`;
+Many visitors complete our site intake before chatting. Their visitor profile (visible to you in the sidebar) includes custom fields such as:
+- unitinterest / unit-interest
+- unitdetails / unit-details (year, make, model, category, status, km, stock #, listing URL)
+- stocknumber / stock-number
+- unitid / unit-id
+- listingurl / unit-url
+- Display name may show "First Last · Stock #MSF-XXXX"
+
+When unitinterest OR unitdetails OR stocknumber is populated:
+1. The visitor ALREADY selected that unit. NEVER say you do not have access or ask them to repeat the stock number.
+2. Read unitdetails (or unitinterest) and answer using those facts: year, make, model, category, mileage, availability status, stock number.
+3. Share the listingurl so they can view photos on the site.
+4. We do not put price in these fields — for price, payment, or financing, offer pre-approval at temptmotorsports.com/pre-approval or a callback from our team at (587) 741-1945.
+5. If they ask "details on the unit I chose", summarize from unitdetails — do not deflect.
+
+Only ask which unit they want if ALL unit fields are empty.`;
+
+/** FAQ answer to add under AI Assist → Data Sources → FAQs (optional backup). */
+export const TAWK_FAQ_SELECTED_UNIT = {
+  question:
+    "Visitor asks about the unit they chose on the website before chat (unitinterest, unitdetails, stocknumber in profile)",
+  answer:
+    "Read unitdetails and unitinterest from the visitor profile. Summarize year, make, model, category, km, status, and stock number. Give them the listingurl. For price or financing, direct to pre-approval or a phone callback — never claim you cannot see their selected unit."
+};
 
 /**
- * Tawk Automation (recommended so the bot sees unit text IN the chat thread):
- * 1) Automation → Add trigger → Event = "website-unit-selected" (from our site JS).
- * 2) Action = AI Assist sends a message, e.g.:
- *    "I see you're interested in {{unitInterest}} — how can I help with financing or details?"
- * 3) Enable the automation and save.
- *
- * Also set AI Assist → Greeting to reference the visitor's selected unit when attributes exist.
+ * Tawk Automation (optional): trigger on event "website-unit-selected" → AI sends first message in thread.
  */
 export const TAWK_AUTOMATION_UNIT_EVENT = "website-unit-selected";
