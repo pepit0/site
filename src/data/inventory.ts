@@ -66,6 +66,8 @@ export type InventoryUnitRow = Omit<InventoryPublicRow, "status"> &
   InventoryCustomerUnitFields & {
     status: InventoryStatus;
     cost: number;
+    /** Admin-only; not on public listings or inventory_units_public. */
+    admin_notes: string | null;
   };
 
 export function inventoryComplianceLabel(row: Pick<InventoryCustomerUnitFields, "has_registration" | "has_insurance" | "no_reg_insurance">): string {
@@ -101,8 +103,9 @@ export function inventoryDisplayTitle(row: Pick<InventoryPublicRow, "make" | "mo
   return `${row.make} ${row.model}`.trim();
 }
 
+/** Public catalog + listing pages — always shown in capitals regardless of DB casing. */
 export function inventoryMakeModelTitle(row: Pick<InventoryPublicRow, "make" | "model">): string {
-  return inventoryDisplayTitle(row);
+  return `${row.make} ${row.model}`.trim().toLocaleUpperCase("en-CA");
 }
 
 export function inventoryOdometerLabel(row: Pick<InventoryPublicRow, "odometer_km">): string {
@@ -220,5 +223,6 @@ export function parseInventoryUnitRow(row: unknown): InventoryUnitRow | null {
   const cost = r.cost;
   const n = typeof cost === "number" ? cost : typeof cost === "string" ? Number(cost) : NaN;
   if (!Number.isFinite(n)) return null;
-  return { ...core, ...parseInventoryCustomerFields(r), cost: n };
+  const admin_notes = typeof r.admin_notes === "string" ? r.admin_notes : null;
+  return { ...core, ...parseInventoryCustomerFields(r), cost: n, admin_notes };
 }

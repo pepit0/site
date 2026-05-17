@@ -559,7 +559,10 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
       ) : null}
 
       <div className="admin-sell-queueLayout">
-        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel" aria-label={queueTab === "submitted" ? "Submitted applications" : "Rejected applications"}>
+        <div
+          className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel admin-invListPanel"
+          aria-label={queueTab === "submitted" ? "Submitted applications" : "Rejected applications"}
+        >
           <h3 className="sell-ride-applyPhotosTitle">{queueTab === "submitted" ? "Submitted" : "Rejected"}</h3>
           {loading ? (
             <p className="sell-ride-applyMuted">Loading…</p>
@@ -568,7 +571,8 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
               {queueTab === "submitted" ? "No submissions in the queue." : "No rejected submissions."}
             </p>
           ) : (
-            <ul className="admin-sell-queueItems">
+            <div className="admin-invUnitListScroll">
+              <ul className="admin-sell-queueItems">
                 {rows.map((r) => {
                   const title = rowTitle(r);
                   const active = r.id === selectedId;
@@ -591,11 +595,15 @@ export function AdminSellQueuePanel({ onInventoryChanged }: AdminSellQueuePanelP
                     </li>
                   );
                 })}
-            </ul>
+              </ul>
+            </div>
           )}
         </div>
 
-        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail" aria-label="Submission detail">
+        <div
+          className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail admin-invDetailPanel"
+          aria-label="Submission detail"
+        >
           {!selected ? (
             <p className="sell-ride-applyMuted admin-sell-detailEmpty">Select a row to view details.</p>
           ) : queueTab === "rejected" ? (

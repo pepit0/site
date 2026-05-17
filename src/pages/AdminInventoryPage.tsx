@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+﻿import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdminCustomerUnitsPanel } from "../components/AdminCustomerUnitsPanel";
 import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
@@ -44,6 +44,7 @@ type FormFields = {
   status: InventoryStatus;
   is_customer_unit: boolean;
   vin: string;
+  admin_notes: string;
 };
 
 const emptyForm = (): FormFields => ({
@@ -56,7 +57,8 @@ const emptyForm = (): FormFields => ({
   cost: "0",
   status: "Available",
   is_customer_unit: false,
-  vin: ""
+  vin: "",
+  admin_notes: ""
 });
 
 type AdminTab = "catalog" | "sell" | "import" | "customer";
@@ -121,7 +123,8 @@ export function AdminInventoryPage() {
       cost: String(row.cost),
       status: row.status,
       is_customer_unit: row.is_customer_unit,
-      vin: row.vin ?? ""
+      vin: row.vin ?? "",
+      admin_notes: row.admin_notes ?? ""
     });
     setPendingFiles(null);
     setFormError(null);
@@ -189,6 +192,7 @@ export function AdminInventoryPage() {
     }
 
     const vinPayload = form.is_customer_unit ? form.vin.trim() || null : null;
+    const adminNotesPayload = form.admin_notes.trim() || null;
 
     try {
       const dup = await findInventoryUnitByStock(supabase, stock, editingId);
@@ -222,7 +226,8 @@ export function AdminInventoryPage() {
             status: form.status,
             photo_paths,
             is_customer_unit: form.is_customer_unit,
-            vin: vinPayload
+            vin: vinPayload,
+            admin_notes: adminNotesPayload
           })
           .eq("id", editingId);
         if (error) {
@@ -249,7 +254,8 @@ export function AdminInventoryPage() {
             status: form.status,
             photo_paths: [],
             is_customer_unit: form.is_customer_unit,
-            vin: vinPayload
+            vin: vinPayload,
+            admin_notes: adminNotesPayload
           })
           .select("*")
           .single();
@@ -309,9 +315,10 @@ export function AdminInventoryPage() {
   };
 
   const wideAdminLayout = adminTab === "sell" || adminTab === "import" || adminTab === "customer";
+  const rootClass = wideAdminLayout ? "admin-inv admin-inv--queues" : "admin-inv admin-inv--catalog";
 
   return (
-    <div className={wideAdminLayout ? "admin-inv admin-inv--queues" : "admin-inv"}>
+    <div className={rootClass}>
       <Seo title="Admin inventory" description="Internal inventory management for Temptation Motorsports." path="/admin/inventory" noindex />
       <header className="admin-invHeader page-header">
         <h1 className="page-title">Admin inventory</h1>
@@ -367,8 +374,79 @@ export function AdminInventoryPage() {
       ) : adminTab === "customer" ? (
         <AdminCustomerUnitsPanel />
       ) : (
-        <>
-          <section className="sell-ride-applyForm admin-invFormPanel" aria-labelledby="admin-inv-form-heading">
+        <div className="admin-invCatalogLayout">
+          <section
+            className="sell-ride-applyForm admin-invListPanel"
+            aria-labelledby="admin-inv-list-heading"
+          >
+            <div className="admin-invListPanelHead">
+              <h2 id="admin-inv-list-heading" className="sell-ride-applyPhotosTitle">
+                Units
+              </h2>
+              <button
+                type="button"
+                className={`btn btn-secondary admin-invMiniBtn admin-invAddUnitBtn${!editingId ? " admin-invAddUnitBtnActive" : ""}`}
+                onClick={resetForm}
+              >
+                Add new
+              </button>
+            </div>
+            {loadError ? (
+              <div className="sell-ride-applyErrorBanner" role="alert">
+                <p className="sell-ride-applyError">{loadError}</p>
+              </div>
+            ) : listLoading ? (
+              <p className="sell-ride-applyMuted">Loading…</p>
+            ) : units.length === 0 ? (
+              <p className="sell-ride-applyMuted">No units yet.</p>
+            ) : (
+              <div className="admin-invUnitListScroll">
+                <ul className="admin-invUnitItems">
+                  {units.map((row) => {
+                    const active = row.id === editingId;
+                    return (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          className={`admin-invUnitItem${active ? " admin-invUnitItemActive" : ""}`}
+                          onClick={() => startEdit(row)}
+                        >
+                          {row.photo_paths[0] ? (
+                            <img
+                              className="admin-invUnitItemThumb"
+                              src={inventoryPhotoPublicUrl(supabase, row.photo_paths[0]!)}
+                              alt=""
+                            />
+                          ) : (
+                            <span className="admin-invUnitItemThumbPlaceholder" aria-hidden>
+                              —
+                            </span>
+                          )}
+                          <span className="admin-invUnitItemText">
+                            <span className="admin-invUnitItemTitle">
+                              #{row.stock_number} · {inventoryDisplayTitle(row)}
+                            </span>
+                            <span className="admin-invUnitItemMeta">
+                              {row.year}
+                              {row.odometer_km != null ? ` · ${row.odometer_km.toLocaleString()} km` : ""}
+                              {` · ${formatMoney(row.cost)}`}
+                            </span>
+                            <span
+                              className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)} admin-invUnitItemStatus`}
+                            >
+                              {row.status}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          <section className="sell-ride-applyForm admin-invFormPanel admin-invDetailPanel" aria-labelledby="admin-inv-form-heading">
             <h2 id="admin-inv-form-heading" className="sell-ride-applySectionTitle">
               {editingId ? "Edit unit" : "Add unit"}
             </h2>
@@ -512,6 +590,19 @@ export function AdminInventoryPage() {
                   </div>
                 ) : null}
                 <div className="form-row sell-ride-applyFullWidth">
+                  <label className="loginLabel" htmlFor="adm-admin-notes">
+                    Internal notes
+                  </label>
+                  <textarea
+                    id="adm-admin-notes"
+                    className="loginInput textarea"
+                    rows={3}
+                    value={form.admin_notes}
+                    onChange={(e) => setForm((f) => ({ ...f, admin_notes: e.target.value }))}
+                    placeholder="Admin-only — not shown on the public listing"
+                  />
+                </div>
+                <div className="form-row sell-ride-applyFullWidth">
                   <label className="loginLabel" htmlFor="adm-files">
                     Add photos
                   </label>
@@ -562,80 +653,27 @@ export function AdminInventoryPage() {
                   {isSaving ? "Saving…" : editingId ? "Save changes" : "Create unit"}
                 </button>
                 {editingId ? (
-                  <button type="button" className="btn btn-secondary" onClick={resetForm} disabled={isSaving}>
-                    Cancel edit
-                  </button>
+                  <>
+                    <button type="button" className="btn btn-secondary" onClick={resetForm} disabled={isSaving}>
+                      Cancel edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={isSaving}
+                      onClick={() => {
+                        const row = units.find((u) => u.id === editingId);
+                        if (row) void deleteUnit(row);
+                      }}
+                    >
+                      Delete unit
+                    </button>
+                  </>
                 ) : null}
               </div>
             </form>
           </section>
-
-          <section className="sell-ride-applyForm admin-invTablePanel" aria-labelledby="admin-inv-table-heading">
-            <h2 id="admin-inv-table-heading" className="sell-ride-applySectionTitle">
-              Units
-            </h2>
-            {loadError ? (
-              <div className="sell-ride-applyErrorBanner" role="alert">
-                <p className="sell-ride-applyError">{loadError}</p>
-              </div>
-            ) : listLoading ? (
-              <p className="sell-ride-applyMuted">Loading…</p>
-            ) : (
-              <div className="admin-invTableScroll">
-                <table className="admin-invTable">
-                  <thead>
-                    <tr>
-                      <th>Photo</th>
-                      <th>Stock</th>
-                      <th>Year</th>
-                      <th>Unit</th>
-                      <th>Km</th>
-                      <th>Cost</th>
-                      <th>Status</th>
-                      <th className="admin-invTableActionsCol">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {units.map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          {row.photo_paths[0] ? (
-                            <img className="admin-invThumb" src={inventoryPhotoPublicUrl(supabase, row.photo_paths[0]!)} alt="" />
-                          ) : (
-                            <span className="sell-ride-applyMuted">—</span>
-                          )}
-                        </td>
-                        <td>{row.stock_number}</td>
-                        <td>{row.year}</td>
-                        <td>
-                          {inventoryDisplayTitle(row)}
-                          <div className="admin-invTableCategory">{row.category}</div>
-                        </td>
-                        <td>{row.odometer_km != null ? row.odometer_km.toLocaleString() : "—"}</td>
-                        <td>{formatMoney(row.cost)}</td>
-                        <td>
-                          <span className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)}`}>
-                            {row.status}
-                          </span>
-                        </td>
-                        <td className="admin-invTableActionsCol">
-                          <div className="admin-invRowActions">
-                            <button type="button" className="btn btn-secondary admin-invMiniBtn" onClick={() => startEdit(row)}>
-                              Edit
-                            </button>
-                            <button type="button" className="btn btn-secondary admin-invMiniBtn" onClick={() => void deleteUnit(row)}>
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        </>
+        </div>
       )}
     </div>
   );

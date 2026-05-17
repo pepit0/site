@@ -10,6 +10,10 @@ export type MsfImportSyncStats = {
   skippedUnmapped: number;
   duplicateWooInFetch: number;
   removedStale: number;
+  /** Catalog units marked Sold (removed from MSF feed). */
+  markedSoldOffMsf: number;
+  /** Pending queue rows removed (product no longer on MSF). */
+  removedPendingOffMsf: number;
   /** Rows written to queue (new + refreshed pending/skipped). */
   upserted: number;
 };
@@ -44,6 +48,8 @@ function parseStats(raw: unknown): MsfImportSyncStats | null {
     skippedUnmapped: n("skippedUnmapped"),
     duplicateWooInFetch: n("duplicateWooInFetch"),
     removedStale: n("removedStale"),
+    markedSoldOffMsf: n("markedSoldOffMsf"),
+    removedPendingOffMsf: n("removedPendingOffMsf"),
     upserted: upserted || importedNew + alreadyPending + alreadySkipped
   };
 }
@@ -93,6 +99,20 @@ export function formatMsfImportSyncSummary(stats: MsfImportSyncStats): MsfImport
       stats.removedStale === 1
         ? "Removed 1 stale pending row that was already on the catalog."
         : `Removed ${stats.removedStale} stale pending rows that were already on the catalog.`
+    );
+  }
+  if (stats.markedSoldOffMsf > 0) {
+    extraLines.push(
+      stats.markedSoldOffMsf === 1
+        ? "Marked 1 catalog unit Sold (no longer on MSF; internal note added)."
+        : `Marked ${stats.markedSoldOffMsf} catalog units Sold (no longer on MSF; internal notes added).`
+    );
+  }
+  if (stats.removedPendingOffMsf > 0) {
+    extraLines.push(
+      stats.removedPendingOffMsf === 1
+        ? "Removed 1 pending queue row (product no longer on MSF)."
+        : `Removed ${stats.removedPendingOffMsf} pending queue rows (products no longer on MSF).`
     );
   }
 

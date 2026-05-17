@@ -1,4 +1,5 @@
 import { useCallback, useState, type MouseEvent } from "react";
+import logoWatermark from "../assets/logo.png";
 import type { VehicleCategory } from "../data/inventory";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import { supabase } from "../lib/supabase";
@@ -53,12 +54,16 @@ export function InventoryPhotoCarousel({
     >
       <div className="inventory-photoCarouselFill">
         {currentPath ? (
-          <img
-            key={currentPath}
-            src={inventoryPhotoPublicUrl(supabase, currentPath)}
-            alt={alt}
-            loading={variant === "card" ? "lazy" : "eager"}
-          />
+          <>
+            <img
+              key={currentPath}
+              className="inventory-photoCarouselPhoto"
+              src={inventoryPhotoPublicUrl(supabase, currentPath)}
+              alt={alt}
+              loading={variant === "card" ? "lazy" : "eager"}
+            />
+            <img className="inventory-photoWatermark" src={logoWatermark} alt="" aria-hidden />
+          </>
         ) : (
           <InventoryPlaceholder category={category} />
         )}

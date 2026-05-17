@@ -50,6 +50,7 @@ export function AdminCustomerUnitsPanel() {
   const [rows, setRows] = useState<CustomerUnitRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,6 +106,20 @@ export function AdminCustomerUnitsPanel() {
     void Promise.resolve().then(() => load());
   }, [load]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (rows.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    setSelectedId((id) => (id && rows.some((r) => r.id === id) ? id : rows[0]!.id));
+  }, [loading, rows]);
+
+  const selected = rows.find((r) => r.id === selectedId) ?? null;
+  const publicListing = selected
+    ? (INVENTORY_PUBLIC_STATUS_VALUES as readonly string[]).includes(selected.status)
+    : false;
+
   return (
     <section className="admin-sell-queueIntegrated" aria-labelledby="admin-customer-units-heading">
       <h2 id="admin-customer-units-heading" className="sell-ride-applySectionTitle admin-sell-queueIntegratedTitle">
@@ -123,62 +138,121 @@ export function AdminCustomerUnitsPanel() {
       ) : rows.length === 0 ? (
         <p className="sell-ride-applyMuted">No customer units yet.</p>
       ) : (
-        <div className="admin-invTableScroll">
-          <table className="admin-invTable">
-            <thead>
-              <tr>
-                <th>Photo</th>
-                <th>Stock</th>
-                <th>Unit</th>
-                <th>VIN</th>
-                <th>Reg / ins</th>
-                <th>Seller</th>
-                <th>Status</th>
-                <th className="admin-invTableActionsCol">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const publicListing = (INVENTORY_PUBLIC_STATUS_VALUES as readonly string[]).includes(row.status);
-                return (
-                  <tr key={row.id}>
-                    <td>
-                      {row.photo_paths[0] ? (
-                        <img className="admin-invThumb" src={inventoryPhotoPublicUrl(supabase, row.photo_paths[0]!)} alt="" />
-                      ) : (
-                        <span className="sell-ride-applyMuted">—</span>
-                      )}
-                    </td>
-                    <td>{row.stock_number}</td>
-                    <td>
-                      {row.year} {inventoryDisplayTitle(row)}
-                      <div className="admin-invTableCategory">{row.category}</div>
-                    </td>
-                    <td>{row.vin?.trim() ? row.vin : "—"}</td>
-                    <td>{inventoryComplianceLabel(row)}</td>
-                    <td>{sellerLabel(row)}</td>
-                    <td>
-                      <span className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)}`}>
-                        {row.status}
+        <div className="admin-invCatalogLayout">
+          <section className="sell-ride-applyForm admin-sell-queueCard admin-invListPanel" aria-label="Customer units list">
+            <h3 className="sell-ride-applyPhotosTitle">Units</h3>
+            <div className="admin-invUnitListScroll">
+              <ul className="admin-invUnitItems">
+                {rows.map((row) => {
+                  const active = row.id === selectedId;
+                  return (
+                    <li key={row.id}>
+                      <button
+                        type="button"
+                        className={`admin-invUnitItem${active ? " admin-invUnitItemActive" : ""}`}
+                        onClick={() => setSelectedId(row.id)}
+                      >
+                        {row.photo_paths[0] ? (
+                          <img
+                            className="admin-invUnitItemThumb"
+                            src={inventoryPhotoPublicUrl(supabase, row.photo_paths[0]!)}
+                            alt=""
+                          />
+                        ) : (
+                          <span className="admin-invUnitItemThumbPlaceholder" aria-hidden>
+                            —
+                          </span>
+                        )}
+                        <span className="admin-invUnitItemText">
+                          <span className="admin-invUnitItemTitle">
+                            #{row.stock_number} · {inventoryDisplayTitle(row)}
+                          </span>
+                          <span className="admin-invUnitItemMeta">
+                            {row.year} · {row.category} · {sellerLabel(row)}
+                          </span>
+                          <span
+                            className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)} admin-invUnitItemStatus`}
+                          >
+                            {row.status}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+
+          <section className="sell-ride-applyForm admin-sell-queueCard admin-invDetailPanel" aria-label="Customer unit detail">
+            {!selected ? (
+              <p className="sell-ride-applyMuted admin-sell-detailEmpty">Select a unit to view details.</p>
+            ) : (
+              <>
+                <h3 className="sell-ride-applyPhotosTitle">
+                  #{selected.stock_number} · {inventoryDisplayTitle(selected)}
+                </h3>
+                <dl className="sell-ride-applyDl">
+                  <div className="sell-ride-applyDlRow">
+                    <dt>Year</dt>
+                    <dd>{selected.year}</dd>
+                  </div>
+                  <div className="sell-ride-applyDlRow">
+                    <dt>Category</dt>
+                    <dd>{selected.category}</dd>
+                  </div>
+                  <div className="sell-ride-applyDlRow">
+                    <dt>VIN</dt>
+                    <dd>{selected.vin?.trim() ? selected.vin : "—"}</dd>
+                  </div>
+                  <div className="sell-ride-applyDlRow">
+                    <dt>Reg / insurance</dt>
+                    <dd>{inventoryComplianceLabel(selected)}</dd>
+                  </div>
+                  <div className="sell-ride-applyDlRow">
+                    <dt>Seller</dt>
+                    <dd>{sellerLabel(selected)}</dd>
+                  </div>
+                  {selected.submission?.seller_phone ? (
+                    <div className="sell-ride-applyDlRow">
+                      <dt>Phone</dt>
+                      <dd>
+                        <a className="admin-sell-detailPhone" href={`tel:${selected.submission.seller_phone}`}>
+                          {formatPhoneDisplay(selected.submission.seller_phone)}
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                  {selected.submission?.seller_email ? (
+                    <div className="sell-ride-applyDlRow">
+                      <dt>Email</dt>
+                      <dd>
+                        <a href={`mailto:${selected.submission.seller_email}`}>{selected.submission.seller_email}</a>
+                      </dd>
+                    </div>
+                  ) : null}
+                  <div className="sell-ride-applyDlRow">
+                    <dt>Status</dt>
+                    <dd>
+                      <span className={`inventory-status inventory-status${inventoryStatusPillModifier(selected.status)}`}>
+                        {selected.status}
                       </span>
-                    </td>
-                    <td className="admin-invTableActionsCol">
-                      <div className="admin-invRowActions">
-                        <Link className="btn btn-secondary admin-invMiniBtn" to={`/admin/inventory?edit=${row.id}`}>
-                          Edit in catalog
-                        </Link>
-                        {publicListing ? (
-                          <Link className="btn btn-secondary admin-invMiniBtn" to={`/inventory/${row.id}`}>
-                            View on site
-                          </Link>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </dd>
+                  </div>
+                </dl>
+                <div className="admin-invRowActions admin-customerUnitDetailActions">
+                  <Link className="btn btn-secondary admin-invMiniBtn" to={`/admin/inventory?edit=${selected.id}`}>
+                    Edit in catalog
+                  </Link>
+                  {publicListing ? (
+                    <Link className="btn btn-secondary admin-invMiniBtn" to={`/inventory/${selected.id}`}>
+                      View on site
+                    </Link>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </section>
         </div>
       )}
     </section>

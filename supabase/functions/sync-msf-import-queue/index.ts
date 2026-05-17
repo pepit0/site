@@ -1,13 +1,10 @@
 /**
  * Sync motorsportsfinancing.ca WooCommerce products into inventory_import_queue.
  * Deploy: supabase functions deploy sync-msf-import-queue
- * Secrets: SUPABASE_SERVICE_ROLE_KEY (auto), SUPABASE_ANON_KEY (auto)
  *
- * Invoked from admin UI (inventory admin JWT). Same rules as scripts/msf-fetch-inventory-queue.mjs:
- * - Upsert only brand-new Woo products (existing pending/skipped rows are left untouched — preserves queue order)
- * - Upsert on (import_source, source_product_id) — no duplicate queue rows per Woo product
- * - Skip queue rows already posted; skip MSF-* already on catalog
- * - Dedupe photo URLs per product; drop first gallery image (studio tile)
+ * - Skip imports when unit already exists in catalog (MSF-* stock, posted queue, or linked unit id)
+ * - Mark catalog units Sold + internal admin note when removed from MSF
+ * - Remove stale pending queue rows for products no longer on MSF
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -19,6 +16,8 @@ const corsHeaders = {
 const IMPORT_SOURCE = "motorsportsfinancing_wc";
 const STORE_BASE = "https://motorsportsfinancing.ca/wp-json/wc/store/v1/products";
 const PER_PAGE = 100;
+const MSF_STOCK_RE = /^MSF-(\d+)$/i;
+const MSF_SOLD_SYNC_MARKER = "No longer listed on motorsportsfinancing.ca";
 
 type QueueRow = {
   import_source: string;
@@ -34,6 +33,23 @@ type QueueRow = {
   source_product_name: string | null;
   status: string;
 };
+
+type CatalogUnitRow = {
+  id: string;
+  stock_number: string;
+  status: string;
+  admin_notes: string | null;
+};
+
+function msfSoldSyncNoteLine(isoDate = new Date().toISOString().slice(0, 10)): string {
+  return `[MSF sync ${isoDate}] ${MSF_SOLD_SYNC_MARKER} — marked Sold on this catalog automatically.`;
+}
+
+function appendAdminNote(existing: string | null, line: string): string {
+  const prev = existing?.trim() ?? "";
+  if (prev.includes(MSF_SOLD_SYNC_MARKER) && line.includes(MSF_SOLD_SYNC_MARKER)) return prev;
+  return prev ? `${prev}\n\n${line}` : line;
+}
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -173,52 +189,164 @@ async function fetchJson(url: string) {
   };
 }
 
-async function loadQueueStatusByPid(supabase: SupabaseClient): Promise<Map<string, string>> {
+async function loadQueueState(supabase: SupabaseClient): Promise<{
+  statusByPid: Map<string, string>;
+  importedUnitIdByPid: Map<string, string>;
+}> {
   const statusByPid = new Map<string, string>();
+  const importedUnitIdByPid = new Map<string, string>();
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("inventory_import_queue")
-      .select("source_product_id,status")
+      .select("source_product_id,status,imported_inventory_id")
       .eq("import_source", IMPORT_SOURCE)
       .order("source_product_id", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
     for (const r of rows) {
-      if (r && typeof r.source_product_id === "string" && typeof r.status === "string") {
-        statusByPid.set(r.source_product_id, r.status);
+      if (!r || typeof r.source_product_id !== "string") continue;
+      const pid = r.source_product_id;
+      if (typeof r.status === "string") statusByPid.set(pid, r.status);
+      if (typeof r.imported_inventory_id === "string" && r.imported_inventory_id) {
+        importedUnitIdByPid.set(pid, r.imported_inventory_id);
       }
     }
     if (rows.length < pageSize) break;
   }
-  return statusByPid;
+  return { statusByPid, importedUnitIdByPid };
 }
 
-async function loadCatalogMsfStockNumbers(supabase: SupabaseClient): Promise<Set<string>> {
-  const set = new Set<string>();
+async function loadCatalogUnits(supabase: SupabaseClient): Promise<CatalogUnitRow[]> {
+  const out: CatalogUnitRow[] = [];
   let from = 0;
   const page = 1000;
   for (;;) {
     const { data, error } = await supabase
       .from("inventory_units")
-      .select("stock_number")
-      .like("stock_number", "MSF-%")
+      .select("id,stock_number,status,admin_notes")
       .range(from, from + page - 1);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
     for (const r of rows) {
-      if (r && typeof r.stock_number === "string") set.add(r.stock_number.trim());
+      if (!r || typeof r.id !== "string" || typeof r.stock_number !== "string") continue;
+      out.push({
+        id: r.id,
+        stock_number: r.stock_number.trim(),
+        status: typeof r.status === "string" ? r.status : "Available",
+        admin_notes: typeof r.admin_notes === "string" ? r.admin_notes : null
+      });
     }
     if (rows.length < page) break;
     from += page;
   }
+  return out;
+}
+
+function catalogPidSet(units: CatalogUnitRow[]): Set<string> {
+  const set = new Set<string>();
+  for (const u of units) {
+    const m = u.stock_number.match(MSF_STOCK_RE);
+    if (m) set.add(m[1]!);
+  }
   return set;
 }
 
+function isAlreadyInCatalog(
+  pid: string,
+  stockNumber: string,
+  catalogPids: Set<string>,
+  catalogUnitIds: Set<string>,
+  statusByPid: Map<string, string>,
+  importedUnitIdByPid: Map<string, string>
+): boolean {
+  if (statusByPid.get(pid) === "posted") return true;
+  if (catalogPids.has(pid)) return true;
+  const stockPid = stockNumber.match(MSF_STOCK_RE)?.[1];
+  if (stockPid && catalogPids.has(stockPid)) return true;
+  const linkedId = importedUnitIdByPid.get(pid);
+  if (linkedId && catalogUnitIds.has(linkedId)) return true;
+  return false;
+}
+
+async function markRemovedFromMsfAsSold(
+  supabase: SupabaseClient,
+  activePids: Set<string>,
+  catalogUnits: CatalogUnitRow[],
+  importedUnitIdByPid: Map<string, string>
+): Promise<number> {
+  const soldNote = msfSoldSyncNoteLine();
+  const toUpdate = new Map<string, CatalogUnitRow>();
+
+  for (const unit of catalogUnits) {
+    const m = unit.stock_number.match(MSF_STOCK_RE);
+    if (m && !activePids.has(m[1]!)) toUpdate.set(unit.id, unit);
+  }
+  for (const [pid, unitId] of importedUnitIdByPid) {
+    if (!activePids.has(pid)) {
+      const unit = catalogUnits.find((u) => u.id === unitId);
+      if (unit) toUpdate.set(unitId, unit);
+    }
+  }
+
+  let marked = 0;
+  for (const unit of toUpdate.values()) {
+    const nextNotes = appendAdminNote(unit.admin_notes, soldNote);
+    const needsStatus = unit.status !== "Sold";
+    const needsNote = nextNotes !== (unit.admin_notes?.trim() ?? "");
+    if (!needsStatus && !needsNote) continue;
+
+    const payload: Record<string, unknown> = { admin_notes: nextNotes };
+    if (needsStatus) payload.status = "Sold";
+
+    const { error } = await supabase.from("inventory_units").update(payload).eq("id", unit.id);
+    if (error) throw new Error(error.message);
+    marked += 1;
+  }
+  return marked;
+}
+
+async function removePendingOffMsf(supabase: SupabaseClient, activePids: Set<string>): Promise<number> {
+  let removed = 0;
+  const pageSize = 500;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("inventory_import_queue")
+      .select("id,source_product_id")
+      .eq("import_source", IMPORT_SOURCE)
+      .eq("status", "pending")
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    if (rows.length === 0) break;
+
+    const ids = rows
+      .filter((r) => r && typeof r.source_product_id === "string" && !activePids.has(r.source_product_id))
+      .map((r) => r.id)
+      .filter((id): id is string => typeof id === "string");
+
+    if (ids.length > 0) {
+      const { data: delRows, error: delErr } = await supabase
+        .from("inventory_import_queue")
+        .delete()
+        .in("id", ids)
+        .select("id");
+      if (delErr) throw new Error(delErr.message);
+      removed += delRows?.length ?? 0;
+    }
+
+    if (rows.length < pageSize) break;
+  }
+  return removed;
+}
+
 async function runSync(supabase: SupabaseClient) {
-  const statusByPid = await loadQueueStatusByPid(supabase);
-  const catalogMsfStocks = await loadCatalogMsfStockNumbers(supabase);
+  const { statusByPid, importedUnitIdByPid } = await loadQueueState(supabase);
+  const catalogUnits = await loadCatalogUnits(supabase);
+  const catalogPids = catalogPidSet(catalogUnits);
+  const catalogUnitIds = new Set(catalogUnits.map((u) => u.id));
 
   const firstUrl = `${STORE_BASE}?per_page=${PER_PAGE}&page=1`;
   const { data: firstPage, total, totalPages } = await fetchJson(firstUrl);
@@ -238,6 +366,7 @@ async function runSync(supabase: SupabaseClient) {
     await new Promise((r) => setTimeout(r, 150));
   }
 
+  const activePids = new Set<string>();
   const byPid = new Map<string, QueueRow>();
   let importedNew = 0;
   let alreadyPending = 0;
@@ -253,18 +382,27 @@ async function runSync(supabase: SupabaseClient) {
       skippedUnmapped += 1;
       continue;
     }
+    activePids.add(mapped.source_product_id);
     if (byPid.has(mapped.source_product_id)) {
       duplicateWooInFetch += 1;
     }
+
+    const inCatalog = isAlreadyInCatalog(
+      mapped.source_product_id,
+      mapped.stock_number,
+      catalogPids,
+      catalogUnitIds,
+      statusByPid,
+      importedUnitIdByPid
+    );
+
+    if (inCatalog) {
+      if (statusByPid.get(mapped.source_product_id) === "posted") ignoredPosted += 1;
+      else ignoredInCatalog += 1;
+      continue;
+    }
+
     const st = statusByPid.get(mapped.source_product_id);
-    if (st === "posted") {
-      ignoredPosted += 1;
-      continue;
-    }
-    if (catalogMsfStocks.has(mapped.stock_number)) {
-      ignoredInCatalog += 1;
-      continue;
-    }
     if (st === "pending") {
       alreadyPending += 1;
       continue;
@@ -291,8 +429,8 @@ async function runSync(supabase: SupabaseClient) {
   }
 
   let removedStale = 0;
-  if (catalogMsfStocks.size > 0) {
-    const stocks = [...catalogMsfStocks];
+  if (catalogPids.size > 0) {
+    const stocks = [...catalogPids].map((pid) => `MSF-${pid}`);
     const ch = 100;
     for (let i = 0; i < stocks.length; i += ch) {
       const part = stocks.slice(i, i + ch);
@@ -308,6 +446,9 @@ async function runSync(supabase: SupabaseClient) {
     }
   }
 
+  const markedSoldOffMsf = await markRemovedFromMsfAsSold(supabase, activePids, catalogUnits, importedUnitIdByPid);
+  const removedPendingOffMsf = await removePendingOffMsf(supabase, activePids);
+
   return {
     wooProducts: allProducts.length,
     importedNew,
@@ -318,6 +459,8 @@ async function runSync(supabase: SupabaseClient) {
     skippedUnmapped,
     duplicateWooInFetch,
     removedStale,
+    markedSoldOffMsf,
+    removedPendingOffMsf,
     upserted: toUpsert.length
   };
 }

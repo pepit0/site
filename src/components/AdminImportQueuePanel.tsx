@@ -85,6 +85,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
 
   const [pubCost, setPubCost] = useState("0");
   const [pubStatus, setPubStatus] = useState<InventoryStatus>("Available");
+  const [pubAdminNotes, setPubAdminNotes] = useState("");
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
 
   const applyRowToForm = (row: InventoryImportQueueRow | null) => {
@@ -101,6 +102,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       setEditCategory("Motorcycle");
       setPubCost("0");
       setPubStatus("Available");
+      setPubAdminNotes("");
       return;
     }
     setEditStock(row.stock_number);
@@ -111,6 +113,7 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     setEditCategory(row.category);
     setPubCost("0");
     setPubStatus("Available");
+    setPubAdminNotes("");
   };
 
   const fetchRows = useCallback(async (tab: QueueTab): Promise<InventoryImportQueueRow[]> => {
@@ -345,7 +348,8 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           category: editCategory,
           cost,
           status: pubStatus,
-          photo_paths: []
+          photo_paths: [],
+          admin_notes: pubAdminNotes.trim() || null
         })
         .select("*")
         .single();
@@ -484,7 +488,10 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       ) : null}
 
       <div className="admin-sell-queueLayout">
-        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel" aria-label="Import queue list">
+        <div
+          className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel admin-invListPanel"
+          aria-label="Import queue list"
+        >
           <h3 className="sell-ride-applyPhotosTitle">
             {queueTab === "pending" ? "Pending" : queueTab === "posted" ? "Posted" : "Skipped"}
           </h3>
@@ -493,7 +500,8 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           ) : rows.length === 0 ? (
             <p className="sell-ride-applyMuted">No rows in this queue.</p>
           ) : (
-            <ul className="admin-sell-queueItems">
+            <div className="admin-invUnitListScroll">
+              <ul className="admin-sell-queueItems">
               {rows.map((r) => {
                 const title = rowTitle(r);
                 const active = r.id === selectedId;
@@ -513,11 +521,15 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
                   </li>
                 );
               })}
-            </ul>
+              </ul>
+            </div>
           )}
         </div>
 
-        <div className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail" aria-label="Import row detail">
+        <div
+          className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueDetail admin-invDetailPanel"
+          aria-label="Import row detail"
+        >
           {!selected ? (
             <p className="sell-ride-applyMuted">Select a row to view details.</p>
           ) : queueTab === "posted" ? (
@@ -774,6 +786,19 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div className="form-row sell-ride-applyFullWidth">
+                    <label className="loginLabel" htmlFor="iq-admin-notes">
+                      Internal notes
+                    </label>
+                    <textarea
+                      id="iq-admin-notes"
+                      className="loginInput textarea"
+                      rows={3}
+                      value={pubAdminNotes}
+                      onChange={(e) => setPubAdminNotes(e.target.value)}
+                      placeholder="Admin-only — not shown on the public listing"
+                    />
                   </div>
                 </div>
                 <p className="sell-ride-applyHint">Uses the vehicle fields above. Images are fetched from the source URLs (CORS must allow your site).</p>
