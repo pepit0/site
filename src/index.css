@@ -3886,6 +3886,50 @@ img.vehicle-category-icon {
   gap: 0.65rem;
 }
 
+.site-chat--handoffClosing .site-chatFab {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.92);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.site-chatPanel--handoffOut {
+  animation: site-chat-handoff-out 0.34s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes site-chat-handoff-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+.site-chatHandoffBridge {
+  gap: 0.5rem;
+}
+
+.site-chatHandoffLead {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.site-chatHandoffHint {
+  margin: 0;
+  max-width: 16rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .inventory-detailApplyBtn {
   display: block;
   width: 100%;

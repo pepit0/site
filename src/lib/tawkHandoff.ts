@@ -1,6 +1,8 @@
 /** Open Tawk after site intake (name, phone, optional unit). */
 
 export type TawkHandoffParams = {
+  /** Delay showing Tawk until intake panel fade starts (ms). */
+  revealDelayMs?: number;
   name: string;
   phone: string;
   unitLabel?: string | null;
@@ -36,14 +38,20 @@ export function waitForTawkApi(timeoutMs = 15_000): Promise<boolean> {
   });
 }
 
-function revealTawkWidget(): void {
+function revealTawkWidget(delayMs = 0): void {
   const api = getApi();
   if (!api) return;
-  api.showWidget?.();
-  // Brief delay helps when the widget was previously hidden via hideWidget().
-  window.setTimeout(() => {
-    api.maximize?.();
-  }, 120);
+  const open = () => {
+    api.showWidget?.();
+    window.setTimeout(() => {
+      api.maximize?.();
+    }, 120);
+  };
+  if (delayMs > 0) {
+    window.setTimeout(open, delayMs);
+    return;
+  }
+  open();
 }
 
 /**
@@ -72,7 +80,7 @@ export async function openTawkHandoff(params: TawkHandoffParams): Promise<boolea
       if (settled) return;
       settled = true;
       if (ok) {
-        revealTawkWidget();
+        revealTawkWidget(params.revealDelayMs ?? 0);
       }
       resolve(ok);
     };

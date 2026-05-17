@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { fetchInventoryUnitsByIds, type ChatSuggestedUnit } from "../../lib/chatSuggestInventory";
 import { buildUnitPickIds } from "../../lib/recentInventoryViews";
 import { submitPublicChatLead } from "../../lib/submitChatLead";
+import { CHAT_HANDOFF_FADE_MS } from "../../lib/chatTheme";
 import { openTawkHandoff } from "../../lib/tawkHandoff";
 import { useTawkAgentStatus } from "../../hooks/useTawkAgentStatus";
 
@@ -99,6 +100,7 @@ export function OfflineChatWidget() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [handoffClosing, setHandoffClosing] = useState(false);
 
   const resetFlow = useCallback((opts?: { keepHandoff?: boolean }) => {
     setStep("contact");
@@ -110,6 +112,7 @@ export function OfflineChatWidget() {
     setMessage("");
     setError(null);
     setSubmitting(false);
+    setHandoffClosing(false);
     if (!opts?.keepHandoff) {
       setHandedOffToTawk(false);
     }
@@ -166,14 +169,30 @@ export function OfflineChatWidget() {
     });
   };
 
-  const handoffToTawk = async (unit: ChatSuggestedUnit | null): Promise<boolean> => {
+  const handoffToTawk = async (unit: ChatSuggestedUnit | null, revealDelayMs?: number): Promise<boolean> => {
     const label = unit ? unitPickLabel(unit) : null;
     return openTawkHandoff({
       name,
       phone,
       unitLabel: label,
-      unitId: unit?.id ?? null
+      unitId: unit?.id ?? null,
+      revealDelayMs
     });
+  };
+
+  const finishTawkHandoff = async (unit: ChatSuggestedUnit | null) => {
+    setHandoffClosing(true);
+    const fadeMs = CHAT_HANDOFF_FADE_MS;
+    const opened = await handoffToTawk(unit, Math.round(fadeMs * 0.35));
+    if (!opened) {
+      setHandoffClosing(false);
+      return false;
+    }
+    await new Promise((r) => window.setTimeout(r, fadeMs));
+    setHandedOffToTawk(true);
+    setOpen(false);
+    resetFlow({ keepHandoff: true });
+    return true;
   };
 
   const continueAfterUnitPick = async (unit: ChatSuggestedUnit | null, skipped: boolean) => {
@@ -196,14 +215,8 @@ export function OfflineChatWidget() {
         : "Handed off to Tawk — no specific unit selected"
     );
 
-    const opened = await handoffToTawk(unit);
-
-    if (opened) {
-      setHandedOffToTawk(true);
-      setOpen(false);
-      resetFlow({ keepHandoff: true });
-      return;
-    }
+    const ok = await finishTawkHandoff(unit);
+    if (ok) return;
 
     setStep("handoffRetry");
   };
@@ -211,13 +224,8 @@ export function OfflineChatWidget() {
   const retryTawkHandoff = async () => {
     setError(null);
     setStep("handoff");
-    const opened = await handoffToTawk(selectedUnit);
-    if (opened) {
-      setHandedOffToTawk(true);
-      setOpen(false);
-      resetFlow({ keepHandoff: true });
-      return;
-    }
+    const ok = await finishTawkHandoff(selectedUnit);
+    if (ok) return;
     setError("Chat still isn’t ready. Refresh the page or call us below.");
     setStep("handoffRetry");
   };
@@ -271,13 +279,13 @@ export function OfflineChatWidget() {
 
   return (
     <div
-      className="site-chat"
+      className={`site-chat${handoffClosing ? " site-chat--handoffClosing" : ""}`}
       data-tawk-configured={tawkConfigured ? "true" : "false"}
       data-tawk-ready={tawkReady ? "true" : "false"}
     >
       {open ? (
         <div
-          className="site-chatPanel"
+          className={`site-chatPanel${handoffClosing ? " site-chatPanel--handoffOut" : ""}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="site-chat-title"
@@ -342,9 +350,22 @@ export function OfflineChatWidget() {
             ) : null}
 
             {step === "loading" || step === "handoff" ? (
-              <div className="site-chatLoading" role="status" aria-live="polite">
+              <div
+                className={`site-chatLoading${step === "handoff" ? " site-chatHandoffBridge" : ""}`}
+                role="status"
+                aria-live="polite"
+              >
                 <span className="site-chatSpinner" aria-hidden />
-                <p>{step === "handoff" ? "Opening live chat…" : "Loading…"}</p>
+                {step === "handoff" ? (
+                  <>
+                    <p className="site-chatHandoffLead">Opening live chat</p>
+                    <p className="site-chatHandoffHint">
+                      Same team and assistant — continuing in our chat window…
+                    </p>
+                  </>
+                ) : (
+                  <p>Loading…</p>
+                )}
               </div>
             ) : null}
 
