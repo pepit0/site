@@ -1821,6 +1821,42 @@ p {
   margin-bottom: 0.65rem;
 }
 
+.admin-importQueueHeadingActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-importMassPostDefaults {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.admin-importMassPostDefaultsLead {
+  margin: 0 0 0.65rem;
+}
+
+.admin-importPendingListHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-importPendingListHead .sell-ride-applyPhotosTitle {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .admin-importSyncBtn {
   padding: 0.28rem 0.65rem;
   font-size: 0.78rem;

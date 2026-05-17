@@ -134,6 +134,12 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     });
   };
 
+  const pendingRows = useMemo(() => rows.filter((r) => r.status === "pending"), [rows]);
+  const allPendingSelected =
+    pendingRows.length > 0 && pendingRows.every((r) => checkedIds.has(r.id));
+
+  const selectAllPending = () => setCheckedIds(new Set(pendingRows.map((r) => r.id)));
+
   const setQueueTabAndReset = (tab: QueueTab) => {
     setQueueTab(tab);
     setSelectedId(null);
@@ -340,18 +346,22 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
     setPublishing(false);
   };
 
-  const runMassSubmit = () => {
-    const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "pending");
+  const executeMassPost = (targets: InventoryImportQueueRow[], confirmLabel: "selected" | "all pending") => {
     if (targets.length === 0) return;
 
     const cost = Number.parseFloat(pubCost);
     if (!Number.isFinite(cost) || cost < 0) {
-      setMassError("Enter a valid cost in the post settings below (or in the detail panel).");
+      setMassError("Enter a valid cost in the mass post settings.");
       return;
     }
 
+    const countLabel =
+      confirmLabel === "all pending"
+        ? `all ${targets.length} pending import${targets.length === 1 ? "" : "s"}`
+        : `${targets.length} selected import${targets.length === 1 ? "" : "s"}`;
+
     const ok = window.confirm(
-      `Post ${targets.length} selected import${targets.length === 1 ? "" : "s"} to the catalog?\n\n` +
+      `Post ${countLabel} to the catalog?\n\n` +
         `Each row uses its queue stock # and vehicle fields. Shared cost ($${cost}) and status (${pubStatus}) apply. ` +
         `Photos are downloaded from MSF source URLs.\n\n` +
         `This cannot be undone in one step. Rows that fail (duplicate stock, missing photos) are listed in the summary.\n\n` +
@@ -387,6 +397,15 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
       setMassSubmitting(false);
     })();
   };
+
+  const runMassSubmit = () => {
+    executeMassPost(
+      rows.filter((r) => checkedIds.has(r.id) && r.status === "pending"),
+      "selected"
+    );
+  };
+
+  const postAllPending = () => executeMassPost(pendingRows, "all pending");
 
   const runMassSkip = () => {
     const targets = rows.filter((r) => checkedIds.has(r.id) && r.status === "pending");
@@ -428,14 +447,26 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
         <h2 id="admin-import-heading" className="sell-ride-applySectionTitle admin-sell-queueIntegratedTitle">
           MSF import queue
         </h2>
-        <button
-          type="button"
-          className="btn btn-secondary admin-importSyncBtn"
-          disabled={msfSyncing || publishing || actionBusy}
-          onClick={() => void runMsfSync()}
-        >
-          {msfSyncing ? "Importing…" : "Import new units"}
-        </button>
+        <div className="admin-importQueueHeadingActions">
+          <button
+            type="button"
+            className="btn btn-secondary admin-importSyncBtn"
+            disabled={msfSyncing || publishing || actionBusy || massSubmitting || massSkipping}
+            onClick={() => void runMsfSync()}
+          >
+            {msfSyncing ? "Importing…" : "Import new units"}
+          </button>
+          {queueTab === "pending" && pendingRows.length > 0 ? (
+            <button
+              type="button"
+              className="btn btn-primary admin-importSyncBtn"
+              disabled={msfSyncing || publishing || actionBusy || massSubmitting || massSkipping || loading}
+              onClick={postAllPending}
+            >
+              {massSubmitting ? "Posting…" : `Post all pending (${pendingRows.length})`}
+            </button>
+          ) : null}
+        </div>
       </div>
       <p className="admin-invPanelIntro">
         Pull new listings from motorsportsfinancing.ca into the pending queue. Units already in your catalog or already
@@ -500,6 +531,57 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
         </div>
       ) : null}
 
+      {queueTab === "pending" && pendingRows.length > 0 && checkedIds.size === 0 ? (
+        <div className="admin-importMassPostDefaults" role="region" aria-label="Mass post settings">
+          <p className="sell-ride-applyHint admin-importMassPostDefaultsLead">
+            Set cost and status for <strong>Post all pending</strong> or after you select rows.
+          </p>
+          <div className="admin-massSubmitBarGrid">
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="iq-mass-cost-all">
+                Cost (CAD)
+              </label>
+              <input
+                id="iq-mass-cost-all"
+                className="loginInput"
+                type="number"
+                min={0}
+                step="0.01"
+                value={pubCost}
+                onChange={(e) => setPubCost(e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <label className="loginLabel" htmlFor="iq-mass-status-all">
+                Status
+              </label>
+              <select
+                id="iq-mass-status-all"
+                className="select sell-ride-applySelect"
+                value={pubStatus}
+                onChange={(e) => setPubStatus(e.target.value as InventoryStatus)}
+              >
+                {INVENTORY_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {massError ? (
+            <div className="sell-ride-applyErrorBanner admin-massSubmitBarMessage" role="alert">
+              <p className="sell-ride-applyError">{massError}</p>
+            </div>
+          ) : null}
+          {massResultSummary ? (
+            <p className="admin-massSubmitBarSummary" role="status">
+              {massResultSummary}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {queueTab === "pending" ? (
         <AdminQueueMassSubmitBar
           selectedCount={checkedIds.size}
@@ -509,8 +591,8 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           onMassSkip={runMassSkip}
           massSubmitting={massSubmitting}
           massSkipping={massSkipping}
-          massError={massError}
-          massResultSummary={massResultSummary}
+          massError={checkedIds.size > 0 ? massError : null}
+          massResultSummary={checkedIds.size > 0 ? massResultSummary : null}
           submitLabel="Mass post to catalog"
           skipLabel="Skip selected"
         >
@@ -555,9 +637,21 @@ export function AdminImportQueuePanel({ onInventoryChanged }: AdminImportQueuePa
           className="sell-ride-applyForm admin-sell-queueCard admin-sell-queueListPanel admin-invListPanel"
           aria-label="Import queue list"
         >
-          <h3 className="sell-ride-applyPhotosTitle">
-            {queueTab === "pending" ? "Pending" : queueTab === "posted" ? "Posted" : "Skipped"}
-          </h3>
+          <div className="admin-importPendingListHead">
+            <h3 className="sell-ride-applyPhotosTitle">
+              {queueTab === "pending" ? "Pending" : queueTab === "posted" ? "Posted" : "Skipped"}
+            </h3>
+            {queueTab === "pending" && pendingRows.length > 0 ? (
+              <button
+                type="button"
+                className="btn btn-secondary admin-invMiniBtn"
+                disabled={massSubmitting || massSkipping}
+                onClick={() => (allPendingSelected ? clearChecked() : selectAllPending())}
+              >
+                {allPendingSelected ? "Deselect all" : `Select all (${pendingRows.length})`}
+              </button>
+            ) : null}
+          </div>
           {loading ? (
             <p className="sell-ride-applyMuted">Loading…</p>
           ) : rows.length === 0 ? (
