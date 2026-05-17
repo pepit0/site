@@ -1,25 +1,30 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { trackPreApprovalLead } from "../lib/metaPixel";
-import { consumePreApprovalConversion } from "../lib/preapprovalConversion";
+import { trackPreApprovalCompleteConversion } from "../lib/metaPixel";
+import {
+  canViewPreApprovalCompletePage,
+  hasPreApprovalLeadBeenTracked,
+  markPreApprovalLeadTracked
+} from "../lib/preapprovalConversion";
 import { Seo } from "../seo/Seo";
 
 /**
- * Dedicated conversion URL for Meta Ads (e.g. custom conversion: URL = /pre-approval/complete).
+ * Form completion page for Meta (`fbq('track', 'Lead')` + PageView on this URL).
  * Only reachable right after a successful application submit.
  */
 export function PreApprovalCompletePage() {
   const navigate = useNavigate();
-  const tracked = useRef(false);
 
   useEffect(() => {
-    if (!consumePreApprovalConversion()) {
+    if (!canViewPreApprovalCompletePage()) {
       navigate("/pre-approval", { replace: true });
       return;
     }
-    if (tracked.current) return;
-    tracked.current = true;
-    trackPreApprovalLead();
+    if (hasPreApprovalLeadBeenTracked()) return;
+
+    // Equivalent to Meta’s snippet on the form completion page: fbq('track', 'Lead');
+    trackPreApprovalCompleteConversion();
+    markPreApprovalLeadTracked();
   }, [navigate]);
 
   return (
