@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { trackPreApprovalCompleteConversion } from "../lib/metaPixel";
+import { trackPreApprovalCompleteConversion } from "../lib/marketingPixels";
 import {
   canViewPreApprovalCompletePage,
   hasPreApprovalLeadBeenTracked,
@@ -9,7 +9,7 @@ import {
 import { Seo } from "../seo/Seo";
 
 /**
- * Form completion page for Meta (`fbq('track', 'Lead')` + PageView on this URL).
+ * Form completion page — Meta Lead + TikTok SubmitForm (after successful submit).
  * Only reachable right after a successful application submit.
  */
 export function PreApprovalCompletePage() {
@@ -22,7 +22,7 @@ export function PreApprovalCompletePage() {
     }
     if (hasPreApprovalLeadBeenTracked()) return;
 
-    // Equivalent to Meta’s snippet on the form completion page: fbq('track', 'Lead');
+    // Meta Lead + TikTok SubmitForm on the thank-you page
     trackPreApprovalCompleteConversion();
     markPreApprovalLeadTracked();
   }, [navigate]);

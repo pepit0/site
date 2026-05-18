@@ -4,7 +4,7 @@ import { useAuth } from "../auth/useAuth";
 import { fetchUserCanManageInventory } from "../lib/inventoryAdminAccess";
 import { supabase } from "../lib/supabase";
 import { isMarketingOnlySite } from "../siteMode";
-import { MetaPixelRouteSync } from "../components/MetaPixelRouteSync";
+import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
 import tLogoUrl from "../assets/Tlogo.png";
@@ -13,7 +13,7 @@ import bikerLogoUrl from "../assets/bikerlogo.png";
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
   return (
     <div className="site-shell">
-      <MetaPixelRouteSync />
+      <MarketingPixelsRouteSync />
       <header className="site-header">
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>

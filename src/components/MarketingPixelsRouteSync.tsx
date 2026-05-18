@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { trackMetaPageView } from "../lib/metaPixel";
+import { trackMarketingPageView } from "../lib/marketingPixels";
 
 /**
- * Sends PageView on client-side navigations so Meta sees the real URL (SPA).
- * Skips the first render — index.html already fired the initial PageView.
+ * Sends page views on client-side navigations (Meta + TikTok).
+ * Skips the first render — index.html already fired the initial page load.
  */
-export function MetaPixelRouteSync() {
+export function MarketingPixelsRouteSync() {
   const { pathname, search } = useLocation();
   const skipNext = useRef(true);
 
@@ -15,7 +15,7 @@ export function MetaPixelRouteSync() {
       skipNext.current = false;
       return;
     }
-    trackMetaPageView();
+    trackMarketingPageView();
   }, [pathname, search]);
 
   return null;

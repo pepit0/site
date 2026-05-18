@@ -42,7 +42,7 @@ export function trackPreApprovalLead(): void {
 }
 
 /**
- * Lead on the thank-you page. PageView for this URL is sent by {@link MetaPixelRouteSync}
+ * Lead on the thank-you page. PageView for this URL is sent by {@link MarketingPixelsRouteSync}
  * on client navigation (or by index.html on a full reload).
  */
 export function trackPreApprovalCompleteConversion(): void {
