@@ -7,10 +7,13 @@ import { isMarketingOnlySite } from "../siteMode";
 import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
+import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
+  const { label: preapprovalNavLabel, hasResumeDraft } = usePreapprovalNavCta();
+
   return (
     <div className="site-shell">
       <MarketingPixelsRouteSync />
@@ -38,9 +41,11 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
             </NavLink>
             <NavLink
               to="/pre-approval"
-              className={({ isActive }) => `site-navCta${isActive ? " site-navCtaActive" : ""}`}
+              className={({ isActive }) =>
+                `site-navCta${hasResumeDraft ? " site-navCta--resume" : ""}${isActive ? " site-navCtaActive" : ""}`
+              }
             >
-              Get pre-approved
+              {preapprovalNavLabel}
             </NavLink>
             {navVariant === "crm" ? <SiteNavCrm /> : <SiteNavMarketing />}
           </nav>

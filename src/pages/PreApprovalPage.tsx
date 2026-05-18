@@ -1,12 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { VehicleSilhouette } from "../components/VehicleSilhouette";
+import { VehicleCategoryPhoto } from "../components/VehicleCategoryPhoto";
+import {
+  PREAPPROVAL_CREDIT_BAND_SUBTEXT,
+  PREAPPROVAL_CREDIT_STEP,
+  PREAPPROVAL_CTA,
+  PREAPPROVAL_HERO,
+  PREAPPROVAL_SEO,
+  PREAPPROVAL_SUBMIT_LABEL,
+  PREAPPROVAL_SUBMITTING_LABEL,
+  PREAPPROVAL_WIZARD_INTRO,
+  preapprovalProgressSuffix
+} from "../data/preapprovalCopy";
 import { PREAPPROVAL_FAQ, preapprovalFaqJsonLd } from "../data/preapprovalFaq";
 import { parseInventoryPublicRow, VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
 import { formatInventoryUnitInterest } from "../lib/inventoryUnitInterest";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
 import { markPreApprovalConversion } from "../lib/preapprovalConversion";
+import {
+  clearPreapprovalDraft,
+  readPreapprovalDraft,
+  savePreapprovalDraft,
+  type PreapprovalWizardState
+} from "../lib/preapprovalDraft";
 import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead";
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
@@ -48,7 +65,8 @@ const CREDIT_BAND_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "great_670_750", label: "Great", hint: "670–750" },
   { value: "good_620_670", label: "Good", hint: "620–670" },
   { value: "decent_550_619", label: "Decent", hint: "550–619" },
-  { value: "poor_300_549", label: "Poor", hint: "300–549" }
+  { value: "poor_300_549", label: "Poor", hint: "300–549" },
+  { value: "not_sure", label: "I'm really not sure", hint: "No problem" }
 ];
 
 const ADDRESS_TENURE_OPTIONS: { value: string; label: string }[] = [
@@ -117,6 +135,22 @@ function requiresEmploymentType(status: EmploymentStatus | ""): boolean {
 
 function requiresEmployerAndTitle(status: EmploymentStatus | ""): boolean {
   return status === "employed" || status === "self_employed";
+}
+
+function loadInitialFromDraft(): { step: number; skipVehicleStep: boolean; wizard: WizardState } | null {
+  const draft = readPreapprovalDraft();
+  if (!draft) return null;
+  const w = draft.wizard;
+  return {
+    step: draft.step,
+    skipVehicleStep: draft.skipVehicleStep,
+    wizard: {
+      ...w,
+      employmentStatus: w.employmentStatus as WizardState["employmentStatus"],
+      employmentType: w.employmentType as WizardState["employmentType"],
+      tradeIntent: w.tradeIntent
+    }
+  };
 }
 
 const emptyWizard = (): WizardState => ({
@@ -257,9 +291,11 @@ export function PreApprovalPage() {
   const [searchParams] = useSearchParams();
   const unitParam = searchParams.get("unit")?.trim() || null;
 
-  const [step, setStep] = useState(0);
-  const [w, setW] = useState<WizardState>(() => emptyWizard());
-  const [skipVehicleStep, setSkipVehicleStep] = useState(false);
+  const [step, setStep] = useState(() => loadInitialFromDraft()?.step ?? 0);
+  const [w, setW] = useState<WizardState>(() => loadInitialFromDraft()?.wizard ?? emptyWizard());
+  const [skipVehicleStep, setSkipVehicleStep] = useState(
+    () => loadInitialFromDraft()?.skipVehicleStep ?? false
+  );
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const otherIncomeParsed = parseMoney(w.otherIncome);
@@ -289,6 +325,18 @@ export function PreApprovalPage() {
       cancelled = true;
     };
   }, [unitParam]);
+
+  useEffect(() => {
+    if (submitting) return;
+    const handle = window.setTimeout(() => {
+      savePreapprovalDraft({
+        step,
+        skipVehicleStep,
+        wizard: w as PreapprovalWizardState
+      });
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [w, step, skipVehicleStep, submitting]);
 
   const update = useCallback(<K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setW((prev) => ({ ...prev, [key]: value }));
@@ -404,7 +452,8 @@ export function PreApprovalPage() {
       return;
     }
 
-    markPreApprovalConversion();
+    clearPreapprovalDraft();
+    markPreApprovalConversion(w.creditScoreBand);
     navigate("/pre-approval/complete", { replace: true });
   };
 
@@ -415,33 +464,51 @@ export function PreApprovalPage() {
     empStatus === "self_employed" ? "Business name" : empStatus === "employed" ? "Employer" : "Employer";
   const jobLabel = empStatus === "self_employed" ? "Your role" : "Job title";
 
+  const primaryCtaLabel =
+    step < TOTAL_STEPS - 1 ? PREAPPROVAL_CTA.nextByStep[step] : PREAPPROVAL_SUBMIT_LABEL;
+  const primaryCtaHint = PREAPPROVAL_CTA.nextHintByStep[step];
+  const step0Blocked = step === 0 && !w.hasChosenVehicle;
+
   return (
     <div className="preapproval">
-      <Seo
-        title="Credit pre-approval"
-        description="Apply for powersports financing: motorcycles, bikes, snowmobiles, sleds, ATVs, side-by-sides, jet skis, boats, trailers, and RVs. Edmonton-based team serving riders across Canada."
-        path="/pre-approval"
-      />
+      <Seo title={PREAPPROVAL_SEO.title} description={PREAPPROVAL_SEO.description} path="/pre-approval" />
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(preapprovalFaqJsonLd())}</script>
       </Helmet>
-      <header className="page-header">
-        <h1 className="page-title">Credit pre-approval</h1>
-        <p className="page-subtitle">
-          Financing for sleds, bikes, quads, PWCs, and more. A few short steps. This is not a final credit decision—we
-          use this to prepare options before we reach out.
-        </p>
-      </header>
+      <div className="preapproval-shell">
+        <div className="preapproval-mainGrid">
+          <header className="preapproval-hero">
+            <p className="preapproval-eyebrow">{PREAPPROVAL_HERO.eyebrow}</p>
+            <h1 className="preapproval-heroTitle">{PREAPPROVAL_HERO.h1}</h1>
+            <p className="preapproval-heroLead">{PREAPPROVAL_HERO.lead}</p>
+            <ul className="preapproval-trustList" aria-label="What's included">
+              {PREAPPROVAL_HERO.trustBullets.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="preapproval-legal">{PREAPPROVAL_HERO.compliance}</p>
+            <p className="preapproval-heroActions">
+              <Link to="/inventory" className="preapproval-heroLink">
+                {PREAPPROVAL_HERO.inventoryLink}
+              </Link>
+            </p>
+          </header>
 
-      <div className="preapproval-form card card-pad preapproval-wizard">
-        <div className="preapproval-wizardProgressTrack" aria-hidden>
-          <div className="preapproval-wizardProgressFill" style={{ width: `${progress}%` }} />
-        </div>
-        <p className="preapproval-wizardProgressLabel">
-          Step {step + 1} of {TOTAL_STEPS}
-        </p>
+          <div className="preapproval-form card card-pad preapproval-wizard">
+            <div className="preapproval-wizardIntro">
+              <h2 className="preapproval-wizardIntroTitle">{PREAPPROVAL_WIZARD_INTRO.title}</h2>
+              <p className="preapproval-wizardIntroSubline">{PREAPPROVAL_WIZARD_INTRO.subline}</p>
+              <p className="preapproval-wizardIntroOutcome">{PREAPPROVAL_WIZARD_INTRO.outcome}</p>
+            </div>
+            <div className="preapproval-wizardProgressTrack" aria-hidden>
+              <div className="preapproval-wizardProgressFill" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="preapproval-wizardProgressLabel">
+              Step {step + 1} of {TOTAL_STEPS}
+              {preapprovalProgressSuffix(step)}
+            </p>
 
-        {errorMessage ? (
+            {errorMessage ? (
           <p className="preapproval-error" role="alert">
             {errorMessage}
           </p>
@@ -474,7 +541,7 @@ export function PreApprovalPage() {
                   }`}
                   onClick={() => selectVehicle(cat)}
                 >
-                  <VehicleSilhouette category={cat} className="inventory-placeholderSvg--compact" />
+                  <VehicleCategoryPhoto category={cat} />
                   {cat}
                 </button>
               ))}
@@ -810,28 +877,30 @@ export function PreApprovalPage() {
 
         {step === 4 ? (
           <>
-            <h2 className="preapproval-wizardStepTitle">Credit score (estimate)</h2>
-            <p className="preapproval-wizardHint">
-              If you’re not sure, your best guess still helps us line up realistic options.
-            </p>
+            <h2 className="preapproval-wizardStepTitle">{PREAPPROVAL_CREDIT_STEP.title}</h2>
+            <p className="preapproval-wizardHint">{PREAPPROVAL_CREDIT_STEP.hint}</p>
             <div
               className="preapproval-tierGrid"
               role="radiogroup"
               aria-label="Estimated credit score range"
             >
-              {CREDIT_BAND_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={w.creditScoreBand === opt.value}
-                  className={`preapproval-tierBtn${w.creditScoreBand === opt.value ? " preapproval-tierBtnActive" : ""}`}
-                  onClick={() => update("creditScoreBand", opt.value)}
-                >
-                  <span className="preapproval-tierTitle">{opt.label}</span>
-                  <span className="preapproval-tierHint">{opt.hint}</span>
-                </button>
-              ))}
+              {CREDIT_BAND_OPTIONS.map((opt) => {
+                const subtext = PREAPPROVAL_CREDIT_BAND_SUBTEXT[opt.value];
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={w.creditScoreBand === opt.value}
+                    className={`preapproval-tierBtn${opt.value === "not_sure" ? " preapproval-tierBtn--wide" : ""}${w.creditScoreBand === opt.value ? " preapproval-tierBtnActive" : ""}`}
+                    onClick={() => update("creditScoreBand", opt.value)}
+                  >
+                    <span className="preapproval-tierTitle">{opt.label}</span>
+                    <span className="preapproval-tierHint">{opt.hint}</span>
+                    {subtext ? <span className="preapproval-tierSubtext">{subtext}</span> : null}
+                  </button>
+                );
+              })}
             </div>
           </>
         ) : null}
@@ -1017,19 +1086,32 @@ export function PreApprovalPage() {
           </div>
           <div className="preapproval-wizardNavEnd">
             {step < TOTAL_STEPS - 1 ? (
-              <button type="button" className="btn btn-primary" onClick={goNext}>
-                Next
+              <button
+                type="button"
+                className="btn btn-primary preapproval-wizardNavPrimary"
+                onClick={goNext}
+                disabled={step0Blocked || submitting}
+              >
+                {primaryCtaLabel}
               </button>
             ) : (
-              <button type="button" className="btn btn-primary" disabled={submitting} onClick={() => void onSubmit()}>
-                {submitting ? "Submitting…" : "Submit application"}
+              <button
+                type="button"
+                className="btn btn-primary preapproval-wizardNavPrimary"
+                disabled={submitting}
+                onClick={() => void onSubmit()}
+              >
+                {submitting ? PREAPPROVAL_SUBMITTING_LABEL : primaryCtaLabel}
               </button>
             )}
+            <p className="preapproval-ctaHint" role="note">
+              {step0Blocked ? PREAPPROVAL_CTA.step0BlockedHint : primaryCtaHint}
+            </p>
           </div>
         </div>
-      </div>
-
-      <section className="preapproval-faq card card-pad" aria-labelledby="preapproval-faq-heading">
+          </div>
+        </div>
+        <section className="preapproval-faq card card-pad" aria-labelledby="preapproval-faq-heading">
         <h2 id="preapproval-faq-heading" className="preapproval-faqTitle">
           Common questions
         </h2>
@@ -1041,7 +1123,9 @@ export function PreApprovalPage() {
             </div>
           ))}
         </dl>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
+
