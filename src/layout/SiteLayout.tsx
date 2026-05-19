@@ -7,6 +7,7 @@ import { isMarketingOnlySite } from "../siteMode";
 import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
+import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
@@ -27,12 +28,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
             <NavLink to="/" className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`} end>
               Home
             </NavLink>
-            <NavLink
-              to="/inventory"
-              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
-            >
-              Inventory
-            </NavLink>
+            <SiteNavInventoryDropdown />
             <NavLink
               to="/sell-your-ride"
               className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}

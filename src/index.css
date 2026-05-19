@@ -177,6 +177,94 @@ p {
   background: var(--surface);
 }
 
+.site-navDropdown {
+  position: relative;
+}
+
+.site-navDropdownTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.site-navDropdownChevron {
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0.75;
+  transform: translateY(0.05rem);
+}
+
+.site-navDropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 30;
+  min-width: 11.5rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease;
+}
+
+.site-navDropdownItem {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(var(--radius-sm) - 2px);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.site-navDropdownItem:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.site-navDropdownItemActive {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.site-navDropdown--dismissed .site-navDropdownMenu {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .site-navDropdown:hover:not(.site-navDropdown--dismissed) .site-navDropdownMenu,
+  .site-navDropdown:focus-within:not(.site-navDropdown--dismissed) .site-navDropdownMenu,
+  .site-navDropdown--open:not(.site-navDropdown--dismissed) .site-navDropdownMenu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none) {
+  .site-navDropdown:focus-within:not(.site-navDropdown--dismissed) .site-navDropdownMenu,
+  .site-navDropdown--open:not(.site-navDropdown--dismissed) .site-navDropdownMenu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-navDropdownMenu {
+    transition: none;
+  }
+}
+
 .site-navCta {
   margin-left: 0.25rem;
   padding: 0.5rem 1rem;
