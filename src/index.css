@@ -17,6 +17,8 @@
   --radius-sm: 8px;
   --font: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --max: 1100px;
+  --home-showroom-sidebar-w: min(14.5rem, 42vw);
+  --home-showroom-toggle-w: 1.5rem;
 }
 
 *,
@@ -547,15 +549,39 @@ p {
 .home {
   position: relative;
   isolation: isolate;
-  padding-top: 0.5rem;
+  padding-top: 0;
   padding-bottom: 0;
+}
+
+/* Full-bleed ambience from below the site header through the hero (not only behind the PNG) */
+.home-backdropAmbience {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  margin-left: -50vw;
+  bottom: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 42% at 8% 0%, rgba(240, 93, 34, 0.32) 0%, transparent 62%),
+    radial-gradient(ellipse 85% 40% at 92% 0%, rgba(255, 122, 61, 0.2) 0%, transparent 58%),
+    radial-gradient(ellipse 70% 35% at 50% 0%, rgba(251, 191, 36, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 120% 70% at 50% 92%, rgba(180, 40, 20, 0.12) 0%, transparent 48%),
+    repeating-linear-gradient(
+      112deg,
+      transparent 0,
+      transparent 48px,
+      rgba(240, 93, 34, 0.018) 48px,
+      rgba(240, 93, 34, 0.018) 49px
+    ),
+    linear-gradient(180deg, #161922 0%, #12141a 22%, #0f1116 55%, var(--bg) 100%);
 }
 
 /* In-flow backdrop reserves height so the shared site footer sits below the hero image */
 .home-backdrop {
   position: relative;
   z-index: 0;
-  margin-top: -2rem;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   display: flex;
@@ -564,24 +590,81 @@ p {
   pointer-events: none;
 }
 
-/* Solid band above the photo — entire PNG shows below, uncropped */
+/* Spacer for hero copy overlay — transparent so ambience runs to the header */
 .home-backdropLedger {
+  position: relative;
+  z-index: 1;
   flex: 0 0 clamp(4.5rem, 16vh, 10rem);
   width: 100%;
-  background: var(--bg);
+  background: transparent;
 }
 
 .home-backdropStage {
   position: relative;
+  z-index: 1;
   width: 100%;
   align-self: stretch;
+  overflow: hidden;
+  background: transparent;
 }
 
 .home-backdropImg {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
   pointer-events: none;
+}
+
+/* Ember tint over hero — screen blend; aligned with header via shared .home top edge */
+.home-backdropWarmth {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 100vw;
+  margin-left: -50vw;
+  bottom: 0;
+  pointer-events: none;
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 55% 38% at 0% 0%, rgba(240, 93, 34, 0.5) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 36% at 100% 0%, rgba(255, 122, 61, 0.38) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 0% 85%, rgba(240, 93, 34, 0.45) 0%, transparent 72%),
+    radial-gradient(ellipse 50% 42% at 100% 80%, rgba(255, 122, 61, 0.35) 0%, transparent 68%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-backdropAmbience {
+    background:
+      radial-gradient(ellipse 90% 42% at 8% 0%, rgba(240, 93, 34, 0.24) 0%, transparent 62%),
+      radial-gradient(ellipse 85% 40% at 92% 0%, rgba(255, 122, 61, 0.14) 0%, transparent 58%),
+      linear-gradient(180deg, #161922 0%, #0f1116 45%, var(--bg) 100%);
+  }
+
+  .home-backdropWarmth {
+    opacity: 0.32;
+  }
+}
+
+/* Softens the bottom of the hero into page background + reviews belt */
+.home-backdropFade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  height: clamp(5rem, 22vh, 14rem);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(12, 13, 16, 0.35) 35%,
+    rgba(12, 13, 16, 0.82) 68%,
+    var(--bg) 100%
+  );
 }
 
 /* ——— Home: illustrative review conveyor ——— */
@@ -727,7 +810,7 @@ p {
   position: absolute;
   line-height: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
   overflow: visible;
 }
 
@@ -766,11 +849,138 @@ p {
   overflow: visible;
 }
 
+.home-content .home-contentGrid,
 .home-content .home-hero,
 .home-content .home-actions,
 .home-content a,
 .home-content button {
   pointer-events: auto;
+}
+
+.home-contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 40rem) minmax(10rem, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: start;
+  width: 100%;
+}
+
+.home-lenders {
+  justify-self: start;
+  max-width: 24rem;
+  margin-top: clamp(2.75rem, 6vh, 4.25rem);
+  text-align: center;
+}
+
+/* Desktop: static slot at the far right; padding reserves space for an open showroom panel */
+@media (min-width: 769px) {
+  .home-content {
+    max-width: none;
+    width: 100%;
+    left: 0;
+    transform: none;
+    padding-left: max(1.25rem, calc((100vw - var(--max)) / 2 + 1.25rem));
+    padding-right: calc(var(--home-showroom-sidebar-w) + var(--home-showroom-toggle-w) + 0.85rem);
+    box-sizing: border-box;
+  }
+
+  .home-contentGrid {
+    position: relative;
+    grid-template-columns: minmax(0, 40rem);
+    max-width: none;
+    width: 100%;
+  }
+
+  .home-lenders {
+    position: absolute;
+    top: clamp(2.75rem, 6vh, 4.25rem);
+    right: 0;
+    left: auto;
+    margin-top: 0;
+    max-width: min(26rem, calc(100% - 42rem));
+  }
+}
+
+.home-lendersTagline {
+  margin: 0 auto 0.75rem;
+  max-width: none;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: rgba(244, 246, 250, 0.88);
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    0 1px 2px rgba(0, 0, 0, 0.75),
+    0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.home-lendersLogos {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.65rem, 1.4vw, 1.1rem);
+}
+
+.home-lendersItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+  max-width: 4.25rem;
+}
+
+.home-lendersName {
+  font-size: 0.58rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.home-lendersLogo {
+  display: block;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+/* Prefera wordmark is wide; source had black matte trimmed to alpha */
+.home-lendersLogo--prefera {
+  width: auto;
+  height: 1.65rem;
+  max-width: 4.75rem;
+  min-width: 2.75rem;
+}
+
+.home-lendersItem:has(.home-lendersLogo--prefera) {
+  max-width: 5.25rem;
+}
+
+@media (max-width: 1024px) {
+  .home-contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-lenders {
+    max-width: none;
+    margin-top: 0.75rem;
+  }
+
+  .home-lendersLogos {
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    justify-content: center;
+  }
 }
 
 .home-hero {
@@ -808,7 +1018,7 @@ p {
 }
 
 .home-unitsSidebarDock {
-  --home-sidebar-toggle-w: 1.5rem;
+  --home-sidebar-toggle-w: var(--home-showroom-toggle-w);
   position: fixed;
   z-index: 5;
   top: 4.75rem;
@@ -1013,7 +1223,6 @@ p {
   .home {
     display: flex;
     flex-direction: column;
-    margin-top: -2rem;
   }
 
   .home-backdrop {
@@ -1025,6 +1234,7 @@ p {
     flex: 0 0 3.75rem;
     width: 100vw;
     margin-left: calc(50% - 50vw);
+    background: transparent;
   }
 
   .home-content {
@@ -1042,6 +1252,10 @@ p {
     box-sizing: border-box;
   }
 
+  .home-contentGrid {
+    position: static;
+  }
+
   .home-backdropStage {
     order: 2;
     width: 100vw;
@@ -1052,6 +1266,31 @@ p {
     order: 3;
     width: 100vw;
     margin-left: calc(50% - 50vw);
+  }
+
+  .home-contentGrid {
+    display: block;
+  }
+
+  .home-lenders {
+    position: static;
+    top: auto;
+    right: auto;
+    left: auto;
+    z-index: auto;
+    margin-top: 1.25rem;
+    max-width: none;
+  }
+
+  .home-lendersTagline {
+    color: var(--text-muted);
+    text-shadow: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .home-lendersName {
+    text-shadow: none;
   }
 
   .home-hero {
@@ -3729,6 +3968,56 @@ img.vehicle-category-icon {
   color: var(--text-muted);
 }
 
+.preapproval-completeContact {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.preapproval-completeContactIntro {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preapproval-completeContactList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.preapproval-completeContactList li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.preapproval-completeContactLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.preapproval-completeContactLink {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.preapproval-completeContactLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
 .preapproval-form {
   max-width: none;
 }
@@ -4222,54 +4511,6 @@ img.vehicle-category-icon {
 
 .preapproval-successActions {
   margin-top: 1.5rem;
-}
-
-.preapproval-outcomeBlock {
-  margin: 0 0 1.35rem;
-  padding: 0 0 1.25rem;
-  border-bottom: 1px solid var(--border);
-  text-align: center;
-}
-
-.preapproval-outcomeHeadline {
-  margin: 0 0 0.35rem;
-  font-size: clamp(1.35rem, 4vw, 1.85rem);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.preapproval-outcomeHeadline--approved {
-  color: #6ee7a0;
-}
-
-.preapproval-outcomeHeadline--conditional {
-  color: #b8e986;
-}
-
-.preapproval-outcomeSubline {
-  margin: 0 0 0.65rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.preapproval-outcomeSubline--approved {
-  color: rgba(110, 231, 160, 0.85);
-}
-
-.preapproval-completeLegal {
-  margin: 0;
-  font-size: 0.76rem;
-  line-height: 1.45;
-  color: var(--text-muted);
-}
-
-.preapproval-completeBody {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: var(--text-muted);
 }
 
 /* ——— Auth / staff ——— */

@@ -5,59 +5,54 @@ export type PreapprovalFaqItem = {
 
 export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   {
-    question: "Can I get powersports financing with bad credit?",
+    question: "How does the dream ride request work?",
     answer:
-      "Often, yes. We work with riders across Canada who have decent, poor, or rebuilding credit. This free pre-approval helps us see what may be possible before a lender makes a final decision — we regularly help customers get riding their dream toy."
+      "Fill out the short form with what you're looking for — unit type, budget, and how to reach you. A Temptation Motorsports specialist reviews your details and contacts you by phone to help match you with inventory and financing options across Canada."
   },
   {
     question: "Do you run a credit check when I fill out this form?",
     answer:
-      "Not to start. There is no credit check required to complete your free assessment. We only pull your consumer credit report if you opt in on the last step of the form. Otherwise we review what you submitted and contact you about next steps."
+      "Not to start. There is no credit check required to complete your request. We only pull your consumer credit report if you opt in on the last step. Otherwise we review what you submitted and contact you about next steps."
   },
   {
-    question: "Will this pre-approval hurt my credit score?",
+    question: "Will filling out this form hurt my credit score?",
     answer:
-      "Filling out this form does not require a credit pull unless you choose the optional consent at the end. If you leave that box unchecked, we won't pull your credit report at this stage."
+      "Completing the form does not require a credit pull unless you choose the optional consent at the end. If you leave that box unchecked, we won't pull your credit report at this stage."
   },
   {
-    question: "How fast will I hear back after I apply?",
+    question: "Do you offer no money down financing?",
     answer:
-      "Many riders hear from us within one business day — often sooner. The form only takes a few minutes. We'll reach out by phone to discuss financing options for motorcycles, snowmobiles, ATVs, and other powersports."
+      "We regularly help customers across Canada with no money down options, depending on the unit and program. Tell us what you're looking for in the form and we'll go over what's available when we call."
   },
   {
-    question: "Can I finance a motorcycle or snowmobile with low credit in Canada?",
+    question: "Do you ship powersports units across Canada?",
     answer:
-      "We help Edmonton-area riders and customers nationwide. Whether you're after bike, sled, quad, or PWC financing, start here and tell us what you're looking for — we line up options for a wide range of credit situations."
+      "Yes. We're based in Edmonton and work with riders nationwide. Many customers have their motorcycle, snowmobile, ATV, or other unit delivered straight to their doorstep — ask us about shipping when we reach out."
   },
   {
-    question: "Is this pre-approval a final approval?",
+    question: "How fast will I hear back after I submit?",
     answer:
-      "No. Pre-approval lets us review your details and prepare options before we talk. The final decision happens with the lender and your full file."
+      "Many riders hear from us within one business day — often sooner. The form only takes a few minutes. We'll reach out by phone to discuss your dream ride and next steps."
   },
   {
-    question: "Do you finance used snowmobiles and sleds?",
+    question: "What types of units can you help me finance?",
     answer:
-      "Yes. We work with riders looking for sled and snowmobile financing, new or used, along with the rest of our powersports lineup."
+      "Motorcycles, snowmobiles and sleds, ATVs, side-by-sides, jet skis, boats, trailers, RVs, and more. Pick a category in the form or choose \"Not sure yet\" if you're still deciding."
   },
   {
-    question: "Can I get financing for a motorcycle or bike?",
+    question: "Can you help with motorcycle or snowmobile financing in Canada?",
     answer:
-      "Motorcycle and bike financing is a big part of what we do. Start with the pre-approval form and we'll go from there."
+      "Absolutely — bike and sled financing are core to what we do. Share your budget and contact details and we'll line up options whether you're in Alberta or anywhere else in Canada."
   },
   {
-    question: "Do you handle ATV, side-by-side, and UTV loans?",
+    question: "Do you finance used snowmobiles, sleds, and ATVs?",
     answer:
-      "We help with ATVs, side-by-sides, and UTVs. Pick the type that fits your ride when you apply, or choose \"Not sure yet\" if you're still deciding."
-  },
-  {
-    question: "What about jet skis, PWCs, or boats?",
-    answer:
-      "We can often help with personal watercraft and marine units, depending on the deal. Mention what you're after in the application so we can line up the right options."
+      "Yes. We work with new and used powersports units. Mention what you're after in your request so we can point you at the right inventory and programs."
   },
   {
     question: "Where are you based, and do you work outside Edmonton?",
     answer:
-      "We're based in Edmonton, Alberta. We work with customers across Canada. Ask us about delivery or out-of-province purchases when we reach out."
+      "We're based in Edmonton, Alberta, and serve customers across Canada. Delivery and out-of-province purchases are common — we'll cover logistics when we contact you."
   }
 ];
 

@@ -4,9 +4,11 @@ import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
 import logoUrl from "../assets/logo.png";
 import mapleLeafUrl from "../assets/maple-leaf.png";
+import { HomeLendersPanel } from "../components/HomeLendersPanel";
 import { HomeReviewsConveyor } from "../components/HomeReviewsConveyor";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
+import { PREAPPROVAL_NAV_CTA } from "../data/preapprovalCopy";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
 import { Seo } from "../seo/Seo";
 
@@ -36,6 +38,7 @@ export function HomePage() {
 
   return (
     <div className="home">
+      <div className="home-backdropAmbience" aria-hidden />
       <Seo
         title="Powersports financing in Edmonton"
         description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, boat, trailer, and RV financing. Fast, friendly credit help from Edmonton for riders across Canada."
@@ -100,11 +103,14 @@ export function HomePage() {
               />
             </div>
           ))}
+          <div className="home-backdropFade" aria-hidden />
         </div>
         <HomeReviewsConveyor />
       </div>
+      <div className="home-backdropWarmth" aria-hidden />
 
       <div className="home-content">
+        <div className="home-contentGrid">
         <section className="home-hero">
           <img
             src={logoUrl}
@@ -127,13 +133,15 @@ export function HomePage() {
           </p>
           <div className="home-actions">
             <Link to="/pre-approval" className="btn btn-primary">
-              Get pre-approved
+              {PREAPPROVAL_NAV_CTA.default}
             </Link>
             <Link to="/inventory" className="btn btn-secondary">
               View inventory
             </Link>
           </div>
         </section>
+        <HomeLendersPanel />
+        </div>
       </div>
 
       <div className={`home-unitsSidebarDock${sidebarCollapsed ? " home-unitsSidebarDock--collapsed" : ""}`}>

@@ -1,0 +1,10 @@
+Lender logos for the homepage trust strip.
+
+Expected filenames (PNG, square favicon-style works best):
+  national-bank.png
+  td.png
+  santander.png
+  prefera.png
+  lendcare.png
+
+Replace these files with your own assets anytime; paths are configured in src/data/homeLenders.ts.

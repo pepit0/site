@@ -60,7 +60,7 @@ export function SellYourRidePage() {
             </p>
             <p className="sell-ride-applyCta">
               <Link to="/sell-your-ride/apply" className="btn btn-primary">
-                Start an application
+                Sell your ride with us
               </Link>
             </p>
           </div>

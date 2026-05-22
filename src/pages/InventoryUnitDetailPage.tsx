@@ -36,7 +36,7 @@ function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
         to={`/pre-approval?unit=${encodeURIComponent(unitId)}`}
         className="btn btn-primary inventory-detailApplyBtn"
       >
-        Apply Now!
+        Get financing on this unit!
       </Link>
     </>
   );

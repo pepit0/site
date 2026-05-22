@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { VehicleCategoryPhoto } from "../components/VehicleCategoryPhoto";
 import {
+  PREAPPROVAL_CONSENT_CONTACT,
   PREAPPROVAL_CREDIT_BAND_SUBTEXT,
   PREAPPROVAL_CREDIT_STEP,
   PREAPPROVAL_CTA,
@@ -65,7 +66,7 @@ const CREDIT_BAND_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "great_670_750", label: "Great", hint: "670–750" },
   { value: "good_620_670", label: "Good", hint: "620–670" },
   { value: "decent_550_619", label: "Decent", hint: "550–619" },
-  { value: "poor_300_549", label: "Poor", hint: "300–549" },
+  { value: "poor_300_549", label: "Rebuilding", hint: "300–549" },
   { value: "not_sure", label: "I'm really not sure", hint: "No problem" }
 ];
 
@@ -453,7 +454,7 @@ export function PreApprovalPage() {
     }
 
     clearPreapprovalDraft();
-    markPreApprovalConversion(w.creditScoreBand);
+    markPreApprovalConversion();
     navigate("/pre-approval/complete", { replace: true });
   };
 
@@ -1058,8 +1059,7 @@ export function PreApprovalPage() {
                 onChange={(e) => update("consentContact", e.target.checked)}
               />
               <span>
-                I confirm the information above is accurate to the best of my knowledge and I agree to be contacted by
-                Temptation Motorsports regarding financing options. <span className="form-required">*</span>
+                {PREAPPROVAL_CONSENT_CONTACT} <span className="form-required">*</span>
               </span>
             </label>
             <label className="form-check form-checkSpaced">
