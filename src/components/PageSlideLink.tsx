@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Link, useNavigate, type LinkProps } from "react-router-dom";
 
 type PageSlideLinkProps = Omit<LinkProps, "to"> & {
@@ -27,10 +28,13 @@ export function PageSlideLink({ to, children, onClick, ...rest }: PageSlideLinkP
         const doc = document as Document & {
           startViewTransition?: (callback: () => void | Promise<void>) => { finished: Promise<void> };
         };
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        if (typeof doc.startViewTransition === "function") {
+        if (typeof doc.startViewTransition === "function" && !prefersReducedMotion) {
           doc.startViewTransition(() => {
-            go();
+            flushSync(() => {
+              go();
+            });
           });
         } else {
           go();

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { fetchUserCanManageInventory } from "../lib/inventoryAdminAccess";
 import { supabase } from "../lib/supabase";
@@ -14,6 +14,7 @@ import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
+  const location = useLocation();
   const { label: preapprovalNavLabel, hasResumeDraft } = usePreapprovalNavCta();
 
   return (
@@ -48,7 +49,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
           </nav>
         </div>
       </header>
-      <main className="site-main">
+      <main className="site-main" key={location.pathname}>
         <Outlet />
       </main>
       <footer className="site-footer">

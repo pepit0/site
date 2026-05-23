@@ -68,7 +68,6 @@ const robots = `User-agent: *
 Allow: /
 
 Disallow: /admin/
-Disallow: /home-preview
 Disallow: /login
 Disallow: /staff
 Disallow: /pre-approval/complete

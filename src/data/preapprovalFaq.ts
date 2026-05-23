@@ -7,7 +7,7 @@ export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   {
     question: "Can I get powersports financing with good credit, bad credit, or no credit?",
     answer:
-      "Yes — good credit, bad credit, or no credit, no problem. We help customers in all credit situations, from prime to subprime and rebuilding, get approved on their next ride — motorcycle, snowmobile, ATV, side-by-side, jet ski, boat, trailer, RV, and more. Fill out the free dream-ride request above and a specialist will contact you. We only pull your credit if you opt in on the last step."
+      "Yes — good credit, bad credit, or no credit, no problem. We help customers in all credit situations, from prime to subprime and rebuilding, get approved on their next ride — motorcycle, snowmobile, ATV, side-by-side, jet ski, boat, trailer, RV, and more. Fill out the free dream-ride request above and a specialist will contact you. With your consent on the form, we run a soft credit inquiry for pre-qualification that does not affect your score."
   },
   {
     question: "How does the dream ride request work?",
@@ -15,14 +15,19 @@ export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
       "Fill out the short form with what you're looking for — unit type, budget, and how to reach you. A Temptation Motorsports specialist reviews your details and contacts you by phone to help match you with inventory and financing options across Canada."
   },
   {
+    question: "What if you don't have the unit I want in stock?",
+    answer:
+      "Our website shows what we have on hand right now — but that's only part of what we can access. We tap one of the largest powersports inventories across Canada, including dealer stock and private-sale units. Once we pre-qualify you, we can search for the year, make, and model you want, even if you don't see it listed on our inventory page. Tell us what you're after in the dream-ride request and we'll go to work."
+  },
+  {
     question: "Do you run a credit check when I fill out this form?",
     answer:
-      "Not to start. There is no credit check required to complete your request. We only pull your consumer credit report if you opt in on the last step. Otherwise we review what you submitted and contact you about next steps."
+      "Only if you authorize it. When you check the consent box on the contact step, we may run a soft credit inquiry for pre-qualification. We do not run a hard credit pull at this stage. If you have questions before submitting, call us — we're happy to explain the process."
   },
   {
     question: "Will filling out this form hurt my credit score?",
     answer:
-      "Completing the form does not require a credit pull unless you choose the optional consent at the end. If you leave that box unchecked, we won't pull your credit report at this stage."
+      "Completing the form alone does not pull your credit. If you check the authorization box, we run a soft inquiry for pre-qualification, which typically does not affect your credit score the way a hard inquiry can. We do not perform a hard credit pull when you submit this request."
   },
   {
     question: "Do you offer no money down financing?",
@@ -51,7 +56,7 @@ export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   }
 ];
 
-export function preapprovalFaqJsonLd() {
+export function preapprovalFaqJsonLd(): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",

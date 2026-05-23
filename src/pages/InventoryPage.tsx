@@ -12,6 +12,7 @@ import {
 import { inventoryRowMatchesSearch } from "../lib/inventorySearch";
 import { supabase } from "../lib/supabase";
 import { InventoryItemListJsonLd } from "../seo/InventoryItemListJsonLd";
+import { INVENTORY_SOURCING_BLURB } from "../data/inventoryCopy";
 import { Seo } from "../seo/Seo";
 
 type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
@@ -25,9 +26,9 @@ function inventoryEmptyMessage(category: VehicleCategory | "all", searchQuery: s
     return `No units match “${q}”. Try stock number, year, make, model, or a category like ATV or jetski.`;
   }
   if (category !== "all") {
-    return "No units in this category yet. Try another filter.";
+    return "No units in this category on the site right now. Try another filter, or ask us to source one for you.";
   }
-  return "No units available yet.";
+  return "No units listed right now. We can still help you find what you want across Canada.";
 }
 
 export function InventoryPage() {
@@ -146,16 +147,35 @@ export function InventoryPage() {
       </header>
 
       <section className="inventory-seoBlurb" aria-labelledby="inventory-seo-heading">
-        <h2 id="inventory-seo-heading" className="inventory-seoBlurbTitle">
-          ATVs, sleds, bikes, trailers &amp; RVs, and more
-        </h2>
-        <p className="inventory-seoBlurbText">
-          Shop our lineup for your next ride, including trailers and RVs. Many buyers pair a unit with{" "}
-          <Link className="inventory-seoBlurbLink" to="/pre-approval">
-            powersports financing
-          </Link>
-          . We are based in Edmonton and work with customers across Canada.
-        </p>
+        <div className="inventory-seoBlurbRow">
+          <div className="inventory-seoBlurbIntro">
+            <h2 id="inventory-seo-heading" className="inventory-seoBlurbTitle">
+              ATVs, sleds, bikes, trailers &amp; RVs, and more
+            </h2>
+            <p className="inventory-seoBlurbText">
+              Shop our lineup for your next ride, including trailers and RVs. Many buyers pair a unit with{" "}
+              <Link className="inventory-seoBlurbLink" to="/pre-approval">
+                powersports financing
+              </Link>
+              . We are based in Edmonton and work with customers across Canada.
+            </p>
+          </div>
+          <aside className="inventory-seoBlurbAside" aria-labelledby="inventory-sourcing-heading">
+            <h3 id="inventory-sourcing-heading" className="inventory-seoBlurbSubheading">
+              {INVENTORY_SOURCING_BLURB.heading}
+            </h3>
+            <p className="inventory-seoBlurbText">
+              {INVENTORY_SOURCING_BLURB.textBeforeCta}{" "}
+              <span className="inventory-seoBlurbCtaLine">
+                below.{" "}
+                <Link className="inventory-seoBlurbLink" to="/pre-approval">
+                  {INVENTORY_SOURCING_BLURB.preApprovalLinkText}
+                </Link>
+                .
+              </span>
+            </p>
+          </aside>
+        </div>
       </section>
 
       <div className="inventory-toolbar">
@@ -241,9 +261,16 @@ export function InventoryPage() {
           Loading inventory…
         </p>
       ) : filteredSorted.length === 0 ? (
-        <p className="inventory-empty" role="status">
-          {inventoryEmptyMessage(category, searchQuery)}
-        </p>
+        <div className="inventory-emptyBlock" role="status">
+          <p className="inventory-empty">{inventoryEmptyMessage(category, searchQuery)}</p>
+          <p className="inventory-emptySourcing">
+            {INVENTORY_SOURCING_BLURB.textFull}{" "}
+            <Link className="inventory-seoBlurbLink" to="/pre-approval">
+              {INVENTORY_SOURCING_BLURB.preApprovalLinkText}
+            </Link>
+            .
+          </p>
+        </div>
       ) : (
         <ul className="inventory-grid">
           {filteredSorted.map((item) => (

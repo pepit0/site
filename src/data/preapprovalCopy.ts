@@ -24,14 +24,13 @@ export const PREAPPROVAL_HERO = {
     "Nationwide delivery straight to your doorstep"
   ] as const,
   compliance:
-    "We do not pull your credit unless you opt in at the last step (optional). A team member will review your request and contact you — not an instant lender decision.",
+    "Pre-qualification uses a soft credit inquiry that does not affect your score when you authorize it on the form — not a hard pull. A team member reviews your request and follows up; this is not an instant lender decision.",
   inventoryLink: "Browse inventory"
 } as const;
 
 export const PREAPPROVAL_WIZARD_INTRO = {
   title: "Tell us about your dream ride",
-  subline: "About 3 minutes · 7 quick questions",
-  outcome: "Pick a unit type below to get started."
+  subline: "About 2 minutes · 6 quick questions"
 } as const;
 
 export const PREAPPROVAL_CTA = {
@@ -41,20 +40,20 @@ export const PREAPPROVAL_CTA = {
     "Continue to income",
     "Continue to credit estimate",
     "Continue to your details",
-    "Continue to final step",
     "Send my dream ride request"
   ] as const,
   nextHintByStep: [
-    "Takes about 3 minutes — let's get started.",
+    "Takes about 2 minutes — let's get started.",
     "Helps us match a monthly payment that fits your budget.",
     "A trade-in can change what you need to borrow.",
     "Income details help us understand what works for you.",
     "Any credit range is welcome — pick what feels closest.",
-    "We'll use this to reach out with options for your dream ride.",
     "Submit now — a specialist from our team will contact you shortly."
   ] as const,
   step0BlockedHint: "Pick a unit type above to continue.",
-  submitHint: "We'll review your answers and contact you to help find your dream ride."
+  submitHint: "We'll review your answers and contact you to help find your dream ride.",
+  consentFootnote:
+    "Submitting this form requests that we contact you about financing options."
 } as const;
 
 export const PREAPPROVAL_CREDIT_STEP = {
@@ -74,13 +73,13 @@ export const PREAPPROVAL_FAQ_INTRO = "Have questions? Scroll down for answers.";
 
 /** Progress suffix from step index 2 onward. */
 export function preapprovalProgressSuffix(step: number): string {
-  if (step >= 5) return " — almost done";
+  if (step >= 4) return " — almost done";
   if (step >= 3) return " — you're doing great";
   if (step >= 2) return " — a few questions left";
   return "";
 }
 
-export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[6];
+export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[5];
 export const PREAPPROVAL_SUBMITTING_LABEL = "Sending your dream ride request…";
 
 export const PREAPPROVAL_COMPLETE = {
@@ -97,5 +96,5 @@ export const PREAPPROVAL_COMPLETE_SEO = {
     "Thank you for your dream ride request with Temptation Motorsports. Our team will contact you shortly to help you find your next powersports unit."
 } as const;
 
-export const PREAPPROVAL_CONSENT_CONTACT =
-  "I confirm the information above is accurate to the best of my knowledge and I agree to be contacted by Temptation Motorsports to help me find my dream ride.";
+export const PREAPPROVAL_CONSENT_SOFT_CHECK =
+  "I agree to receive communications from Temptation Motorsports about my request by phone, text, or email, and I authorize a soft credit inquiry for pre-qualification that will not affect my credit score. I confirm the information above is accurate to the best of my knowledge.";

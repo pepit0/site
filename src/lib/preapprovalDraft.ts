@@ -2,8 +2,8 @@
 
 export const PREAPPROVAL_DRAFT_CHANGED_EVENT = "tm-preapproval-draft-changed";
 
-const STORAGE_KEY = "tm_preapproval_draft_v1";
-const DRAFT_VERSION = 1;
+const STORAGE_KEY = "tm_preapproval_draft_v2";
+const DRAFT_VERSION = 2;
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type PreapprovalTradeIntent = "unset" | "no" | "yes";
@@ -145,16 +145,21 @@ function readRaw(): PreapprovalDraft | null {
       window.localStorage.removeItem(STORAGE_KEY);
       return null;
     }
-    if (typeof parsed.step !== "number" || parsed.step < 0 || parsed.step > 6) return null;
+    if (typeof parsed.step !== "number" || parsed.step < 0) return null;
+    const step = parsed.step > 6 ? 5 : parsed.step > 5 ? 5 : parsed.step;
     if (typeof parsed.skipVehicleStep !== "boolean") return null;
     const wizard = parseWizard(parsed.wizard);
     if (!wizard) return null;
+    const mergedWizard = {
+      ...wizard,
+      consentCredit: wizard.consentCredit || wizard.consentContact
+    };
     return {
       version: DRAFT_VERSION,
       savedAt: parsed.savedAt,
-      step: parsed.step,
+      step,
       skipVehicleStep: parsed.skipVehicleStep,
-      wizard
+      wizard: mergedWizard
     };
   } catch {
     return null;

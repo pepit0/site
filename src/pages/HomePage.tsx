@@ -1,21 +1,26 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
 import logoUrl from "../assets/logo.png";
-import mapleLeafUrl from "../assets/maple-leaf.png";
-import { HomeLendersPanel } from "../components/HomeLendersPanel";
+import { PageSlideLink } from "../components/PageSlideLink";
 import { HomeReviewsConveyor } from "../components/HomeReviewsConveyor";
+import { HOME_PREVIEW_SLIDESHOW, HOME_PREVIEW_SLIDESHOW_MS } from "../data/homePreviewSlideshow";
+import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
-import { PREAPPROVAL_NAV_CTA } from "../data/preapprovalCopy";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
 import { Seo } from "../seo/Seo";
 
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [showroomInView, setShowroomInView] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const sidebarNavRef = useRef<HTMLElement>(null);
+  const slideshowTopRef = useRef<HTMLElement>(null);
+  const showroomStageRef = useRef<HTMLDivElement>(null);
 
   const toggleSidebar = () => {
     setSidebarCollapsed((collapsed) => {
@@ -36,18 +41,164 @@ export function HomePage() {
     []
   );
 
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduceMotion(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || HOME_PREVIEW_SLIDESHOW.length < 2) return;
+    const timer = window.setInterval(() => {
+      setSlideIndex((i) => (i + 1) % HOME_PREVIEW_SLIDESHOW.length);
+    }, HOME_PREVIEW_SLIDESHOW_MS);
+    return () => window.clearInterval(timer);
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    const slideshow = slideshowTopRef.current;
+    const stage = showroomStageRef.current;
+    if (!slideshow || !stage) return;
+
+    const update = () => {
+      const vh = window.innerHeight;
+      const slideBottom = slideshow.getBoundingClientRect().bottom;
+      const stageRect = stage.getBoundingClientRect();
+      const visiblePx = Math.min(stageRect.bottom, vh) - Math.max(stageRect.top, 0);
+
+      const passedSlideshow = slideBottom < vh * 0.42;
+      const stageOnPage = visiblePx > vh * 0.1 && stageRect.bottom > 72;
+
+      const visible = passedSlideshow && stageOnPage;
+      setShowroomInView(visible);
+      if (!visible) {
+        setSidebarGlow(null);
+        setSidebarCollapsed(false);
+      }
+    };
+
+    const observer = new IntersectionObserver(update, {
+      threshold: [0, 0.05, 0.1, 0.15, 0.25, 0.4]
+    });
+    observer.observe(stage);
+
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  const showSidebar = showroomInView;
+  const activeSlide = HOME_PREVIEW_SLIDESHOW[slideIndex] ?? HOME_PREVIEW_SLIDESHOW[0];
+
   return (
-    <div className="home">
-      <div className="home-backdropAmbience" aria-hidden />
+    <div className="home home-preview">
       <Seo
         title="Powersports financing in Edmonton"
         description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, boat, trailer, and RV financing. Fast, friendly credit help from Edmonton for riders across Canada."
         path="/"
       />
       <LocalBusinessJsonLd />
-      <div className="home-backdrop">
-        <div className="home-backdropLedger" aria-hidden />
-        <div className="home-backdropStage">
+      <div className="home-backdropAmbience" aria-hidden />
+      <div className="home-backdropWarmth" aria-hidden />
+
+      <section ref={slideshowTopRef} className="home-previewTop" aria-label="Hero">
+        <div className="home-previewSlideshow" aria-hidden>
+          <img
+            src={activeSlide.src}
+            alt=""
+            className="home-previewSlideshowSizer"
+            decoding="async"
+            draggable={false}
+          />
+          {HOME_PREVIEW_SLIDESHOW.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`home-previewSlideshowSlide${index === slideIndex ? " home-previewSlideshowSlide--active" : ""}`}
+            >
+              <img src={slide.src} alt="" className="home-previewSlideshowImg" decoding="async" draggable={false} />
+            </div>
+          ))}
+        </div>
+
+        <div className="home-content home-previewContent">
+          <div className="home-previewContentInner">
+            <section className="home-previewHero" aria-labelledby="home-hook">
+              <img
+                src={logoUrl}
+                alt="Temptation Motorsports"
+                className="home-previewHeroLogo"
+                width={400}
+                height={200}
+                decoding="async"
+              />
+
+              <h1 id="home-hook" className="home-previewHook">
+                {HOME_PREVIEW_HERO.hook}
+              </h1>
+              <p className="home-previewSubhook">{HOME_PREVIEW_HERO.subhook}</p>
+              <p className="home-previewLede">{HOME_PREVIEW_HERO.lede}</p>
+
+              <div className="home-previewCtaBlock">
+                <div className="home-previewCtaRow">
+                  <PageSlideLink
+                    to="/pre-approval"
+                    className="home-previewQualifyCta"
+                    aria-label={HOME_PREVIEW_HERO.qualifyAria}
+                  >
+                    <span className="home-previewQualifyCopy">
+                      <span className="home-previewQualifyText">{HOME_PREVIEW_HERO.qualifyPrompt}</span>
+                      <span className="home-previewQualifySubtext">{HOME_PREVIEW_HERO.noCreditCheck}</span>
+                    </span>
+                    <span className="home-previewQualifyArrow" aria-hidden>
+                      →
+                    </span>
+                  </PageSlideLink>
+
+                  <PageSlideLink to="/inventory" className="home-previewInventoryCta">
+                    {HOME_PREVIEW_HERO.inventoryLink}
+                  </PageSlideLink>
+                </div>
+
+                <ul className="home-previewHighlights" aria-label="Why apply">
+                  {HOME_PREVIEW_HERO.highlights.map((item) => (
+                    <li key={item.label} className="home-previewHighlight">
+                      <span className="home-previewHighlightValue">{item.value}</span>
+                      <span className="home-previewHighlightLabel">{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {!reduceMotion && HOME_PREVIEW_SLIDESHOW.length > 1 ? (
+          <div className="home-previewSlideshowDots" role="tablist" aria-label="Hero backgrounds">
+            {HOME_PREVIEW_SLIDESHOW.map((slide, index) => (
+              <button
+                key={slide.id}
+                type="button"
+                role="tab"
+                className={`home-previewSlideshowDot${index === slideIndex ? " home-previewSlideshowDot--active" : ""}`}
+                aria-selected={index === slideIndex}
+                aria-label={slide.label}
+                onClick={() => setSlideIndex(index)}
+              />
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="home-previewShowroom" aria-label="Showroom floor">
+        <div ref={showroomStageRef} className="home-previewShowroomStage">
           <svg className="home-heroGlowFilters" aria-hidden focusable="false">
             <defs>
               <filter
@@ -76,10 +227,9 @@ export function HomePage() {
             <img
               src={heroBackgroundPng}
               alt=""
-              className="home-backdropImg"
+              className="home-backdropImg home-previewShowroomImg"
               decoding="async"
-              fetchPriority="high"
-              aria-hidden
+              draggable={false}
             />
           </picture>
           {spotsWithLayer.map((h) => (
@@ -94,63 +244,25 @@ export function HomePage() {
               }}
               aria-hidden
             >
-              <img
-                className="home-heroUnitGlowImg"
-                src={h.layerUrl}
-                alt=""
-                decoding="async"
-                draggable={false}
-              />
+              <img className="home-heroUnitGlowImg" src={h.layerUrl} alt="" decoding="async" draggable={false} />
             </div>
           ))}
           <div className="home-backdropFade" aria-hidden />
         </div>
         <HomeReviewsConveyor />
-      </div>
-      <div className="home-backdropWarmth" aria-hidden />
+      </section>
 
-      <div className="home-content">
-        <div className="home-contentGrid">
-        <section className="home-hero">
-          <img
-            src={logoUrl}
-            alt=""
-            className="home-heroLogo"
-            width={400}
-            height={200}
-            decoding="async"
-          />
-          <p className="home-eyebrow">
-            Motorsports financing{" "}
-            <img src={mapleLeafUrl} alt="" className="home-eyebrowLeaf" decoding="async" />
-          </p>
-          <h1 className="home-title">Temptation Motorsports</h1>
-          <p className="home-tagline">Serving motorsports customers since 2015</p>
-          <p className="home-lede">
-            Fast, friendly financing for motorcycles, sleds, snowmobiles, jet skis, boats, ATVs, side-by-sides, trailers,
-            and RVs. We are based in Edmonton and work with riders all over Canada who want to ride, not fight
-            paperwork.
-          </p>
-          <div className="home-actions">
-            <Link to="/pre-approval" className="btn btn-primary">
-              {PREAPPROVAL_NAV_CTA.default}
-            </Link>
-            <Link to="/inventory" className="btn btn-secondary">
-              View inventory
-            </Link>
-          </div>
-        </section>
-        <HomeLendersPanel />
-        </div>
-      </div>
-
-      <div className={`home-unitsSidebarDock${sidebarCollapsed ? " home-unitsSidebarDock--collapsed" : ""}`}>
+      <div
+        className={`home-unitsSidebarDock${sidebarCollapsed ? " home-unitsSidebarDock--collapsed" : ""}${showSidebar ? " home-unitsSidebarDock--showroomVisible" : " home-unitsSidebarDock--showroomHidden"}`}
+        aria-hidden={!showSidebar}
+        inert={!showSidebar ? true : undefined}
+      >
         <aside
           id="home-categories-panel"
           className="home-unitsSidebar"
           aria-label="Showroom categories"
-          aria-hidden={sidebarCollapsed}
-          inert={sidebarCollapsed ? true : undefined}
+          aria-hidden={sidebarCollapsed || !showSidebar}
+          inert={sidebarCollapsed || !showSidebar ? true : undefined}
         >
           <p className="home-unitsSidebarTitle">Showroom floor</p>
           <p className="home-unitsSidebarHint">Hover to highlight in the photo.</p>
@@ -180,6 +292,7 @@ export function HomePage() {
           aria-expanded={!sidebarCollapsed}
           aria-controls="home-categories-panel"
           aria-label={sidebarCollapsed ? "Show showroom categories" : "Hide showroom categories"}
+          tabIndex={showSidebar ? 0 : -1}
         >
           <span className="home-unitsSidebarToggleIcon" aria-hidden />
         </button>

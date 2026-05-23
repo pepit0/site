@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { VehicleCategoryPhoto } from "../components/VehicleCategoryPhoto";
 import {
-  PREAPPROVAL_CONSENT_CONTACT,
+  PREAPPROVAL_CONSENT_SOFT_CHECK,
   PREAPPROVAL_CREDIT_BAND_SUBTEXT,
   PREAPPROVAL_CREDIT_STEP,
   PREAPPROVAL_CTA,
@@ -30,7 +30,7 @@ import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead"
 import { supabase } from "../lib/supabase";
 import { Seo } from "../seo/Seo";
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 
 /** Slider range $200–$1000 (by $50). Sentinels stored in DB / RPC: under/over that range. */
 const BUDGET_SLIDER_MIN = 200;
@@ -275,11 +275,8 @@ function validateStep(step: number, w: WizardState): string | null {
       if (!w.city.trim()) return "Enter your city.";
       if (!w.province.trim()) return "Enter your province.";
       if (!w.addressTenure) return "Select how long you’ve lived at this address.";
-      return null;
-    }
-    case 6: {
-      if (!w.consentContact) {
-        return "You must agree to be contacted to submit your application.";
+      if (!w.consentCredit) {
+        return "Please check the box to authorize communications and the soft credit inquiry.";
       }
       return null;
     }
@@ -444,7 +441,7 @@ export function PreApprovalPage() {
       employmentType: requiresEmploymentType(w.employmentStatus) ? w.employmentType : null,
       creditScoreBand: w.creditScoreBand,
       addressTenure: w.addressTenure,
-      consentContact: w.consentContact,
+      consentContact: true,
       consentCredit: w.consentCredit
     });
     setSubmitting(false);
@@ -501,7 +498,6 @@ export function PreApprovalPage() {
             <div className="preapproval-wizardIntro">
               <h2 className="preapproval-wizardIntroTitle">{PREAPPROVAL_WIZARD_INTRO.title}</h2>
               <p className="preapproval-wizardIntroSubline">{PREAPPROVAL_WIZARD_INTRO.subline}</p>
-              <p className="preapproval-wizardIntroOutcome">{PREAPPROVAL_WIZARD_INTRO.outcome}</p>
             </div>
             <div className="preapproval-wizardProgressTrack" aria-hidden>
               <div className="preapproval-wizardProgressFill" style={{ width: `${progress}%` }} />
@@ -1048,33 +1044,19 @@ export function PreApprovalPage() {
                 ))}
               </select>
             </div>
-          </>
-        ) : null}
-
-        {step === 6 ? (
-          <>
-            <h2 className="preapproval-wizardStepTitle">Consent and submit</h2>
-            <label className="form-check">
-              <input
-                type="checkbox"
-                checked={w.consentContact}
-                onChange={(e) => update("consentContact", e.target.checked)}
-              />
-              <span>
-                {PREAPPROVAL_CONSENT_CONTACT} <span className="form-required">*</span>
-              </span>
-            </label>
-            <label className="form-check form-checkSpaced">
-              <input
-                type="checkbox"
-                checked={w.consentCredit}
-                onChange={(e) => update("consentCredit", e.target.checked)}
-              />
-              <span>
-                I consent to Temptation Motorsports pulling and viewing my consumer credit report in connection with this
-                application. <span className="form-optional">(optional)</span>
-              </span>
-            </label>
+            <div className="preapproval-wizardConsent">
+              <label className="form-check">
+                <input
+                  type="checkbox"
+                  checked={w.consentCredit}
+                  onChange={(e) => update("consentCredit", e.target.checked)}
+                />
+                <span>
+                  {PREAPPROVAL_CONSENT_SOFT_CHECK} <span className="form-required">*</span>
+                </span>
+              </label>
+              <p className="preapproval-wizardConsentFootnote">{PREAPPROVAL_CTA.consentFootnote}</p>
+            </div>
           </>
         ) : null}
 
