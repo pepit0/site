@@ -7,6 +7,7 @@ import {
   PREAPPROVAL_CREDIT_BAND_SUBTEXT,
   PREAPPROVAL_CREDIT_STEP,
   PREAPPROVAL_CTA,
+  PREAPPROVAL_FAQ_INTRO,
   PREAPPROVAL_HERO,
   PREAPPROVAL_SEO,
   PREAPPROVAL_SUBMIT_LABEL,
@@ -481,6 +482,7 @@ export function PreApprovalPage() {
           <header className="preapproval-hero">
             <p className="preapproval-eyebrow">{PREAPPROVAL_HERO.eyebrow}</p>
             <h1 className="preapproval-heroTitle">{PREAPPROVAL_HERO.h1}</h1>
+            <p className="preapproval-heroCreditLine">{PREAPPROVAL_HERO.creditLine}</p>
             <p className="preapproval-heroLead">{PREAPPROVAL_HERO.lead}</p>
             <ul className="preapproval-trustList" aria-label="What's included">
               {PREAPPROVAL_HERO.trustBullets.map((item) => (
@@ -1115,6 +1117,7 @@ export function PreApprovalPage() {
         <h2 id="preapproval-faq-heading" className="preapproval-faqTitle">
           Common questions
         </h2>
+        <p className="preapproval-faqIntro">{PREAPPROVAL_FAQ_INTRO}</p>
         <dl className="preapproval-faqList">
           {PREAPPROVAL_FAQ.map((item) => (
             <div key={item.question} className="preapproval-faqItem">

@@ -7,6 +7,7 @@ import { isMarketingOnlySite } from "../siteMode";
 import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
+import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
 import tLogoUrl from "../assets/Tlogo.png";
@@ -153,14 +154,7 @@ function SiteNavMarketing() {
         <span className="site-navMuted">…</span>
       ) : user ? (
         <>
-          {canManageInventory ? (
-            <NavLink
-              to="/admin/inventory"
-              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
-            >
-              Admin inventory
-            </NavLink>
-          ) : null}
+          {canManageInventory ? <SiteNavAdminToolsDropdown /> : null}
           <button type="button" className="site-navSignOut" onClick={() => void signOut()}>
             Sign out
           </button>

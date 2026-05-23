@@ -12,6 +12,13 @@ import {
 } from "../data/inventory";
 import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
+import { InventoryProductJsonLd } from "../seo/InventoryProductJsonLd";
+import {
+  INVENTORY_CALL_FOR_PRICING,
+  inventoryUnitCanonicalPath,
+  inventoryUnitSeoDescription,
+  inventoryUnitSeoTitle
+} from "../seo/inventoryStructuredData";
 import { Seo } from "../seo/Seo";
 
 type LocationState = { fromCategory?: VehicleCategory | "all" } | null;
@@ -88,16 +95,19 @@ export function InventoryUnitDetailPage() {
 
   const backHref = inventoryBackHref(fromCategory);
   const title = row ? inventoryMakeModelTitle(row) : "Unit";
-  const seoPath = unitId ? `/inventory/${unitId}` : "/inventory";
+  const seoPath = unitId ? inventoryUnitCanonicalPath(unitId) : "/inventory";
 
   return (
     <div className="inventory inventory-detail">
       {row ? (
-        <Seo
-          title={`${row.year} ${title}`}
-          description={`${row.year} ${title} — ${inventoryYearKmLine(row)}. View photos and details at Temptation Motorsports.`}
-          path={seoPath}
-        />
+        <>
+          <Seo
+            title={inventoryUnitSeoTitle(row)}
+            description={inventoryUnitSeoDescription(row)}
+            path={seoPath}
+          />
+          <InventoryProductJsonLd row={row} />
+        </>
       ) : (
         <Seo title="Unit not found" description="This inventory unit could not be found." path={seoPath} noindex />
       )}
@@ -144,6 +154,7 @@ export function InventoryUnitDetailPage() {
                 </p>
                 <h1 className="inventory-detailTitle">{title}</h1>
                 <p className="inventory-detailYearKm">{inventoryYearKmLine(row)}</p>
+                <p className="inventory-detailPrice">{INVENTORY_CALL_FOR_PRICING}</p>
               </header>
 
               <section className="inventory-detailDescription" aria-labelledby="inventory-detail-desc-heading">

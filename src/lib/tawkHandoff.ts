@@ -87,9 +87,13 @@ function persistUnitSession(params: TawkHandoffParams): void {
 
 function buildAttributes(params: TawkHandoffParams): Record<string, string> {
   const attrs: Record<string, string> = {
-    name: displayNameForTawk(params),
-    phone: phoneForTawk(params.phone)
+    name: displayNameForTawk(params)
   };
+
+  const phoneTrimmed = params.phone.trim();
+  if (phoneTrimmed.length >= 7) {
+    attrs.phone = phoneForTawk(phoneTrimmed);
+  }
 
   const sentence = unitContextSentence(params);
   if (sentence) {
@@ -238,10 +242,11 @@ export function applySavedVisitorContactToTawk(): void {
   if (pendingHandoff) return;
   const saved = readSavedChatVisitorContact();
   if (!saved) return;
-  void setAttributesAsync({
-    name: saved.name,
-    phone: phoneForTawk(saved.phone)
-  });
+  const attrs: Record<string, string> = { name: saved.name };
+  if (saved.phone.trim().length >= 7) {
+    attrs.phone = phoneForTawk(saved.phone);
+  }
+  void setAttributesAsync(attrs);
 }
 
 /** Wait until Tawk embed API is callable (after onLoad). */

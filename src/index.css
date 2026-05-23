@@ -2743,6 +2743,13 @@ p {
   margin: 0 0 0.5rem;
 }
 
+.inventory-cardPrice {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .inventory-cardStock {
   margin-top: auto;
   padding-top: 0.65rem;
@@ -3049,6 +3056,26 @@ p {
   font-size: 1rem;
   color: var(--text-muted);
   margin: 0;
+}
+
+.inventory-detailPrice {
+  margin: 0.5rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.inventory-prerender {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.inventory-prerenderPrice {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .inventory-detailSectionTitle {
@@ -3754,8 +3781,16 @@ img.vehicle-category-icon {
   font-size: clamp(1.35rem, 3.5vw, 1.75rem);
   font-weight: 700;
   line-height: 1.2;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.5rem;
   color: var(--text);
+}
+
+.preapproval-heroCreditLine {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--accent);
 }
 
 .preapproval-heroLead {
@@ -4030,8 +4065,15 @@ img.vehicle-category-icon {
 .preapproval-faqTitle {
   font-size: 1.05rem;
   font-weight: 600;
-  margin: 0 0 1rem;
+  margin: 0 0 0.35rem;
   color: var(--text);
+}
+
+.preapproval-faqIntro {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .preapproval-faqList {
@@ -4630,6 +4672,7 @@ img.vehicle-category-icon {
   padding: 0.5rem 0.85rem;
   border-radius: 12px;
   text-align: right;
+  color: var(--accent);
   background: rgba(12, 13, 16, 0.88);
   border: 1px solid rgba(240, 93, 34, 0.35);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -4639,15 +4682,10 @@ img.vehicle-category-icon {
 
 .site-chatFabTeaserLine {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: inherit;
   line-height: 1.35;
-}
-
-.site-chatFabTeaserAccent {
-  color: #ffb088;
-  font-size: 0.92rem;
 }
 
 @keyframes site-chat-teaser-in {
@@ -4851,6 +4889,13 @@ img.vehicle-category-icon {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.site-chatLabelOptional {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
 }
 
 .site-chatInput {
@@ -5291,4 +5336,79 @@ img.vehicle-category-icon {
   .site-chatPanel {
     animation: none;
   }
+}
+
+/* Admin payment calculator */
+.admin-calcGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .admin-calcGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-calcSectionTitle {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-calc .form-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-calcResultCard {
+  position: sticky;
+  top: 1rem;
+}
+
+.admin-calcPayment {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.admin-calcPaymentLabel {
+  margin: 0.25rem 0 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.admin-calcSummary {
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.admin-calcSummary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.admin-calcSummary dt {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.admin-calcSummary dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.admin-calcError {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }

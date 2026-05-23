@@ -34,11 +34,22 @@ function readRaw(): SavedChatVisitorContact | null {
   }
 }
 
-export function isValidChatVisitorContact(name: string, phone: string): boolean {
-  return name.trim().length > 0 && phone.trim().length >= 7 && Boolean(normalizeNanpTo10Digits(phone));
+export function isValidChatVisitorName(name: string): boolean {
+  return name.trim().length > 0;
 }
 
-/** Last name + phone from a completed intake (browser localStorage). */
+/** Empty phone is allowed; if provided it must look like a real number. */
+export function isValidOptionalChatPhone(phone: string): boolean {
+  const trimmed = phone.trim();
+  if (trimmed.length === 0) return true;
+  return trimmed.length >= 7 && Boolean(normalizeNanpTo10Digits(phone));
+}
+
+export function isValidChatVisitorContact(name: string, phone: string): boolean {
+  return isValidChatVisitorName(name) && isValidOptionalChatPhone(phone);
+}
+
+/** Saved name (+ optional phone) from a completed intake (browser localStorage). */
 export function readSavedChatVisitorContact(): SavedChatVisitorContact | null {
   const row = readRaw();
   if (!row || !isValidChatVisitorContact(row.name, row.phone)) return null;

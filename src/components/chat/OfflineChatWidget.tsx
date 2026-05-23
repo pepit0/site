@@ -197,8 +197,9 @@ export function OfflineChatWidget() {
       setError("Please enter your name.");
       return;
     }
-    if (phone.trim().length < 7) {
-      setError("Please enter a valid phone number.");
+    const phoneTrimmed = phone.trim();
+    if (phoneTrimmed.length > 0 && phoneTrimmed.length < 7) {
+      setError("Please enter a valid phone number or leave it blank.");
       return;
     }
     saveChatVisitorContact(name, phone);
@@ -377,12 +378,12 @@ export function OfflineChatWidget() {
                 ) : null}
                 <div className="site-chatField">
                   <label className="site-chatLabel" htmlFor="chat-name">
-                    Your name
+                    Name
                   </label>
                   <input
                     id="chat-name"
                     className="site-chatInput"
-                    placeholder="First and last"
+                    placeholder="Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="name"
@@ -391,7 +392,7 @@ export function OfflineChatWidget() {
                 </div>
                 <div className="site-chatField">
                   <label className="site-chatLabel" htmlFor="chat-phone">
-                    Phone number
+                    Phone <span className="site-chatLabelOptional">(optional)</span>
                   </label>
                   <input
                     id="chat-phone"
@@ -401,7 +402,6 @@ export function OfflineChatWidget() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     autoComplete="tel"
-                    required
                   />
                 </div>
                 {error ? (
@@ -557,7 +557,11 @@ export function OfflineChatWidget() {
 
             {step === "done" ? (
               <div className="site-chatDone">
-                <p className="site-chatDoneLead">We got your message and will reach out at the number you provided.</p>
+                <p className="site-chatDoneLead">
+                  {phone.trim().length >= 7
+                    ? "We got your message and will reach out at the number you provided."
+                    : "We got your message and will follow up in chat or by email when we can."}
+                </p>
                 <div className="site-chatResultsFooter">
                   <p className="site-chatCtaLead">Ready for financing?</p>
                   <Link to={preApprovalHref} className="btn btn-primary site-chatSubmitBtn site-chatCtaBtn" onClick={close}>
@@ -581,8 +585,8 @@ export function OfflineChatWidget() {
 
       {!open ? (
         <p className="site-chatFabTeaser" aria-hidden>
-          <span className="site-chatFabTeaserLine">Questions?</span>
-          <span className="site-chatFabTeaserLine site-chatFabTeaserAccent">Chat with us</span>
+          <span className="site-chatFabTeaserLine">Speak with</span>
+          <span className="site-chatFabTeaserLine">a real human</span>
         </p>
       ) : null}
 

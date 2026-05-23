@@ -1,58 +1,66 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
+import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 
-function readSiteUrlFromEnvFiles() {
-  const files = [".env.production.local", ".env.local", ".env.production", ".env"];
-  for (const f of files) {
-    const p = path.join(root, f);
-    if (!fs.existsSync(p)) continue;
-    const text = fs.readFileSync(p, "utf8");
-    for (const line of text.split("\n")) {
-      const t = line.trim();
-      if (!t || t.startsWith("#")) continue;
-      const m = t.match(/^VITE_PUBLIC_SITE_URL\s*=\s*(.*)$/);
-      if (!m) continue;
-      let v = m[1].trim();
-      if (
-        (v.startsWith('"') && v.endsWith('"')) ||
-        (v.startsWith("'") && v.endsWith("'"))
-      ) {
-        v = v.slice(1, -1);
-      }
-      if (v) return v.replace(/\/+$/, "");
-    }
-  }
-  return "";
-}
+const { siteUrl, supabaseUrl, supabaseAnonKey } = loadViteBuildEnv(root);
+const origin = siteUrl || "https://example.com";
 
-const fromFile = readSiteUrlFromEnvFiles();
-const fromProcess = (process.env.VITE_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
-const origin = fromProcess || fromFile || "https://example.com";
-
-if (!fromProcess && !fromFile) {
+if (!siteUrl) {
   console.warn(
     "[seo-prebuild] VITE_PUBLIC_SITE_URL is not set. Using https://example.com for sitemap/robots. " +
       "Set VITE_PUBLIC_SITE_URL in .env.local or your host (e.g. Vercel) before deploying."
   );
 }
 
-const urls = ["/", "/inventory", "/pre-approval", "/sell-your-ride", "/sell-your-ride/apply"];
-const lastmod = new Date().toISOString().slice(0, 10);
+const staticUrls = [
+  { loc: "/", priority: "1.0", changefreq: "weekly" },
+  { loc: "/inventory", priority: "0.9", changefreq: "daily" },
+  { loc: "/pre-approval", priority: "0.8", changefreq: "weekly" },
+  { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
+  { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }
+];
 
-const urlEntries = urls
-  .map((loc) => {
-    const priority = loc === "/" ? "1.0" : "0.8";
-    return `  <url>\n    <loc>${origin}${loc}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n    <lastmod>${lastmod}</lastmod>\n  </url>`;
-  })
-  .join("\n");
+const defaultLastmod = new Date().toISOString().slice(0, 10);
+
+/** @type {{ loc: string; priority: string; changefreq: string; lastmod: string }[]} */
+let inventoryUrls = [];
+
+if (supabaseUrl && supabaseAnonKey) {
+  const { rows, error } = await fetchPublicInventoryUnits({ supabaseUrl, supabaseAnonKey });
+  if (error) {
+    console.warn(`[seo-prebuild] Could not fetch inventory for sitemap (${error}). Static URLs only.`);
+  } else {
+    inventoryUrls = rows.map((row) => ({
+      loc: `/inventory/${row.id}`,
+      priority: row.status === "Sold" ? "0.5" : "0.7",
+      changefreq: row.status === "Available" ? "daily" : "weekly",
+      lastmod: (row.updated_at || defaultLastmod).slice(0, 10)
+    }));
+    console.log(`[seo-prebuild] ${inventoryUrls.length} inventory unit URL(s) for sitemap`);
+  }
+} else {
+  console.warn(
+    "[seo-prebuild] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set — sitemap will omit /inventory/{id} URLs."
+  );
+}
+
+function urlEntry({ loc, priority, changefreq, lastmod }) {
+  return `  <url>\n    <loc>${origin}${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n    <lastmod>${lastmod}</lastmod>\n  </url>`;
+}
+
+const allUrls = [
+  ...staticUrls.map((u) => ({ ...u, lastmod: defaultLastmod })),
+  ...inventoryUrls
+];
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urlEntries}
+${allUrls.map(urlEntry).join("\n")}
 </urlset>
 `;
 

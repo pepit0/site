@@ -5,6 +5,11 @@ export type PreapprovalFaqItem = {
 
 export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   {
+    question: "Can I get powersports financing with good credit, bad credit, or no credit?",
+    answer:
+      "Yes — good credit, bad credit, or no credit, no problem. We help customers in all credit situations, from prime to subprime and rebuilding, get approved on their next ride — motorcycle, snowmobile, ATV, side-by-side, jet ski, boat, trailer, RV, and more. Fill out the free dream-ride request above and a specialist will contact you. We only pull your credit if you opt in on the last step."
+  },
+  {
     question: "How does the dream ride request work?",
     answer:
       "Fill out the short form with what you're looking for — unit type, budget, and how to reach you. A Temptation Motorsports specialist reviews your details and contacts you by phone to help match you with inventory and financing options across Canada."
@@ -37,17 +42,7 @@ export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   {
     question: "What types of units can you help me finance?",
     answer:
-      "Motorcycles, snowmobiles and sleds, ATVs, side-by-sides, jet skis, boats, trailers, RVs, and more. Pick a category in the form or choose \"Not sure yet\" if you're still deciding."
-  },
-  {
-    question: "Can you help with motorcycle or snowmobile financing in Canada?",
-    answer:
-      "Absolutely — bike and sled financing are core to what we do. Share your budget and contact details and we'll line up options whether you're in Alberta or anywhere else in Canada."
-  },
-  {
-    question: "Do you finance used snowmobiles, sleds, and ATVs?",
-    answer:
-      "Yes. We work with new and used powersports units. Mention what you're after in your request so we can point you at the right inventory and programs."
+      "Motorcycles and bikes, snowmobiles and sleds (new or used), ATVs, side-by-sides, jet skis and PWCs, boats, trailers, RVs, and more. Pick a category in the form or choose \"Not sure yet\" if you're still deciding."
   },
   {
     question: "Where are you based, and do you work outside Edmonton?",

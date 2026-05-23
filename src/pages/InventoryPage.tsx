@@ -11,6 +11,7 @@ import {
 } from "../data/inventory";
 import { inventoryRowMatchesSearch } from "../lib/inventorySearch";
 import { supabase } from "../lib/supabase";
+import { InventoryItemListJsonLd } from "../seo/InventoryItemListJsonLd";
 import { Seo } from "../seo/Seo";
 
 type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
@@ -136,9 +137,10 @@ export function InventoryPage() {
     <div className="inventory">
       <Seo
         title="Inventory"
-        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, trailers, RVs, and more. Sold units marked; unlisted units hidden. Financing available through Temptation Motorsports."
+        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, and trailers in Edmonton. Call for pricing on every unit. Financing available through Temptation Motorsports."
         path="/inventory"
       />
+      {rows.length > 0 ? <InventoryItemListJsonLd rows={rows} /> : null}
       <header className="page-header">
         <h1 className="page-title">Inventory</h1>
       </header>

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { SiteLayout } from "./layout/SiteLayout";
+import { AdminCalculatorPage } from "./pages/AdminCalculatorPage";
 import { AdminInventoryPage } from "./pages/AdminInventoryPage";
 import { HomePage } from "./pages/HomePage";
 import { InventoryPage } from "./pages/InventoryPage";
@@ -33,6 +34,14 @@ export default function App() {
           element={
             <ProtectedRoute requireCrm={false} requireInventoryAdmin>
               <AdminInventoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="admin/calculator"
+          element={
+            <ProtectedRoute requireCrm={false} requireInventoryAdmin>
+              <AdminCalculatorPage />
             </ProtectedRoute>
           }
         />
