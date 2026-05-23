@@ -382,6 +382,11 @@ p {
   background: var(--bg);
 }
 
+.site-shell:has(.home-preview) .site-footer {
+  border-top: none;
+  background: transparent;
+}
+
 .site-footerInner {
   max-width: var(--max);
   margin: 0 auto;
@@ -551,6 +556,470 @@ p {
   isolation: isolate;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+/* ——— Home preview: slideshow hero + scroll-gated showroom ——— */
+.home-preview {
+  position: relative;
+  padding-bottom: 0;
+  --home-preview-edge-x: clamp(2.2rem, 6vw, 3.5rem);
+  --home-preview-seam-overlap: clamp(10rem, 24vh, 18rem);
+}
+
+.home-previewTop {
+  position: relative;
+  z-index: 2;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-bottom: 0;
+  overflow: visible;
+}
+
+.home-previewSlideshow {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  line-height: 0;
+  background: var(--bg);
+}
+
+/* Color fade: slide bottoms → page background (no blur) */
+.home-previewSlideshow::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: clamp(12rem, 32vh, 22rem);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(12, 13, 16, 0.45) 32%,
+    rgba(12, 13, 16, 0.88) 62%,
+    var(--bg) 100%
+  );
+}
+
+/* In-flow spacer so the hero grows to the full slide height (no crop) */
+.home-previewSlideshowSizer {
+  display: block;
+  width: 100%;
+  height: auto;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.home-previewSlideshowSlide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 1.1s ease-in-out;
+}
+
+.home-previewSlideshowSlide--active {
+  opacity: 1;
+}
+
+.home-previewSlideshowImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+}
+
+.home-preview .home-previewContent {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 0;
+  height: 100%;
+  padding-top: clamp(1rem, 3.5vh, 1.75rem);
+  padding-bottom: clamp(5rem, 14vh, 8rem);
+  padding-left: var(--home-preview-edge-x);
+  padding-right: var(--home-preview-edge-x);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.home-previewContentInner {
+  width: min(40rem, 56vw);
+  max-width: 40rem;
+  pointer-events: none;
+}
+
+.home-previewHero {
+  position: relative;
+  width: 100%;
+  max-width: 38rem;
+  pointer-events: auto;
+}
+
+.home-previewLenders {
+  position: absolute;
+  z-index: 6;
+  top: clamp(1rem, 3.5vh, 1.75rem);
+  right: var(--home-preview-edge-x);
+  max-width: min(26rem, 44vw);
+  pointer-events: auto;
+}
+
+/* Tagline row + single logo row (like live home) */
+.home-preview .home-previewLenders .home-lenders {
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  text-align: right;
+}
+
+.home-preview .home-previewLenders .home-lendersTagline {
+  margin: 0 0 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.home-preview .home-previewLenders .home-lendersLogos {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: clamp(0.5rem, 1.1vw, 0.95rem);
+}
+
+.home-preview .home-previewLenders .home-lendersItem {
+  max-width: 3.75rem;
+}
+
+.home-preview .home-previewLenders .home-lendersLogo {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.home-preview .home-previewLenders .home-lendersLogo--prefera {
+  height: 1.5rem;
+  max-width: 4.25rem;
+  min-width: 2.5rem;
+}
+
+.home-previewHeroLogo {
+  display: block;
+  width: clamp(7rem, 20vw, 11.5rem);
+  height: auto;
+  max-height: min(13rem, 38vh);
+  margin: 0 0 clamp(1rem, 2.5vh, 1.35rem);
+  object-fit: contain;
+  object-position: left top;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.55));
+}
+
+@media (max-width: 720px) {
+  .home-previewHeroLogo {
+    width: clamp(5.5rem, 18vw, 7.5rem);
+  }
+}
+
+@media (max-width: 520px) {
+  .home-previewHeroLogo {
+    width: clamp(4.5rem, 16vw, 6.25rem);
+    max-height: min(9.5rem, 28vh);
+  }
+}
+
+.home-previewHook {
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.85rem, 5.2vw, 3.15rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    0 2px 12px rgba(0, 0, 0, 0.55),
+    0 4px 28px rgba(0, 0, 0, 0.35);
+}
+
+.home-previewSubhook {
+  margin: 0 0 clamp(1.35rem, 3vh, 1.75rem);
+  max-width: 34rem;
+  font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+  line-height: 1.45;
+  font-weight: 500;
+  color: rgba(244, 246, 250, 0.92);
+  text-wrap: balance;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.home-previewQualifyCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(100%, 28rem);
+  margin-bottom: 0;
+  padding: 0.95rem 1.15rem 0.95rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(240, 93, 34, 0.95) 0%, rgba(232, 74, 12, 0.98) 100%);
+  color: #fff;
+  font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  box-shadow:
+    0 4px 18px rgba(240, 93, 34, 0.4),
+    0 12px 32px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.home-previewQualifyCta:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 6px 22px rgba(240, 93, 34, 0.5),
+    0 14px 36px rgba(0, 0, 0, 0.4);
+}
+
+.home-previewQualifyCta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.home-previewQualifyText {
+  flex: 1;
+  text-align: left;
+}
+
+.home-previewQualifyArrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.home-previewQualifyCta:hover .home-previewQualifyArrow {
+  transform: translateX(4px);
+}
+
+@media (max-width: 720px) {
+  .home-previewLenders {
+    max-width: min(20rem, 48vw);
+  }
+
+  .home-preview .home-previewLenders .home-lendersTagline {
+    font-size: 0.7rem;
+    white-space: normal;
+    max-width: 12rem;
+    margin-left: auto;
+  }
+
+  .home-preview .home-previewLenders .home-lendersLogo {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .home-preview .home-previewLenders .home-lendersLogo--prefera {
+    height: 1.35rem;
+    max-width: 3.5rem;
+  }
+
+  .home-previewContentInner {
+    width: min(38rem, 62vw);
+  }
+}
+
+@media (max-width: 640px) {
+  .home-preview .home-previewContent {
+    padding-bottom: clamp(4.5rem, 12vh, 6.5rem);
+  }
+
+  .home-previewQualifyCta {
+    width: 100%;
+  }
+
+  .home-previewContentInner {
+    width: min(100%, calc(100% - 10.5rem));
+  }
+}
+
+.home-previewSlideshowDots {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: clamp(2rem, 6vh, 3.5rem);
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(12, 13, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: auto;
+}
+
+.home-previewSlideshowDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.home-previewSlideshowDot--active {
+  background: var(--accent);
+  transform: scale(1.15);
+}
+
+.home-previewSlideshowDot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.home-previewShowroom {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--home-preview-seam-overlap));
+  padding-top: 0;
+  background: transparent;
+}
+
+.home-previewShowroomStage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.home-preview .home-reviewsBelt {
+  background: linear-gradient(180deg, rgba(12, 13, 16, 0.35) 0%, transparent 100%);
+  border-top: none;
+}
+
+/* Feather top of background.png into the same page bg as the slideshow fade */
+.home-previewShowroomStage::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: clamp(8rem, 22vh, 16rem);
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--bg) 0%, rgba(12, 13, 16, 0.65) 45%, transparent 100%);
+}
+
+.home-previewShowroomImg {
+  position: relative;
+  z-index: 1;
+}
+
+.home-previewShowroomStage .home-backdropFade {
+  z-index: 4;
+}
+
+.home-unitsSidebarDock--showroomHidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(100%);
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease,
+    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-unitsSidebarDock--showroomVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+  transform: translateX(0);
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease,
+    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-unitsSidebarDock--showroomVisible.home-unitsSidebarDock--collapsed {
+  transform: translateX(calc(100% - var(--home-sidebar-toggle-w)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-previewSlideshowSlide {
+    transition: none;
+  }
+
+  .home-unitsSidebarDock--showroomHidden,
+  .home-unitsSidebarDock--showroomVisible {
+    transition: none;
+  }
+}
+
+/* Horizontal slide when navigating via PageSlideLink (View Transitions API) */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: 0.38s cubic-bezier(0.4, 0, 0.2, 1) both page-slide-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 0.38s cubic-bezier(0.4, 0, 0.2, 1) both page-slide-in;
+  }
+}
+
+@keyframes page-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0.85;
+    transform: translateX(-10%);
+  }
+}
+
+@keyframes page-slide-in {
+  from {
+    opacity: 0.85;
+    transform: translateX(10%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Full-bleed ambience from below the site header through the hero (not only behind the PNG) */

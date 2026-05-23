@@ -4,6 +4,7 @@ import { SiteLayout } from "./layout/SiteLayout";
 import { AdminCalculatorPage } from "./pages/AdminCalculatorPage";
 import { AdminInventoryPage } from "./pages/AdminInventoryPage";
 import { HomePage } from "./pages/HomePage";
+import { HomePagePreview } from "./pages/HomePagePreview";
 import { InventoryPage } from "./pages/InventoryPage";
 import { InventoryUnitDetailPage } from "./pages/InventoryUnitDetailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -21,6 +22,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<SiteLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="home-preview" element={<HomePagePreview />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="inventory/:unitId" element={<InventoryUnitDetailPage />} />
         <Route path="sell-your-ride" element={<SellYourRidePage />} />
