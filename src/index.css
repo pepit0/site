@@ -924,21 +924,84 @@ p {
   .home-preview {
     --home-preview-edge-x: 1.15rem;
     --home-preview-content-shift: 0;
-    --home-preview-seam-overlap: clamp(3.5rem, 9vh, 6rem);
+    --home-preview-seam-overlap: 0;
     overflow-x: clip;
+  }
+
+  .home-preview > .home-backdropAmbience,
+  .home-preview > .home-backdropWarmth {
+    display: none;
   }
 
   .home-preview .home-unitsSidebarDock {
     display: none !important;
   }
 
+  .home-previewTop {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .home-previewSlideshow {
+    flex: 0 0 auto;
+    order: 1;
+    position: relative;
+    height: clamp(11rem, 34vw, 14.5rem);
+    max-height: 15.5rem;
+    overflow: hidden;
+  }
+
+  .home-previewSlideshowSizer {
+    display: none;
+  }
+
+  .home-previewSlideshowSlide {
+    position: absolute;
+    inset: 0;
+  }
+
+  .home-previewSlideshowImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+  }
+
+  .home-previewSlideshow::after {
+    height: 55%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(12, 13, 16, 0.55) 55%,
+      var(--bg) 100%
+    );
+  }
+
+  .home-previewSlideshowDots {
+    order: 2;
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    align-self: center;
+    margin: -1.85rem 0 0.75rem;
+    z-index: 6;
+  }
+
   .home-preview .home-previewContent {
-    padding-left: var(--home-preview-edge-x);
-    padding-right: var(--home-preview-edge-x);
-    padding-top: clamp(0.65rem, 2.5vh, 1.1rem);
-    padding-bottom: clamp(3.25rem, 9vh, 4.75rem);
+    position: relative;
+    order: 3;
+    top: auto;
+    left: auto;
+    right: auto;
+    height: auto;
+    width: 100%;
+    padding: 0 var(--home-preview-edge-x) 1.35rem;
+    background: var(--bg);
     align-items: stretch;
     justify-content: flex-start;
+    pointer-events: auto;
   }
 
   .home-previewContentInner {
@@ -948,29 +1011,49 @@ p {
 
   .home-previewHero {
     max-width: none;
-    text-align: center;
+    text-align: left;
   }
 
   .home-previewHeroLogo {
-    margin-left: auto;
+    width: clamp(5.25rem, 38vw, 7.5rem);
+    max-height: none;
+    margin: 0 0 0.85rem;
+    margin-left: 0;
     margin-right: auto;
-    object-position: center top;
+    object-position: left top;
+    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.35));
   }
 
   .home-previewHook {
-    font-size: clamp(1.42rem, 6.8vw, 1.9rem);
-    line-height: 1.12;
+    margin-bottom: 0.55rem;
+    font-size: clamp(1.5rem, 7.2vw, 1.95rem);
+    line-height: 1.14;
+    color: var(--text);
+    -webkit-text-stroke: 0;
+    paint-order: normal;
+    text-shadow: none;
+  }
+
+  .home-previewSubhook,
+  .home-previewLede {
+    max-width: none;
+    -webkit-text-stroke: 0;
+    paint-order: normal;
+    text-shadow: none;
   }
 
   .home-previewSubhook {
-    font-size: clamp(0.98rem, 3.8vw, 1.12rem);
-    max-width: none;
+    margin-bottom: 0.5rem;
+    font-size: clamp(0.95rem, 3.6vw, 1.08rem);
+    font-weight: 600;
+    color: var(--text);
   }
 
   .home-previewLede {
-    font-size: clamp(0.8rem, 3.2vw, 0.92rem);
-    max-width: none;
-    margin-bottom: clamp(1rem, 2.5vh, 1.35rem);
+    margin-bottom: 1.1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-muted);
   }
 
   .home-previewCtaBlock {
@@ -980,7 +1063,6 @@ p {
 
   .home-previewCtaRow {
     flex-direction: column;
-    flex-wrap: wrap;
     width: 100%;
     max-width: none;
     gap: 0.55rem;
@@ -989,64 +1071,67 @@ p {
   .home-previewQualifyCta {
     width: 100%;
     justify-content: space-between;
-    padding: 0.85rem 1rem 0.85rem 1.1rem;
+    padding: 0.9rem 1rem 0.9rem 1.1rem;
   }
 
   .home-previewQualifyCopy {
-    align-items: center;
+    align-items: flex-start;
   }
 
   .home-previewQualifyText,
   .home-previewQualifySubtext {
-    text-align: center;
-    align-self: center;
+    text-align: left;
+    align-self: flex-start;
   }
 
   .home-previewInventoryCta {
     width: 100%;
     align-self: auto;
-    padding: 0.85rem 1.25rem;
+    padding: 0.9rem 1.25rem;
     white-space: normal;
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .home-previewHighlights {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.55rem 0.75rem;
-    margin-top: 0.95rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 1rem;
   }
 
   .home-previewHighlight {
-    flex: 1 1 calc(33.333% - 0.75rem);
-    min-width: 5.25rem;
+    flex: none;
+    min-width: 0;
+    padding: 0.55rem 0.35rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
   }
 
   .home-previewHighlightValue {
-    font-size: clamp(1rem, 4.2vw, 1.2rem);
+    font-size: 0.92rem;
+    color: var(--accent);
     white-space: normal;
   }
 
   .home-previewHighlightLabel {
-    font-size: 0.58rem;
-    line-height: 1.25;
+    font-size: 0.54rem;
+    line-height: 1.2;
+    color: var(--text-muted);
     white-space: normal;
   }
 
-  .home-previewSlideshow::after {
-    height: clamp(8rem, 24vh, 14rem);
-  }
-
-  .home-previewSlideshowDots {
-    bottom: clamp(0.85rem, 3.5vh, 1.75rem);
-    padding: 0.3rem 0.5rem;
-  }
-
   .home-previewShowroom {
-    margin-top: calc(-1 * var(--home-preview-seam-overlap));
+    margin-top: 0;
   }
 
   .home-previewShowroomStage::before {
-    height: clamp(4rem, 12vh, 8rem);
+    height: clamp(2.5rem, 7vh, 4.5rem);
   }
 
   .home-preview .home-heroUnitGlow {
@@ -1054,8 +1139,8 @@ p {
   }
 
   .home-preview .home-reviewsBelt {
-    margin-top: clamp(-1.75rem, -4vh, -2.25rem);
-    padding-top: 0.65rem;
+    margin-top: 0;
+    padding-top: 0.75rem;
   }
 
   .home-reviewsCard {
