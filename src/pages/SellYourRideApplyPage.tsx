@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { VEHICLE_CATEGORIES, type VehicleCategory } from "../data/inventory";
+import { SELL_RIDE_APPLY } from "../data/sellRideCopy";
 import { SELL_RIDE_PHOTOS_BUCKET } from "../data/sellRide";
 import { normalizePhoneForStorage } from "../lib/phoneFormat";
 import {
@@ -509,6 +510,7 @@ export function SellYourRideApplyPage() {
                 id="sr-notes"
                 className="loginInput textarea"
                 rows={3}
+                placeholder={SELL_RIDE_APPLY.notesPlaceholder}
                 value={form.sellerNotes}
                 onChange={(e) => setForm((f) => ({ ...f, sellerNotes: e.target.value }))}
               />

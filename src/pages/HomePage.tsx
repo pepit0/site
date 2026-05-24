@@ -18,6 +18,9 @@ export function HomePage() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [showroomInView, setShowroomInView] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [mobileHome, setMobileHome] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 768px)").matches : false
+  );
   const sidebarNavRef = useRef<HTMLElement>(null);
   const slideshowTopRef = useRef<HTMLElement>(null);
   const showroomStageRef = useRef<HTMLDivElement>(null);
@@ -42,6 +45,14 @@ export function HomePage() {
   );
 
   useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const apply = () => setMobileHome(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => setReduceMotion(mq.matches);
     apply();
@@ -58,6 +69,13 @@ export function HomePage() {
   }, [reduceMotion]);
 
   useEffect(() => {
+    if (mobileHome) {
+      setShowroomInView(false);
+      setSidebarGlow(null);
+      setSidebarCollapsed(false);
+      return;
+    }
+
     const slideshow = slideshowTopRef.current;
     const stage = showroomStageRef.current;
     if (!slideshow || !stage) return;
@@ -93,9 +111,9 @@ export function HomePage() {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [mobileHome]);
 
-  const showSidebar = showroomInView;
+  const showSidebar = !mobileHome && showroomInView;
   const activeSlide = HOME_PREVIEW_SLIDESHOW[slideIndex] ?? HOME_PREVIEW_SLIDESHOW[0];
 
   return (
@@ -252,12 +270,13 @@ export function HomePage() {
         <HomeReviewsConveyor />
       </section>
 
-      <div
-        className={`home-unitsSidebarDock${sidebarCollapsed ? " home-unitsSidebarDock--collapsed" : ""}${showSidebar ? " home-unitsSidebarDock--showroomVisible" : " home-unitsSidebarDock--showroomHidden"}`}
-        aria-hidden={!showSidebar}
-        inert={!showSidebar ? true : undefined}
-      >
-        <aside
+      {!mobileHome ? (
+        <div
+          className={`home-unitsSidebarDock${sidebarCollapsed ? " home-unitsSidebarDock--collapsed" : ""}${showSidebar ? " home-unitsSidebarDock--showroomVisible" : " home-unitsSidebarDock--showroomHidden"}`}
+          aria-hidden={!showSidebar}
+          inert={!showSidebar ? true : undefined}
+        >
+          <aside
           id="home-categories-panel"
           className="home-unitsSidebar"
           aria-label="Showroom categories"
@@ -296,7 +315,8 @@ export function HomePage() {
         >
           <span className="home-unitsSidebarToggleIcon" aria-hidden />
         </button>
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
