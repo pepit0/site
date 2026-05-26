@@ -4348,6 +4348,20 @@ img.vehicle-category-icon {
   font-size: 0.72rem;
 }
 
+.admin-invFbListed {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #047857;
+}
+
+.admin-invFbStatusReadonly {
+  padding: 0.5rem 0.75rem;
+  background: rgba(4, 120, 87, 0.08);
+  border-radius: 6px;
+}
+
 .admin-invDetailPanel {
   margin-bottom: 0;
   min-width: 0;
