@@ -64,6 +64,7 @@ type FormFields = {
   odometer_km: string;
   category: VehicleCategory;
   cost: string;
+  marketplace_list_price: string;
   status: InventoryStatus;
   is_customer_unit: boolean;
   vin: string;
@@ -78,6 +79,7 @@ const emptyForm = (): FormFields => ({
   odometer_km: "",
   category: "Motorcycle",
   cost: "0",
+  marketplace_list_price: "",
   status: "Available",
   is_customer_unit: false,
   vin: "",
@@ -175,6 +177,8 @@ export function AdminInventoryPage() {
       odometer_km: row.odometer_km != null ? String(row.odometer_km) : "",
       category: row.category,
       cost: String(row.cost),
+      marketplace_list_price:
+        row.marketplace_list_price != null ? String(row.marketplace_list_price) : "",
       status: row.status,
       is_customer_unit: row.is_customer_unit,
       vin: row.vin ?? "",
@@ -247,6 +251,15 @@ export function AdminInventoryPage() {
 
     const vinPayload = form.is_customer_unit ? form.vin.trim() || null : null;
     const adminNotesPayload = form.admin_notes.trim() || null;
+    const marketplace_list_price: number | null = (() => {
+      if (form.marketplace_list_price.trim() === "") return null;
+      const p = Number.parseFloat(form.marketplace_list_price);
+      return Number.isFinite(p) && p >= 0 ? p : NaN;
+    })();
+    if (marketplace_list_price !== null && Number.isNaN(marketplace_list_price)) {
+      setFormError("Enter a valid Facebook list price or leave blank.");
+      return;
+    }
 
     try {
       const dup = await findInventoryUnitByStock(supabase, stock, editingId);
@@ -277,6 +290,7 @@ export function AdminInventoryPage() {
             odometer_km,
             category: form.category,
             cost,
+            marketplace_list_price,
             status: form.status,
             photo_paths,
             is_customer_unit: form.is_customer_unit,
@@ -305,6 +319,7 @@ export function AdminInventoryPage() {
             odometer_km,
             category: form.category,
             cost,
+            marketplace_list_price,
             status: form.status,
             photo_paths: [],
             is_customer_unit: form.is_customer_unit,
@@ -571,6 +586,14 @@ export function AdminInventoryPage() {
                             >
                               {row.status}
                             </span>
+                            {row.posted_to_marketplace ? (
+                              <span className="admin-invFbListed" title={row.marketplace_listed_at ?? undefined}>
+                                Listed on FB
+                                {row.marketplace_listed_at
+                                  ? ` · ${new Date(row.marketplace_listed_at).toLocaleDateString("en-CA")}`
+                                  : ""}
+                              </span>
+                            ) : null}
                           </span>
                         </button>
                       </li>
@@ -682,6 +705,39 @@ export function AdminInventoryPage() {
                     required
                   />
                 </div>
+                <div className="form-row">
+                  <label className="loginLabel" htmlFor="adm-fb-price">
+                    Facebook list price (CAD)
+                  </label>
+                  <input
+                    id="adm-fb-price"
+                    className="loginInput"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.marketplace_list_price}
+                    onChange={(e) => setForm((f) => ({ ...f, marketplace_list_price: e.target.value }))}
+                    placeholder="Optional — uses cost if blank"
+                  />
+                  <p className="sell-ride-applyHint">
+                    Used by the Marketplace Lister Chrome extension. Leave blank to use cost.
+                  </p>
+                </div>
+                {editingId ? (() => {
+                  const editing = units.find((u) => u.id === editingId);
+                  if (!editing?.posted_to_marketplace) return null;
+                  return (
+                    <div className="form-row sell-ride-applyFullWidth admin-invFbStatusReadonly">
+                      <p className="sell-ride-applyHint">
+                        <strong>Facebook Marketplace:</strong> marked as listed
+                        {editing.marketplace_listed_at
+                          ? ` on ${new Date(editing.marketplace_listed_at).toLocaleString("en-CA")}`
+                          : ""}
+                        . Updated via the Chrome extension.
+                      </p>
+                    </div>
+                  );
+                })() : null}
                 <div className="form-row">
                   <label className="loginLabel" htmlFor="adm-status">
                     Status

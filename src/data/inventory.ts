@@ -62,9 +62,18 @@ export type InventoryCustomerUnitFields = {
   no_reg_insurance: boolean;
 };
 
+/** Facebook Marketplace Lister extension fields on `inventory_units`. */
+export type InventoryMarketplaceFields = {
+  posted_to_marketplace: boolean;
+  marketplace_listed_at: string | null;
+  /** Optional Facebook list price; extension API uses COALESCE(this, cost). */
+  marketplace_list_price: number | null;
+};
+
 /** Full row for admins (`inventory_units`). */
 export type InventoryUnitRow = Omit<InventoryPublicRow, "status"> &
-  InventoryCustomerUnitFields & {
+  InventoryCustomerUnitFields &
+  InventoryMarketplaceFields & {
     status: InventoryStatus;
     cost: number;
     /** Admin-only; not on public listings or inventory_units_public. */
@@ -221,6 +230,21 @@ export function parseInventoryPublicRow(row: unknown): InventoryPublicRow | null
   return { ...core, status: core.status };
 }
 
+function parseInventoryMarketplaceFields(row: Record<string, unknown>): InventoryMarketplaceFields {
+  const marketplace_list_price = (() => {
+    const raw = row.marketplace_list_price;
+    if (raw == null || raw === "") return null;
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  })();
+  return {
+    posted_to_marketplace: row.posted_to_marketplace === true,
+    marketplace_listed_at:
+      typeof row.marketplace_listed_at === "string" ? row.marketplace_listed_at : null,
+    marketplace_list_price
+  };
+}
+
 /** Parse full admin row from `inventory_units`. */
 export function parseInventoryUnitRow(row: unknown): InventoryUnitRow | null {
   const core = parseInventoryCore(row);
@@ -230,5 +254,11 @@ export function parseInventoryUnitRow(row: unknown): InventoryUnitRow | null {
   const n = typeof cost === "number" ? cost : typeof cost === "string" ? Number(cost) : NaN;
   if (!Number.isFinite(n)) return null;
   const admin_notes = typeof r.admin_notes === "string" ? r.admin_notes : null;
-  return { ...core, ...parseInventoryCustomerFields(r), cost: n, admin_notes };
+  return {
+    ...core,
+    ...parseInventoryCustomerFields(r),
+    ...parseInventoryMarketplaceFields(r),
+    cost: n,
+    admin_notes
+  };
 }

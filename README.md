@@ -13,6 +13,8 @@ Vite + React + TypeScript. Pre-approval and inventory are in this repo.
 
 **Inventory:** Public units load from the view `inventory_units_public` (no `cost` column; **Unlisted** rows are excluded). Admins manage stock at **`/admin/inventory`** after sign-in. If you already ran older `01` without **Sold** / **Unlisted**, run **`sql/marketing/03_inventory_status_sold_unlisted.sql`**. Photos live in the **`inventory-photos`** Storage bucket.
 
+**Facebook Marketplace Lister (Chrome extension):** run **`sql/marketing/24_inventory_marketplace_extension.sql`**, set Vercel env vars, and see **`docs/MARKETPLACE_EXTENSION.md`**.
+
 **Click-by-click Supabase + Windows help:** in the **auto-finance-manager** repo open **`docs/SUPABASE_BEGINNER_CLICKS.md`**.
 
 Full checklist (two projects, hosting): **`docs/SETUP_CHECKLIST.md`** in the same repo.
