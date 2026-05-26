@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { inventoryPhotoPublicUrl } from "./supabaseAdmin";
+import { inventoryPhotoPublicUrl } from "./supabaseAdmin.js";
 
 const KM_TO_MILES = 0.621371;
 
