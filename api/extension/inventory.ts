@@ -4,9 +4,9 @@ import {
   sendMethodNotAllowed,
   sendServerMisconfigured,
   sendUnauthorized
-} from "./_lib/auth";
-import { mapRowToExtensionVehicle, type InventoryUnitDbRow } from "./_lib/mapInventory";
-import { getSupabaseAdmin } from "./_lib/supabaseAdmin";
+} from "./_lib/auth.js";
+import { mapRowToExtensionVehicle, type InventoryUnitDbRow } from "./_lib/mapInventory.js";
+import { getSupabaseAdmin } from "./_lib/supabaseAdmin.js";
 
 const SELECT_COLUMNS =
   "id, year, make, model, odometer_km, cost, vin, photo_paths, status, posted_to_marketplace, marketplace_listed_at, marketplace_list_price";
