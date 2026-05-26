@@ -4,8 +4,8 @@ import {
   sendMethodNotAllowed,
   sendServerMisconfigured,
   sendUnauthorized
-} from "../../_lib/auth";
-import { getSupabaseAdmin } from "../../_lib/supabaseAdmin";
+} from "../../_lib/auth.js";
+import { getSupabaseAdmin } from "../../_lib/supabaseAdmin.js";
 
 type PatchBody = {
   posted?: boolean;
