@@ -1,0 +1,6 @@
+# Marketplace Lister Chrome extension API (Vercel serverless only — never VITE_*):
+# EXTENSION_API_KEY=<long-random-secret>
+# SUPABASE_URL=https://xxxx.supabase.co
+# SUPABASE_SERVICE_ROLE_KEY=eyJ...
+# Run sql/marketing/24_inventory_marketplace_extension.sql on marketing Supabase.
+# See docs/MARKETPLACE_EXTENSION.md
