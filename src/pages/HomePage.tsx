@@ -146,16 +146,26 @@ export function HomePage() {
           ))}
         </div>
 
+        <img
+          src={logoUrl}
+          alt="Temptation Motorsports"
+          className="home-previewHeroLogo home-previewHeroLogo--overlay"
+          width={400}
+          height={200}
+          decoding="async"
+        />
+
         <div className="home-content home-previewContent">
           <div className="home-previewContentInner">
             <section className="home-previewHero" aria-labelledby="home-hook">
               <img
                 src={logoUrl}
-                alt="Temptation Motorsports"
-                className="home-previewHeroLogo"
+                alt=""
+                className="home-previewHeroLogo home-previewHeroLogo--inline"
                 width={400}
                 height={200}
                 decoding="async"
+                aria-hidden
               />
 
               <h1 id="home-hook" className="home-previewHook">
