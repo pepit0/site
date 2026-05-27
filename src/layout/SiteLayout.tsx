@@ -16,19 +16,39 @@ import bikerLogoUrl from "../assets/bikerlogo.png";
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
   const location = useLocation();
   const { label: preapprovalNavLabel, hasResumeDraft } = usePreapprovalNavCta();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="site-shell">
       <MarketingPixelsRouteSync />
-      <header className="site-header">
+      <header className={`site-header${mobileMenuOpen ? " site-headerMobileOpen" : ""}`}>
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>
             <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={52} height={52} decoding="async" />
             <span>Temptation Motorsports</span>
           </NavLink>
-          <nav className="site-nav" aria-label="Main">
+          <button
+            type="button"
+            className="site-navToggle"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="site-main-nav"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+          <nav id="site-main-nav" className={`site-nav${mobileMenuOpen ? " site-navOpen" : ""}`} aria-label="Main">
             <NavLink to="/" className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`} end>
               Home
+            </NavLink>
+            <NavLink to="/inventory" className={({ isActive }) => `site-navLink site-navLinkMobileOnly${isActive ? " site-navLinkActive" : ""}`}>
+              Inventory
             </NavLink>
             <SiteNavInventoryDropdown />
             <NavLink
