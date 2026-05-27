@@ -8,7 +8,6 @@ import {
   PREAPPROVAL_CREDIT_STEP,
   PREAPPROVAL_CTA,
   PREAPPROVAL_FAQ_INTRO,
-  PREAPPROVAL_HERO,
   PREAPPROVAL_SEO,
   PREAPPROVAL_SUBMIT_LABEL,
   PREAPPROVAL_SUBMITTING_LABEL,
@@ -476,23 +475,56 @@ export function PreApprovalPage() {
       </Helmet>
       <div className="preapproval-shell">
         <div className="preapproval-mainGrid">
-          <header className="preapproval-hero">
-            <p className="preapproval-eyebrow">{PREAPPROVAL_HERO.eyebrow}</p>
-            <h1 className="preapproval-heroTitle">{PREAPPROVAL_HERO.h1}</h1>
-            <p className="preapproval-heroCreditLine">{PREAPPROVAL_HERO.creditLine}</p>
-            <p className="preapproval-heroLead">{PREAPPROVAL_HERO.lead}</p>
-            <ul className="preapproval-trustList" aria-label="What's included">
-              {PREAPPROVAL_HERO.trustBullets.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <p className="preapproval-legal">{PREAPPROVAL_HERO.compliance}</p>
-            <p className="preapproval-heroActions">
-              <Link to="/inventory" className="preapproval-heroLink">
-                {PREAPPROVAL_HERO.inventoryLink}
-              </Link>
-            </p>
-          </header>
+          <svg
+            className="preapproval-guideArrow"
+            viewBox="0 0 1000 420"
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+            focusable="false"
+          >
+            <defs>
+              <linearGradient id="preapprovalArrowStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffb38e" />
+                <stop offset="55%" stopColor="#ff7a3d" />
+                <stop offset="100%" stopColor="#f05d22" />
+              </linearGradient>
+            </defs>
+            <path
+              className="preapproval-guideArrowGlow"
+              d="M 92 255 C 115 405, 248 242, 418 252"
+            />
+            <path
+              className="preapproval-guideArrowPath"
+              d="M 92 255 C 115 405, 248 242, 418 252"
+            />
+            <g className="preapproval-guideArrowTip" transform="translate(418 252) rotate(-9)">
+              <polygon className="preapproval-guideArrowTipShadow" points="0 -34 72 0 0 34" />
+              <polygon className="preapproval-guideArrowTipShape" points="0 -34 72 0 0 34" />
+            </g>
+          </svg>
+
+          <div className="preapproval-visual" aria-label="Pre-approval highlights">
+            <div className="preapproval-promo">
+              <p className="preapproval-promoKicker">Fast and simple</p>
+              <h2 className="preapproval-promoTitle">
+                Take 2 minutes
+                <br />
+                to see if you qualify!
+              </h2>
+              <p className="preapproval-promoLead">
+                Quick form. Clear steps. We help with all credit situations.
+              </p>
+              <ul className="preapproval-promoPoints" aria-label="Why apply now">
+                <li>No hard-to-read fluff</li>
+                <li>Just the info needed to help you</li>
+                <li>A team member follows up fast</li>
+              </ul>
+              <p className="preapproval-promoMobileCue" aria-hidden>
+                ↓
+              </p>
+            </div>
+          </div>
 
           <div className="preapproval-form card card-pad preapproval-wizard">
             <div className="preapproval-wizardIntro">

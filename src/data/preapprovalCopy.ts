@@ -29,7 +29,7 @@ export const PREAPPROVAL_HERO = {
 } as const;
 
 export const PREAPPROVAL_WIZARD_INTRO = {
-  title: "Tell us about your dream ride",
+  title: "Tell us how we can help you",
   subline: "About 2 minutes · 6 quick questions"
 } as const;
 
