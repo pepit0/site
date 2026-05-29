@@ -30,22 +30,29 @@ export const PREAPPROVAL_HERO = {
 
 export const PREAPPROVAL_WIZARD_INTRO = {
   title: "Tell us how we can help you",
-  subline: "About 2 minutes · 6 quick questions"
+  subline: "About 2 minutes · 5 quick questions"
 } as const;
+
+/** Short labels under wizard progress circles (order matches step index). */
+export const PREAPPROVAL_WIZARD_STEPS = [
+  { shortLabel: "Unit" },
+  { shortLabel: "Details" },
+  { shortLabel: "Income" },
+  { shortLabel: "Credit" },
+  { shortLabel: "Done" }
+] as const;
 
 export const PREAPPROVAL_CTA = {
   nextByStep: [
-    "Choose unit & continue",
-    "Set budget & continue",
+    "Continue to your details",
     "Continue to income",
     "Continue to credit estimate",
-    "Continue to your details",
-    "Send my dream ride request"
+    "Continue to final details",
+    "Get my approval options ✔"
   ] as const,
   nextHintByStep: [
-    "Takes about 2 minutes — let's get started.",
-    "Helps us match a monthly payment that fits your budget.",
-    "A trade-in can change what you need to borrow.",
+    "Pick a unit type and monthly budget to get started.",
+    "We'll use this to follow up about your application.",
     "Income details help us understand what works for you.",
     "Any credit range is welcome — pick what feels closest.",
     "Submit now — a specialist from our team will contact you shortly."
@@ -73,21 +80,18 @@ export const PREAPPROVAL_FAQ_INTRO = "Have questions? Scroll down for answers.";
 
 /** Progress suffix from step index 2 onward. */
 export function preapprovalProgressSuffix(step: number): string {
-  if (step >= 4) return " — almost done";
-  if (step >= 3) return " — you're doing great";
-  if (step >= 2) return " — a few questions left";
+  if (step >= 3) return " — almost done";
+  if (step >= 2) return " — you're doing great";
+  if (step >= 1) return " — a few questions left";
   return "";
 }
 
-export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[5];
+export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[4];
 export const PREAPPROVAL_SUBMITTING_LABEL = "Sending your dream ride request…";
 
 export const PREAPPROVAL_COMPLETE = {
-  title: "You're on your way to your dream ride",
-  lead: "Thanks for reaching out — someone from our team will contact you shortly.",
-  body:
-    "We help Canadians from coast to coast — prime, subprime, and every situation in between — get into the ride they've been waiting for. No money down options are available, and we ship nationwide straight to your doorstep.",
-  contactIntro: "Want to talk sooner? Reach us directly:"
+  title: "Application Complete!",
+  lead: "A member of our team will be in touch with you shortly to help you find your dream ride."
 } as const;
 
 export const PREAPPROVAL_COMPLETE_SEO = {
@@ -96,5 +100,8 @@ export const PREAPPROVAL_COMPLETE_SEO = {
     "Thank you for your dream ride request with Temptation Motorsports. Our team will contact you shortly to help you find your next powersports unit."
 } as const;
 
-export const PREAPPROVAL_CONSENT_SOFT_CHECK =
-  "I agree to receive communications from Temptation Motorsports about my request by phone, text, or email, and I authorize a soft credit inquiry for pre-qualification that will not affect my credit score. I confirm the information above is accurate to the best of my knowledge.";
+export const PREAPPROVAL_CONSENT_LABEL =
+  "I authorize to be contacted by the financing team regarding this application.";
+
+export const PREAPPROVAL_CONSENT_FOOTNOTE =
+  "Submitting this does not trigger a hard credit pull. A team member will contact you — typically within the hour.";

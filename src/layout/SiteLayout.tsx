@@ -84,27 +84,25 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               decoding="async"
             />
             <div className="site-footerMeta">
-              <p className="site-footerContact">
-                <span>Based in Edmonton</span>
-                <span className="site-footerContactSep" aria-hidden>
-                  ·
-                </span>
-                <a href="tel:+15877411945">(587) 741-1945</a>
+              <p className="site-footerTagline">
+                We deliver all over Canada!{" "}
+                <a className="site-footerPhoneInline" href="tel:+15877411945">
+                  (587) 741-1945
+                </a>
               </p>
-              <p className="site-footerTagline">We deliver all over Canada!</p>
               <p className="site-footerSeoBlurb">
-                Looking for{" "}
+                Fast approvals for{" "}
                 <Link className="site-footerSeoLink" to="/pre-approval">
-                  motorcycle or snowmobile financing
+                  motorcycle, ATV, and snowmobile financing
                 </Link>
-                ? Explore our latest{" "}
+                . Browse our{" "}
                 <Link className="site-footerSeoLink" to="/inventory">
-                  powersports inventory
-                </Link>{" "}
-                across Alberta and Canada.
+                  Edmonton powersports inventory
+                </Link>
+                .
               </p>
               <p className="site-footerText">
-                © {new Date().getFullYear()} Temptation Motorsports. All rights reserved.
+                © {new Date().getFullYear()} Temptation Motorsports. All rights reserved. Based in Edmonton.
               </p>
             </div>
           </div>

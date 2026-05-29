@@ -84,6 +84,24 @@ alter table public.crm_public_preapproval_leads
 alter table public.crm_public_preapproval_leads
   add column if not exists marketing_snapshot jsonb;
 
+alter table public.crm_public_preapproval_leads
+  add column if not exists application_status text not null default 'submitted';
+
+alter table public.crm_public_preapproval_leads
+  add column if not exists wizard_step integer;
+
+alter table public.crm_public_preapproval_leads
+  add column if not exists erased_fields jsonb;
+
+alter table public.crm_public_preapproval_leads
+  add column if not exists income_tenure text;
+
+alter table public.crm_public_preapproval_leads
+  alter column phone drop not null;
+
+alter table public.crm_public_preapproval_leads
+  alter column date_of_birth drop not null;
+
 create table if not exists public.crm_system_leads (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -188,6 +206,12 @@ declare
   v_employment_type text;
   v_credit_band text;
   v_address_tenure text;
+  v_income_tenure text;
+  v_application_status text;
+  v_is_partial boolean;
+  v_wizard_step integer;
+  v_erased_fields jsonb;
+  v_erased_block text;
   v_consent_contact boolean;
   v_consent_credit boolean;
   v_existing_lead public.crm_system_leads%rowtype;
@@ -466,6 +490,44 @@ begin
     ''
   );
 
+  v_income_tenure := nullif(
+    trim(coalesce(v_row ->> 'income_tenure', v_row ->> 'incomeTenure', '')),
+    ''
+  );
+
+  v_application_status := lower(trim(coalesce(v_row ->> 'application_status', v_row ->> 'applicationStatus', 'submitted')));
+  v_is_partial := v_application_status = 'partial';
+
+  begin
+    v_wizard_step := nullif(trim(coalesce(v_row ->> 'wizard_step', v_row ->> 'wizardStep', '')), '')::integer;
+  exception
+    when others then
+      v_wizard_step := null;
+  end;
+
+  v_erased_fields :=
+    case
+      when jsonb_typeof(v_row -> 'erased_fields') = 'object' then v_row -> 'erased_fields'
+      when jsonb_typeof(v_row -> 'erasedFields') = 'object' then v_row -> 'erasedFields'
+      else '{}'::jsonb
+    end;
+
+  v_erased_block := '';
+  if v_is_partial and v_erased_fields <> '{}'::jsonb then
+    select string_agg(
+      format(
+        '  %s: %s (erased)',
+        initcap(replace(k, '_', ' ')),
+        trim(both '"' from v::text)
+      ),
+      E'\n'
+      order by k
+    )
+    into v_erased_block
+    from jsonb_each_text(v_erased_fields) t(k, v)
+    where length(trim(v)) > 0;
+  end if;
+
   v_consent_contact :=
     case
       when (v_row -> 'consent_contact') = 'true'::jsonb or (v_row -> 'consentContact') = 'true'::jsonb then true
@@ -479,7 +541,7 @@ begin
       else lower(trim(coalesce(v_row ->> 'consent_credit', v_row ->> 'consentCredit', ''))) in ('true', 't', '1', 'yes')
     end;
 
-  if v_consent_contact is not true then
+  if not v_is_partial and v_consent_contact is not true then
     return jsonb_build_object('ok', false, 'error', 'Consent to be contacted is required.');
   end if;
 
@@ -487,26 +549,42 @@ begin
     return jsonb_build_object('ok', false, 'error', 'display_name is required.');
   end if;
 
-  if v_email is not null and v_email !~ '^[^@]+@[^@]+\.[^@]+$' then
+  if v_is_partial then
+    if v_email is null or v_email !~ '^[^@]+@[^@]+\.[^@]+$' then
+      return jsonb_build_object('ok', false, 'error', 'Valid email is required for partial applications.');
+    end if;
+  elsif v_email is not null and v_email !~ '^[^@]+@[^@]+\.[^@]+$' then
     return jsonb_build_object('ok', false, 'error', 'Valid email is required when provided.');
   end if;
 
   if length(v_phone) = 11 and left(v_phone, 1) = '1' then
     v_phone := substr(v_phone, 2);
   end if;
-  if length(v_phone) <> 10 then
+
+  if v_is_partial then
+    if length(v_phone) > 0 and length(v_phone) <> 10 then
+      return jsonb_build_object('ok', false, 'error', 'Phone must be 10 digits when provided.');
+    end if;
+    if length(v_phone) = 0 then
+      v_phone := null;
+    end if;
+  elsif length(v_phone) <> 10 then
     return jsonb_build_object('ok', false, 'error', 'Valid 10-digit phone is required.');
   end if;
 
-  begin
-    v_dob := v_dob_text::date;
-  exception
-    when others then
-      return jsonb_build_object('ok', false, 'error', 'Invalid date_of_birth.');
-  end;
+  if v_is_partial and length(v_dob_text) = 0 then
+    v_dob := null;
+  else
+    begin
+      v_dob := v_dob_text::date;
+    exception
+      when others then
+        return jsonb_build_object('ok', false, 'error', 'Invalid date_of_birth.');
+    end;
 
-  if v_dob > current_date or v_dob < (current_date - interval '120 years') then
-    return jsonb_build_object('ok', false, 'error', 'Invalid date_of_birth.');
+    if v_dob > current_date or v_dob < (current_date - interval '120 years') then
+      return jsonb_build_object('ok', false, 'error', 'Invalid date_of_birth.');
+    end if;
   end if;
 
   v_budget_label :=
@@ -598,7 +676,9 @@ begin
     'employment_other_description', v_employment_other,
     'employment_type', v_employment_type,
     'credit_score_band', v_credit_band,
-    'address_tenure', v_address_tenure
+    'address_tenure', v_address_tenure,
+    'income_tenure', v_income_tenure,
+    'application_status', v_application_status
   ));
 
   if not v_duplicate then
@@ -627,10 +707,14 @@ begin
       employment_status,
       employment_other_description,
       employment_type,
+      income_tenure,
       credit_score_band,
       address_tenure,
       consent_contact,
       consent_credit,
+      application_status,
+      wizard_step,
+      erased_fields,
       marketing_snapshot
     )
     values (
@@ -658,10 +742,14 @@ begin
       v_employment_status,
       v_employment_other,
       v_employment_type,
+      v_income_tenure,
       v_credit_band,
       v_address_tenure,
       v_consent_contact,
       v_consent_credit,
+      v_application_status,
+      v_wizard_step,
+      case when v_erased_fields = '{}'::jsonb then null else v_erased_fields end,
       v_row
     )
     returning id into v_preapproval_id;
@@ -673,7 +761,7 @@ begin
       limit 1;
     end if;
 
-    if v_customer_id is null then
+    if v_customer_id is null and v_phone is not null then
       select c.id into v_customer_id
       from public.crm_customers c
       where regexp_replace(coalesce(c.phone, ''), '\D', '', 'g') = v_phone
@@ -737,8 +825,18 @@ begin
     select distinct
       notify_user.user_id,
       'system_lead',
-      'New system lead',
-      v_name || ' submitted a credit pre-approval on the marketing site.',
+      case
+        when v_is_partial then 'New partial pre-approval'
+        else 'New system lead'
+      end,
+      case
+        when v_is_partial then
+          v_name
+          || ' started a pre-approval on the marketing site (partial'
+          || coalesce(', step ' || (v_wizard_step + 1)::text, '')
+          || ').'
+        else v_name || ' submitted a credit pre-approval on the marketing site.'
+      end,
       v_system_lead_id,
       v_customer_id
     from (
@@ -778,10 +876,14 @@ begin
       employment_status = v_employment_status,
       employment_other_description = v_employment_other,
       employment_type = v_employment_type,
+      income_tenure = v_income_tenure,
       credit_score_band = v_credit_band,
       address_tenure = v_address_tenure,
       consent_contact = v_consent_contact,
       consent_credit = v_consent_credit,
+      application_status = v_application_status,
+      wizard_step = v_wizard_step,
+      erased_fields = case when v_erased_fields = '{}'::jsonb then null else v_erased_fields end,
       marketing_snapshot = v_row
     where p.id = v_preapproval_id;
 
@@ -802,9 +904,20 @@ begin
   v_address_line := v_address_line || ', ' || v_city || ', ' || v_prov;
 
   v_comment_body :=
-    E'Website pre-approval application (submitted on the marketing site)\n\n'
+    case
+      when v_is_partial then
+        E'Website pre-approval — PARTIAL (in progress)\n\n'
+      else
+        E'Website pre-approval application (submitted on the marketing site)\n\n'
+    end
     || E'--- Lead ---\n'
     || format(E'Marketing lead ID: %s\n', v_marketing_id::text)
+    || format(E'Application status: %s\n', v_application_status)
+    || case
+      when v_wizard_step is not null then
+        format(E'Wizard step (0-based): %s\n', v_wizard_step::text)
+      else ''
+    end
     || case
       when nullif(trim(coalesce(v_row ->> 'created_at', '')), '') is not null then
         format(E'Submitted at (marketing): %s\n', trim(v_row ->> 'created_at'))
@@ -813,8 +926,16 @@ begin
     || E'\n--- Applicant ---\n'
     || format(E'Display name: %s\n', v_name)
     || format(E'Email: %s\n', coalesce(v_email, '(not provided)'))
-    || format(E'Phone: %s\n', v_phone)
-    || format(E'Date of birth: %s\n', v_dob::text)
+    || format(E'Phone: %s\n', coalesce(v_phone, '(not provided)'))
+    || format(
+      E'Date of birth: %s\n',
+      case when v_dob is null then '(not provided)' else v_dob::text end
+    )
+    || case
+      when v_erased_block is not null and length(v_erased_block) > 0 then
+        E'\n--- Previously entered (erased) ---\n' || v_erased_block || E'\n'
+      else ''
+    end
     || E'\n--- Address ---\n'
     || format(E'Street: %s\n', nullif(v_street, ''))
     || format(E'Unit / suite: %s\n', coalesce(v_line2, '(none)'))
@@ -860,6 +981,10 @@ begin
     || format(
       E'Job title / role: %s\n',
       coalesce(v_job_title, '(n/a)')
+    )
+    || format(
+      E'Income tenure: %s\n',
+      coalesce(nullif(v_income_tenure, ''), '(not specified)')
     )
     || E'\n--- Consents ---\n'
     || format(E'Consent to be contacted: %s\n', case when v_consent_contact then 'yes' else 'no' end)

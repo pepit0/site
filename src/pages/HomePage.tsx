@@ -4,7 +4,6 @@ import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
 import logoUrl from "../assets/logo.png";
 import { PageSlideLink } from "../components/PageSlideLink";
-import { HomeReviewsConveyor } from "../components/HomeReviewsConveyor";
 import { HOME_PREVIEW_SLIDESHOW, HOME_PREVIEW_SLIDESHOW_MS } from "../data/homePreviewSlideshow";
 import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
@@ -277,7 +276,6 @@ export function HomePage() {
           ))}
           <div className="home-backdropFade" aria-hidden />
         </div>
-        <HomeReviewsConveyor />
       </section>
 
       {!mobileHome ? (

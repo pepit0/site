@@ -18,8 +18,14 @@ const CATEGORY_PHOTO_FILES: Record<VehicleCategory, string | readonly string[]> 
   Snowmobile: "ATV_0001_Layer-10.png",
   /** Prefer transparent PNG; JPG has a baked-in white background. */
   "Side by side": ["SIDE.png", "ATV_0004_Layer-2.png"],
-  Watercraft: "jetski.png",
+  Watercraft: "boat.png",
   Trailer: "trailer.png"
+};
+
+/** Second unit shown beside the primary photo (slight overlap in UI). */
+const CATEGORY_PHOTO_SECONDARY_FILES: Partial<Record<VehicleCategory, string>> = {
+  Motorcycle: "ATV_0002_Layer-5.png",
+  Watercraft: "jetski.png"
 };
 
 export function getVehicleCategoryIconUrl(category: VehicleCategory): string | undefined {
@@ -34,4 +40,10 @@ export function getVehicleCategoryPhotoUrl(category: VehicleCategory): string | 
     if (url) return url;
   }
   return undefined;
+}
+
+export function getVehicleCategoryPhotoSecondaryUrl(category: VehicleCategory): string | undefined {
+  const filename = CATEGORY_PHOTO_SECONDARY_FILES[category];
+  if (!filename) return undefined;
+  return getHomeHeroLayerUrl(filename);
 }

@@ -16,9 +16,29 @@ See **[CRM Edge Function reference](CRM_INGEST_EDGE_FUNCTION_REFERENCE.md)** for
 
 Re-run [`sql/crm/crm_marketing_ingest_bridge.sql`](crm/crm_marketing_ingest_bridge.sql) on CRM so `crm_public_preapproval_leads` gets extended columns and ingest fills them.
 
+## Partial applications (30 minute idle)
+
+If someone enters **first name, last name, and email** on the pre-approval wizard but does not submit, the site upserts `preapproval_partial_queue` on the marketing project. Each edit resets `deliver_after` to **30 minutes** from the last change.
+
+After 30 minutes with no edits, **`promote_due_preapproval_partials()`** (scheduled with **pg_cron**, every 3 minutes) copies the row into `preapproval_leads` with `application_status = 'partial'`. The CRM ingest creates a system lead titled **“New partial pre-approval”** (consent and phone are not required for partial rows).
+
+When the same visitor completes the form, `submit_public_preapproval_lead` upgrades the same `marketing_lead_id` to `application_status = 'submitted'`; the CRM webhook **UPDATE** refreshes the existing system lead.
+
+**Migrations (marketing, postgres):**
+
+1. `sql/marketing/25_preapproval_rpc_client_sync.sql` (if not already applied)
+2. `sql/marketing/26_preapproval_partial_queue.sql` — queue, promote function, submit upgrade, INSERT/UPDATE CRM trigger
+3. Enable **pg_cron** and uncomment the `cron.schedule` block at the bottom of `26`, or create the job in the dashboard.
+
+**CRM (postgres):** re-run `sql/crm/crm_marketing_ingest_bridge.sql` for partial ingest rules and `application_status` columns.
+
+**Staging tip:** temporarily change `interval '30 minutes'` in `upsert_preapproval_partial_queue` to `interval '1 minute'` to test promotion without waiting.
+
+Fields the user typed then cleared (phone, SIN) are sent once per field in `erased_fields` and appear in the CRM activity comment as `(erased)`.
+
 ## Prerequisites
 
-- Marketing project: `sql/marketing/04_submit_public_preapproval_lead.sql` (and optionally `05_preapproval_crm_sync_columns.sql`).
+- Marketing project: `sql/marketing/04_submit_public_preapproval_lead.sql`, `25`, and **`26_preapproval_partial_queue.sql`** (and optionally `05_preapproval_crm_sync_columns.sql`).
 - CRM project: `sql/crm_security.sql`, `sql/crm_public_preapproval_leads.sql`, **`sql/crm/crm_marketing_ingest_bridge.sql`** (copy in this repo; same file lives in **auto-finance-manager** `sql/crm_marketing_ingest_bridge.sql`).
 - CRM Edge Function deployed: `ingest-marketing-preapproval` (see auto-finance-manager `docs/CRM_BRIDGE.md`).
 
@@ -27,9 +47,9 @@ Re-run [`sql/crm/crm_marketing_ingest_bridge.sql`](crm/crm_marketing_ingest_brid
 1. CRM → deploy Edge Function and note the URL, e.g.  
    `https://<crm-project-ref>.supabase.co/functions/v1/ingest-marketing-preapproval`
 2. Generate a long random **shared secret** (same value in both places).
-3. Marketing Supabase → **Database** → **Webhooks** → **Create webhook**:
+3. Marketing Supabase → **Database** → **Webhooks** → **Create webhook** (if you are not using the `pg_net` trigger in `14` / `26`):
    - **Table**: `public.preapproval_leads`
-   - **Events**: `INSERT`
+   - **Events**: `INSERT` and **`UPDATE`** (partial refresh and full submit upgrade)
    - **HTTP request**: POST to the CRM function URL
    - **HTTP headers**: `X-Marketing-Webhook-Secret: <your-secret>`
    - **Payload**: include the new row (`record`)

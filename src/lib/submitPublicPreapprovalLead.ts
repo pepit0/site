@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 
 export type PublicPreapprovalPayload = {
+  marketingLeadId?: string | null;
   displayName: string;
   email: string | null;
   phone: string;
@@ -24,8 +25,10 @@ export type PublicPreapprovalPayload = {
   employmentStatus: string;
   employmentOtherDescription: string | null;
   employmentType: string | null;
+  incomeTenure: string;
   creditScoreBand: string;
   addressTenure: string;
+  sin: string | null;
   consentContact: boolean;
   consentCredit: boolean;
 };
@@ -75,10 +78,13 @@ export async function submitPublicPreapprovalLead(
     p_employment_status: payload.employmentStatus,
     p_employment_other_description: nullIfEmpty(payload.employmentOtherDescription ?? ""),
     p_employment_type: nullIfEmpty(payload.employmentType ?? ""),
+    p_income_tenure: payload.incomeTenure,
     p_credit_score_band: payload.creditScoreBand,
     p_address_tenure: payload.addressTenure,
+    p_sin: nullIfEmpty(payload.sin ?? ""),
     p_consent_contact: payload.consentContact,
-    p_consent_credit: payload.consentCredit
+    p_consent_credit: payload.consentCredit,
+    p_marketing_lead_id: payload.marketingLeadId ?? null
   });
 
   if (error) {

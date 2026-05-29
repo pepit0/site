@@ -1,10 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  PREAPPROVAL_COMPLETE,
-  PREAPPROVAL_COMPLETE_SEO,
-  SITE_CONTACT
-} from "../data/preapprovalCopy";
+import { PREAPPROVAL_COMPLETE, PREAPPROVAL_COMPLETE_SEO } from "../data/preapprovalCopy";
 import { trackPreApprovalCompleteConversion } from "../lib/marketingPixels";
 import {
   canViewPreApprovalCompletePage,
@@ -39,28 +35,28 @@ export function PreApprovalCompletePage() {
         path="/pre-approval/complete"
         noindex
       />
-      <div className="preapproval-success card card-pad" role="status">
-        <h1 className="page-title">{PREAPPROVAL_COMPLETE.title}</h1>
-        <p className="page-subtitle">{PREAPPROVAL_COMPLETE.lead}</p>
-        <p className="preapproval-completeBody">{PREAPPROVAL_COMPLETE.body}</p>
-        <div className="preapproval-completeContact">
-          <p className="preapproval-completeContactIntro">{PREAPPROVAL_COMPLETE.contactIntro}</p>
-          <ul className="preapproval-completeContactList">
-            <li>
-              <span className="preapproval-completeContactLabel">Phone</span>
-              <a href={`tel:${SITE_CONTACT.phoneTel}`} className="preapproval-completeContactLink">
-                {SITE_CONTACT.phoneDisplay}
-              </a>
-            </li>
-            <li>
-              <span className="preapproval-completeContactLabel">Email</span>
-              <a href={`mailto:${SITE_CONTACT.email}`} className="preapproval-completeContactLink">
-                {SITE_CONTACT.email}
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="home-actions preapproval-successActions">
+      <div className="preapproval-complete card card-pad" role="status">
+        <svg
+          className="preapproval-completeCheck"
+          viewBox="0 0 64 64"
+          width={72}
+          height={72}
+          aria-hidden
+          focusable="false"
+        >
+          <circle cx="32" cy="32" r="30" className="preapproval-completeCheckCircle" />
+          <path
+            className="preapproval-completeCheckMark"
+            d="M20 33.5 28.2 41.5 44.5 24.5"
+            fill="none"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <h1 className="preapproval-completeTitle">{PREAPPROVAL_COMPLETE.title}</h1>
+        <p className="preapproval-completeLead">{PREAPPROVAL_COMPLETE.lead}</p>
+        <div className="home-actions preapproval-completeActions">
           <Link to="/" className="btn btn-secondary">
             Back to home
           </Link>
