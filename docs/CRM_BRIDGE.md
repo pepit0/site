@@ -18,9 +18,51 @@ Re-run [`sql/crm/crm_marketing_ingest_bridge.sql`](crm/crm_marketing_ingest_brid
 
 ## Partial applications (30 minute idle)
 
-If someone enters **first name, last name, and email** on the pre-approval wizard but does not submit, the site upserts `preapproval_partial_queue` on the marketing project. Each edit resets `deliver_after` to **30 minutes** from the last change.
+If someone enters **first name, last name, and email** on the pre-approval wizard but does not submit, the site upserts `preapproval_partial_queue` on the marketing project. Each edit (or leaving the page) resets `deliver_after` to **30 minutes** from the last change.
 
-After 30 minutes with no edits, **`promote_due_preapproval_partials()`** (scheduled with **pg_cron**, every 3 minutes) copies the row into `preapproval_leads` with `application_status = 'partial'`. The CRM ingest creates a system lead titled **“New partial pre-approval”** (consent and phone are not required for partial rows).
+After 30 minutes with no edits, **`promote_due_preapproval_partials()`** (scheduled with **pg_cron**, every 3 minutes) copies the row into `preapproval_leads` with `application_status = 'partial'`. The CRM ingest creates a **System lead** titled **“New partial pre-approval”** (consent and phone are not required for partial rows).
+
+**This is not instant.** Full submits appear in CRM immediately; partials appear only after the idle window + cron promotion + webhook.
+
+### Expected timeline (testing with `28`)
+
+| Time | What happens |
+|------|----------------|
+| User fills step 2 and leaves | Row in `preapproval_partial_queue`, `deliver_after = now() + 2 min` |
+| 2+ minutes idle | Cron promotes → `preapproval_leads` (`partial`) → webhook → CRM System lead |
+| User completes form later | Same `marketing_lead_id` upgrades to `submitted` |
+
+### Verify a live test (replace email)
+
+**Marketing** — queue saved?
+
+```sql
+select marketing_lead_id, deliver_after, promoted_at, wizard_snapshot ->> 'email' as email
+from public.preapproval_partial_queue
+where lower(wizard_snapshot ->> 'email') = lower('test@example.com')
+order by updated_at desc limit 1;
+```
+
+**Marketing** — promoted?
+
+```sql
+select id, application_status, display_name, email, created_at
+from public.preapproval_leads
+where lower(email) = lower('test@example.com')
+order by created_at desc limit 1;
+```
+
+**CRM** — system lead?
+
+```sql
+select sl.created_at, p.display_name, p.application_status
+from public.crm_system_leads sl
+join public.crm_public_preapproval_leads p on p.id = sl.preapproval_lead_id
+where lower(p.email) = lower('test@example.com')
+order by sl.created_at desc limit 1;
+```
+
+In the CRM app, check **System leads** (not only completed/submitted views).
 
 When the same visitor completes the form, `submit_public_preapproval_lead` upgrades the same `marketing_lead_id` to `application_status = 'submitted'`; the CRM webhook **UPDATE** refreshes the existing system lead.
 

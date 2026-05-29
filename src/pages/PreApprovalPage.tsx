@@ -36,9 +36,9 @@ import {
 } from "../lib/preapprovalDraft";
 import {
   cancelPartialPreapprovalQueue,
-  createMarketingLeadId,
   isPartialPreapprovalEligible,
-  upsertPartialPreapprovalQueue
+  syncPartialPreapprovalQueue,
+  syncPartialPreapprovalQueueKeepalive
 } from "../lib/syncPartialPreapproval";
 import { submitPublicPreapprovalLead } from "../lib/submitPublicPreapprovalLead";
 import { supabase } from "../lib/supabase";
@@ -463,6 +463,15 @@ export function PreApprovalPage() {
   const bottomVehicleRowRef = useRef<HTMLDivElement>(null);
   const wizardScrollRef = useRef<HTMLDivElement>(null);
   const skipWizardScrollRef = useRef(true);
+  const partialSyncPendingRef = useRef(false);
+  const partialStateRef = useRef({
+    w,
+    step,
+    skipVehicleStep,
+    marketingLeadId,
+    erasedFields
+  });
+  partialStateRef.current = { w, step, skipVehicleStep, marketingLeadId, erasedFields };
   const [vehicleRowHeightPx, setVehicleRowHeightPx] = useState<number | null>(null);
   const otherIncomeParsed = parseMoney(w.otherIncome);
   const showOtherIncomeDescription = otherIncomeParsed.ok && otherIncomeParsed.value > 0;
@@ -528,29 +537,95 @@ export function PreApprovalPage() {
     return () => window.clearTimeout(handle);
   }, [w, step, skipVehicleStep, submitting, marketingLeadId, erasedFields]);
 
+  const runPartialSync = useCallback(
+    (snap: {
+      marketingLeadId: string | null;
+      wizardStep: number;
+      wizard: PreapprovalWizardState;
+      erasedFields: PreapprovalErasedFields;
+    }) => {
+      partialSyncPendingRef.current = false;
+      void syncPartialPreapprovalQueue(snap).then((result) => {
+        if (result.ok) {
+          if (!snap.marketingLeadId) {
+            setMarketingLeadId(result.marketingLeadId);
+          }
+          if (import.meta.env.DEV) {
+            console.debug("[partial pre-approval] queued", {
+              marketingLeadId: result.marketingLeadId,
+              step: snap.wizardStep
+            });
+          }
+          return;
+        }
+        if (import.meta.env.DEV) {
+          console.warn("[partial pre-approval] queue failed:", result.error);
+        }
+      });
+    },
+    []
+  );
+
+  const flushPartialSyncKeepalive = useCallback(() => {
+    const { w: wizardState, step: wizardStep, skipVehicleStep: skipStep, marketingLeadId: leadId, erasedFields: erased } =
+      partialStateRef.current;
+    const wizard = wizardState as PreapprovalWizardState;
+    if (!isPartialPreapprovalEligible(wizard)) return;
+
+    const result = syncPartialPreapprovalQueueKeepalive({
+      marketingLeadId: leadId,
+      wizardStep: wizardStep,
+      wizard,
+      erasedFields: erased
+    });
+    if (!result) return;
+
+    partialSyncPendingRef.current = false;
+    savePreapprovalDraft({
+      step: wizardStep,
+      skipVehicleStep: skipStep,
+      marketingLeadId: result.marketingLeadId,
+      erasedFields: erased,
+      wizard
+    });
+  }, []);
+
   useEffect(() => {
     if (submitting) return;
     const wizard = w as PreapprovalWizardState;
     if (!isPartialPreapprovalEligible(wizard)) {
+      partialSyncPendingRef.current = false;
       void cancelPartialPreapprovalQueue(marketingLeadId);
       return;
     }
 
+    partialSyncPendingRef.current = true;
+    const snap = { marketingLeadId, wizardStep: step, wizard, erasedFields };
+
     const handle = window.setTimeout(() => {
-      const leadId = marketingLeadId ?? createMarketingLeadId();
-      if (!marketingLeadId) {
-        setMarketingLeadId(leadId);
-      }
-      void upsertPartialPreapprovalQueue({
-        marketingLeadId: leadId,
-        wizardStep: step,
-        wizard,
-        erasedFields
-      });
+      if (!partialSyncPendingRef.current) return;
+      runPartialSync(snap);
     }, 800);
 
     return () => window.clearTimeout(handle);
-  }, [w, step, submitting, marketingLeadId, erasedFields]);
+  }, [w, step, submitting, marketingLeadId, erasedFields, runPartialSync]);
+
+  useEffect(() => {
+    const onPageExit = () => {
+      flushPartialSyncKeepalive();
+    };
+
+    window.addEventListener("pagehide", onPageExit);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        onPageExit();
+      }
+    });
+    return () => {
+      window.removeEventListener("pagehide", onPageExit);
+      flushPartialSyncKeepalive();
+    };
+  }, [flushPartialSyncKeepalive]);
 
   const update = useCallback(<K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setW((prev) => ({ ...prev, [key]: value }));
