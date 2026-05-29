@@ -713,8 +713,10 @@ export function PreApprovalPage() {
 
     setSubmitting(true);
     await cancelPartialPreapprovalQueue(marketingLeadId);
+    // Always insert a new marketing lead on full submit so a promoted partial stays
+    // its own CRM lead and the completed application arrives as a separate full lead.
     const result = await submitPublicPreapprovalLead({
-      marketingLeadId,
+      marketingLeadId: null,
       displayName,
       email: emailTrim,
       phone: phoneDigits ?? "",
