@@ -233,6 +233,8 @@ declare
   v_root_scalars jsonb;
   v_parent_scalars jsonb;
   v_duplicate boolean := false;
+  v_old_application_status text;
+  v_upgraded_to_submitted boolean := false;
 begin
   -- Unwrap transport envelopes (Edge / queues often send { "message": <webhook json> }).
   v_outer := p_payload;
@@ -851,6 +853,11 @@ begin
     v_customer_id := v_existing_lead.customer_id;
     v_system_lead_id := v_existing_lead.id;
 
+    select p.application_status
+    into v_old_application_status
+    from public.crm_public_preapproval_leads p
+    where p.id = v_preapproval_id;
+
     update public.crm_public_preapproval_leads p
     set
       display_name = v_name,
@@ -895,6 +902,10 @@ begin
       date_of_birth = coalesce(c.date_of_birth, v_dob),
       profile_metadata = coalesce(c.profile_metadata, '{}'::jsonb) || v_metadata
     where c.id = v_customer_id;
+
+    v_upgraded_to_submitted :=
+      coalesce(v_old_application_status, '') = 'partial'
+      and v_application_status = 'submitted';
   end if;
 
   v_address_line := v_street;
@@ -993,7 +1004,7 @@ begin
     || jsonb_pretty(v_row);
 
   v_comment_error := null;
-  if not v_duplicate then
+  if not v_duplicate or v_upgraded_to_submitted then
     begin
       insert into public.crm_activities (
         customer_id,
@@ -1015,10 +1026,30 @@ begin
     end;
   end if;
 
+  if v_upgraded_to_submitted then
+    insert into public.crm_notifications (user_id, type, title, body, system_lead_id, customer_id)
+    select distinct
+      notify_user.user_id,
+      'system_lead',
+      'Pre-approval completed',
+      v_name || ' completed their pre-approval application on the marketing site.',
+      v_system_lead_id,
+      v_customer_id
+    from (
+      select d.user_id from public.crm_user_directory d
+      union
+      select u.id as user_id
+      from auth.users u
+      inner join public.crm_access_allowlist a on lower(u.email) = lower(a.email)
+    ) notify_user;
+  end if;
+
   return jsonb_build_object(
     'ok', true,
-    'duplicate', v_duplicate,
-    'refreshed_existing', v_duplicate,
+    'duplicate', v_duplicate and not v_upgraded_to_submitted,
+    'refreshed_existing', v_duplicate and not v_upgraded_to_submitted,
+    'upgraded_to_submitted', v_upgraded_to_submitted,
+    'application_status', v_application_status,
     'system_lead_id', v_system_lead_id::text,
     'customer_id', v_customer_id::text,
     'preapproval_lead_id', v_preapproval_id::text,

@@ -6,6 +6,7 @@ import { createEmptyErasedFields } from "./preapprovalErasedFields";
 export const PREAPPROVAL_DRAFT_CHANGED_EVENT = "tm-preapproval-draft-changed";
 
 const STORAGE_KEY = "tm_preapproval_draft_v4";
+const SUBMITTED_SESSION_KEY = "tm_preapproval_submitted_v1";
 const DRAFT_VERSION = 4;
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -240,7 +241,26 @@ function isMeaningfulDraft(draft: PreapprovalDraft): boolean {
   return false;
 }
 
+function isSubmittedThisSession(): boolean {
+  try {
+    return sessionStorage.getItem(SUBMITTED_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** After a successful submit — clears storage and blocks draft restore this session. */
+export function finishPreapprovalApplication(): void {
+  clearPreapprovalDraft();
+  try {
+    sessionStorage.setItem(SUBMITTED_SESSION_KEY, "1");
+  } catch {
+    /* private mode / blocked storage */
+  }
+}
+
 export function readPreapprovalDraft(): PreapprovalDraft | null {
+  if (isSubmittedThisSession()) return null;
   return readRaw();
 }
 
@@ -265,6 +285,7 @@ export function savePreapprovalDraft(draft: Omit<PreapprovalDraft, "version" | "
     return;
   }
   try {
+    sessionStorage.removeItem(SUBMITTED_SESSION_KEY);
     window.localStorage.removeItem("tm_preapproval_draft_v3");
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     dispatchDraftChanged();
