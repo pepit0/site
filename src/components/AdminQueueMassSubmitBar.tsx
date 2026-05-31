@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AdminButtonBusyLabel } from "./AdminButtonBusyLabel";
+import type { AdminMassPostProgressState } from "./AdminMassPostProgress";
 
 export type AdminQueueMassSubmitBarProps = {
   selectedCount: number;
@@ -7,6 +8,7 @@ export type AdminQueueMassSubmitBarProps = {
   onClearSelection: () => void;
   onMassSubmit: () => void;
   massSubmitting: boolean;
+  massPostProgress?: AdminMassPostProgressState | null;
   massError: string | null;
   massResultSummary: string | null;
   children?: ReactNode;
@@ -22,6 +24,7 @@ export function AdminQueueMassSubmitBar({
   onClearSelection,
   onMassSubmit,
   massSubmitting,
+  massPostProgress = null,
   massError,
   massResultSummary,
   children,
@@ -52,7 +55,11 @@ export function AdminQueueMassSubmitBar({
           ) : null}
           <button type="button" className="btn btn-primary admin-invMiniBtn" disabled={massBusy} onClick={onMassSubmit}>
             {massSubmitting ? (
-              <AdminButtonBusyLabel>{submitLabel.toLowerCase().includes("post") ? "Posting…" : "Submitting…"}</AdminButtonBusyLabel>
+              massPostProgress ? (
+                `${massPostProgress.completed}/${massPostProgress.total}`
+              ) : (
+                <AdminButtonBusyLabel>{submitLabel.toLowerCase().includes("post") ? "Posting…" : "Submitting…"}</AdminButtonBusyLabel>
+              )
             ) : (
               submitLabel
             )}

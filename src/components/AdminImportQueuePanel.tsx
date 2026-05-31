@@ -3,15 +3,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { INVENTORY_STATUS_VALUES, VEHICLE_CATEGORIES, type InventoryStatus, type VehicleCategory } from "../data/inventory";
 import { parseInventoryImportQueueRow, type InventoryImportQueueRow, type InventoryImportQueueStatus } from "../data/inventoryImportQueue";
 import { findInventoryUnitByStock, normalizeStockNumber, type StockDuplicateMatch } from "../lib/inventoryStockDuplicate";
-import {
-  formatMsfImportSyncSummary,
-  syncMsfImportQueue,
-  type MsfImportSyncSummary
-} from "../lib/syncMsfImportQueue";
 import { publishImportQueueRow } from "../lib/adminPublishImportRow";
+import {
+  formatOverlandramImportSyncSummary,
+  syncOverlandramImportQueue,
+  type OverlandramImportSyncSummary
+} from "../lib/syncOverlandramImportQueue";
 import { formatAdminCount, type AdminInventoryCounts } from "../lib/adminInventoryCounts";
 import { supabase } from "../lib/supabase";
 import { AdminButtonBusyLabel } from "./AdminButtonBusyLabel";
+import { AdminMassPostProgress, type AdminMassPostProgressState } from "./AdminMassPostProgress";
 import { AdminQueueMassSubmitBar } from "./AdminQueueMassSubmitBar";
 import { AdminQueuePhotoTile } from "./AdminQueuePhotoTile";
 import { AdminStockDuplicateError } from "./AdminStockDuplicateError";
@@ -29,7 +30,7 @@ function rowTitle(r: InventoryImportQueueRow): string {
   const md = r.model?.trim() || "";
   const core = `${mk} ${md}`.trim();
   if (core) return `${y} ${core}`;
-  return r.source_product_name?.trim() || `Woo #${r.source_product_id}`;
+  return r.source_product_name?.trim() || `Source #${r.source_product_id}`;
 }
 
 export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: AdminImportQueuePanelProps) {
@@ -46,9 +47,9 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
   const [actionBusy, setActionBusy] = useState(false);
   const [removingPhotoUrl, setRemovingPhotoUrl] = useState<string | null>(null);
   const [photoRemoveError, setPhotoRemoveError] = useState<string | null>(null);
-  const [msfSyncing, setMsfSyncing] = useState(false);
-  const [msfSyncError, setMsfSyncError] = useState<string | null>(null);
-  const [msfSyncSummary, setMsfSyncSummary] = useState<MsfImportSyncSummary | null>(null);
+  const [importSyncing, setImportSyncing] = useState(false);
+  const [importSyncError, setImportSyncError] = useState<string | null>(null);
+  const [importSyncSummary, setImportSyncSummary] = useState<OverlandramImportSyncSummary | null>(null);
 
   const [editStock, setEditStock] = useState("");
   const [editYear, setEditYear] = useState("");
@@ -63,6 +64,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
   const [massSubmitting, setMassSubmitting] = useState(false);
+  const [massPostProgress, setMassPostProgress] = useState<AdminMassPostProgressState | null>(null);
   const [massSkipping, setMassSkipping] = useState(false);
   const [massError, setMassError] = useState<string | null>(null);
   const [massResultSummary, setMassResultSummary] = useState<string | null>(null);
@@ -267,16 +269,19 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
     setActionBusy(false);
   };
 
-  const runMsfSync = async () => {
-    setMsfSyncError(null);
-    setMsfSyncSummary(null);
-    setMsfSyncing(true);
-    const result = await syncMsfImportQueue(supabase);
+  const runImportSync = async () => {
+    setImportSyncError(null);
+    setImportSyncSummary(null);
+    setImportSyncing(true);
+    const result = await syncOverlandramImportQueue(supabase);
     if (!result.ok) {
-      setMsfSyncError(result.error);
+      setImportSyncError(result.error);
     } else {
-      setMsfSyncSummary(formatMsfImportSyncSummary(result.stats));
-      const queueChanged = result.stats.importedNew > 0 || result.stats.removedStale > 0;
+      setImportSyncSummary(formatOverlandramImportSyncSummary(result.stats));
+      const queueChanged =
+        result.stats.importedNew > 0 ||
+        result.stats.removedStale > 0 ||
+        result.stats.removedPendingOffFeed > 0;
       if (queueChanged) {
         setQueueTab("pending");
         setSelectedId(null);
@@ -285,7 +290,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
         onInventoryChanged?.();
       }
     }
-    setMsfSyncing(false);
+    setImportSyncing(false);
   };
 
   const publishSelected = async (event: FormEvent) => {
@@ -371,7 +376,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
     const ok = window.confirm(
       `Post ${countLabel} to the catalog?\n\n` +
         `Each row uses its queue stock # and vehicle fields. Shared cost ($${cost}) and status (${pubStatus}) apply. ` +
-        `Photos are downloaded from MSF source URLs.\n\n` +
+        `Photos are downloaded from source URLs.\n\n` +
         `This cannot be undone in one step. Rows that fail (duplicate stock, missing photos) are listed in the summary.\n\n` +
         `Continue?`
     );
@@ -381,9 +386,12 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
       setMassSubmitting(true);
       setMassError(null);
       setMassResultSummary(null);
+      setMassPostProgress({ completed: 0, total: targets.length, label: null });
       let okCount = 0;
       const failures: string[] = [];
-      for (const row of targets) {
+      for (let i = 0; i < targets.length; i += 1) {
+        const row = targets[i]!;
+        setMassPostProgress({ completed: i, total: targets.length, label: row.stock_number });
         const result = await publishImportQueueRow(supabase, row, {
           cost,
           status: pubStatus,
@@ -391,6 +399,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
         });
         if (result.ok) okCount += 1;
         else failures.push(`${result.stock}: ${result.error}`);
+        setMassPostProgress({ completed: i + 1, total: targets.length, label: row.stock_number });
       }
       clearChecked();
       setSelectedId(null);
@@ -402,6 +411,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
         parts.push(`Failed: ${failures.slice(0, 5).join("; ")}${failures.length > 5 ? ` (+${failures.length - 5} more)` : ""}`);
       }
       setMassResultSummary(parts.join(" "));
+      setMassPostProgress(null);
       setMassSubmitting(false);
     })();
   };
@@ -463,25 +473,27 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
     <section className="admin-sell-queueIntegrated" aria-labelledby="admin-import-heading">
       <div className="admin-importQueueHeading">
         <h2 id="admin-import-heading" className="sell-ride-applySectionTitle admin-sell-queueIntegratedTitle">
-          MSF import queue
+          Import queue
         </h2>
         <div className="admin-importQueueHeadingActions">
           <button
             type="button"
             className="btn btn-secondary admin-importSyncBtn"
-            disabled={msfSyncing || publishing || actionBusy || massSubmitting || massSkipping}
-            onClick={() => void runMsfSync()}
+            disabled={importSyncing || publishing || actionBusy || massSubmitting || massSkipping}
+            onClick={() => void runImportSync()}
           >
-            {msfSyncing ? "Importing…" : "Import new units"}
+            {importSyncing ? "Importing…" : "Import new units"}
           </button>
           {queueTab === "pending" && pendingRows.length > 0 ? (
             <button
               type="button"
               className="btn btn-primary admin-importSyncBtn"
-              disabled={msfSyncing || publishing || actionBusy || massSubmitting || massSkipping || loading}
+              disabled={importSyncing || publishing || actionBusy || massSubmitting || massSkipping || loading}
               onClick={postAllPending}
             >
-              {massSubmitting ? (
+              {massSubmitting && massPostProgress ? (
+                `${massPostProgress.completed}/${massPostProgress.total}`
+              ) : massSubmitting ? (
                 <AdminButtonBusyLabel>Posting…</AdminButtonBusyLabel>
               ) : (
                 `Post all pending (${formatAdminCount(postAllPendingCount)})`
@@ -491,30 +503,38 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
         </div>
       </div>
       <p className="admin-invPanelIntro">
-        Pull new listings from motorsportsfinancing.ca into the pending queue. Units already in your catalog or already
-        posted from the queue are skipped (no duplicates). Review each row, then post to the catalog.
+        Pull new listings from Overland RAM (motorsports, marine, and RV — Auto excluded) into the pending queue.
+        Review each row, then post to the catalog.
       </p>
-      {msfSyncSummary ? (
+      {importSyncSummary ? (
         <div className="admin-importSyncSummary" role="status" aria-live="polite">
-          <p className="admin-importSyncSuccessLead">{msfSyncSummary.headline}</p>
-          {msfSyncSummary.ignoredLines.length > 0 ? (
+          <p className="admin-importSyncSuccessLead">{importSyncSummary.headline}</p>
+          {importSyncSummary.ignoredLines.length > 0 ? (
             <ul className="admin-importSyncSummaryList">
-              {msfSyncSummary.ignoredLines.map((line) => (
+              {importSyncSummary.ignoredLines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
           ) : null}
-          {msfSyncSummary.extraLines.map((line) => (
+          {importSyncSummary.extraLines.map((line) => (
             <p key={line} className="admin-importSyncSummaryExtra">
               {line}
             </p>
           ))}
         </div>
       ) : null}
-      {msfSyncError ? (
+      {importSyncError ? (
         <div className="sell-ride-applyErrorBanner" role="alert">
-          <p className="sell-ride-applyError">{msfSyncError}</p>
+          <p className="sell-ride-applyError">{importSyncError}</p>
         </div>
+      ) : null}
+
+      {massSubmitting && massPostProgress ? (
+        <AdminMassPostProgress
+          completed={massPostProgress.completed}
+          total={massPostProgress.total}
+          label={massPostProgress.label}
+        />
       ) : null}
 
       <div className="admin-sell-queueQueueTabs" role="tablist" aria-label="Import queue status">
@@ -621,6 +641,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
           onMassSubmit={runMassSubmit}
           onMassSkip={runMassSkip}
           massSubmitting={massSubmitting}
+          massPostProgress={massPostProgress}
           massSkipping={massSkipping}
           massError={checkedIds.size > 0 ? massError : null}
           massResultSummary={checkedIds.size > 0 ? massResultSummary : null}
@@ -686,7 +707,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
           {pendingListCapped ? (
             <p className="sell-ride-applyHint admin-invListCapHint" role="status">
               Showing {formatAdminCount(rows.length)} of {formatAdminCount(pendingDbTotal)} pending in the list. Total
-              posted from MSF: {formatAdminCount(postedDbTotal)}. Use counts above the tabs for full database totals.
+              posted from import: {formatAdminCount(postedDbTotal)}. Use counts above the tabs for full database totals.
             </p>
           ) : null}
           {loading ? (
@@ -718,7 +739,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
                     >
                       <span className="admin-sell-queueItemTitle">{title}</span>
                       <span className="admin-sell-queueItemMeta">
-                        {r.stock_number} · Woo #{r.source_product_id}
+                        {r.stock_number} · Source #{r.source_product_id}
                         {queueTab === "posted" && r.imported_inventory_id ? ` · unit ${r.imported_inventory_id.slice(0, 8)}…` : ""}
                       </span>
                     </button>
@@ -776,7 +797,7 @@ export function AdminImportQueuePanel({ onInventoryChanged, queueCounts }: Admin
                     <dt>Source</dt>
                     <dd>
                       <a href={selected.source_permalink} target="_blank" rel="noreferrer">
-                        View on motorsportsfinancing.ca
+                        View source listing
                       </a>
                     </dd>
                   </div>

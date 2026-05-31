@@ -420,7 +420,7 @@ export function AdminInventoryPage() {
       <header className="admin-invHeader page-header">
         <h1 className="page-title">Admin inventory</h1>
         <p className="page-subtitle admin-invHeaderSubtitle">
-          Manage the public catalog, sell-your-ride submissions, and staged MSF imports in one place. Cost stays admin-only. Use{" "}
+          Manage the public catalog, sell-your-ride submissions, and staged imports in one place. Cost stays admin-only. Use{" "}
           <strong>Unlisted</strong> to hide a unit without deleting it; use <strong>Sold</strong> for the sold banner
           on the site.
         </p>
@@ -453,7 +453,7 @@ export function AdminInventoryPage() {
           aria-current={adminTab === "import" ? "page" : undefined}
           onClick={() => setAdminTab("import")}
         >
-          MSF import
+          Import
           <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.import.total)}</span>
         </button>
         <span className="admin-invTabDivider" aria-hidden />

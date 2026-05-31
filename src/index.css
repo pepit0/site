@@ -3070,6 +3070,92 @@ p {
   line-height: 1.45;
 }
 
+.admin-massPostProgress {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(240, 93, 34, 0.4);
+  background: rgba(240, 93, 34, 0.1);
+}
+
+.admin-massPostProgressRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-massPostProgressRing {
+  position: relative;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-shrink: 0;
+}
+
+.admin-massPostProgressSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.admin-massPostProgressRingBg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 3;
+}
+
+.admin-massPostProgressRingFg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s ease;
+}
+
+.admin-massPostProgressPct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.admin-massPostProgressBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-massPostProgressTitle {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.admin-massPostProgressLabel {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-massPostProgressTrack {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.admin-massPostProgressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #ff8a4c);
+  transition: width 0.2s ease;
+}
+
 .admin-sell-queueIntegrated {
   margin-top: 0.25rem;
 }
