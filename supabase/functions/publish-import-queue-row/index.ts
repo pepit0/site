@@ -102,6 +102,14 @@ async function publishRow(supabase: SupabaseClient, body: PublishBody) {
   const { data: dup } = await supabase.from("inventory_units").select("id").eq("stock_number", stock).maybeSingle();
   if (dup) throw new Error(`Stock #${stock} already in catalog.`);
 
+  const { data: queueDup } = await supabase
+    .from("inventory_import_queue")
+    .select("id")
+    .eq("stock_number", stock)
+    .neq("id", body.queue_id)
+    .maybeSingle();
+  if (queueDup) throw new Error(`Stock #${stock} is already assigned to another import queue row.`);
+
   let unitId: string | null = null;
   const newPaths: string[] = [];
 
@@ -130,17 +138,22 @@ async function publishRow(supabase: SupabaseClient, body: PublishBody) {
     if (!unitId) throw new Error("Invalid inventory response.");
 
     const downloaded = await mapPool(urls, PARALLEL_PHOTOS, async (url, index) => {
-      const { blob, contentType } = await fetchImage(url);
-      const ext = guessImageExt(url, contentType);
-      const path = `${unitId}/import-${String(index).padStart(2, "0")}.${ext}`;
-      const { error: upErr } = await supabase.storage.from(PHOTOS_BUCKET).upload(path, blob, {
-        cacheControl: "3600",
-        upsert: false
-      });
-      if (upErr) throw new Error(upErr.message);
-      return path;
+      try {
+        const { blob, contentType } = await fetchImage(url);
+        const ext = guessImageExt(url, contentType);
+        const path = `${unitId}/import-${String(index).padStart(2, "0")}.${ext}`;
+        const { error: upErr } = await supabase.storage.from(PHOTOS_BUCKET).upload(path, blob, {
+          cacheControl: "3600",
+          upsert: false
+        });
+        if (upErr) return null;
+        return path;
+      } catch {
+        return null;
+      }
     });
-    newPaths.push(...downloaded);
+    newPaths.push(...downloaded.filter((p): p is string => typeof p === "string"));
+    if (newPaths.length < 1) throw new Error("No photos could be downloaded.");
 
     const { error: upRowErr } = await supabase
       .from("inventory_units")

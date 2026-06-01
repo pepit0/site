@@ -23,7 +23,7 @@ export function LocalBusinessJsonLd() {
     name: "Temptation Motorsports",
     description:
       "Powersports financing in Edmonton for motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, trailers, and RVs—serving customers across Canada.",
-    telephone: "+1-587-741-1945",
+    telephone: "+1-587-415-7424",
     url: absoluteUrl("/"),
     address: {
       "@type": "PostalAddress",

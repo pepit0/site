@@ -9,6 +9,7 @@ import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { TawkProvider } from "../components/chat/tawkContext";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
+import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
@@ -84,23 +85,28 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               decoding="async"
             />
             <div className="site-footerMeta">
-              <p className="site-footerTagline">
-                We deliver all over Canada!{" "}
-                <a className="site-footerPhoneInline" href="tel:+15877411945">
-                  (587) 741-1945
-                </a>
-              </p>
-              <p className="site-footerSeoBlurb">
-                Fast approvals for{" "}
-                <Link className="site-footerSeoLink" to="/pre-approval">
-                  motorcycle, ATV, and snowmobile financing
-                </Link>
-                . Browse our{" "}
-                <Link className="site-footerSeoLink" to="/inventory">
-                  Edmonton powersports inventory
-                </Link>
-                .
-              </p>
+              <div className="site-footerLead">
+                <p className="site-footerTagline">
+                  We deliver all over Canada!{" "}
+                  <a className="site-footerPhoneInline" href={`tel:${SITE_CONTACT.phoneTel}`}>
+                    {SITE_CONTACT.phoneDisplay}
+                  </a>
+                </p>
+                <p className="site-footerSeoBlurb">
+                  Fast approvals for{" "}
+                  <Link className="site-footerSeoLink" to="/pre-approval">
+                    motorcycle, ATV, and snowmobile financing
+                  </Link>
+                  .
+                </p>
+                <p className="site-footerSeoBlurb">
+                  Browse our{" "}
+                  <Link className="site-footerSeoLink" to="/inventory">
+                    Edmonton powersports inventory
+                  </Link>
+                  .
+                </p>
+              </div>
               <p className="site-footerText">
                 © {new Date().getFullYear()} Temptation Motorsports. All rights reserved. Based in Edmonton.
               </p>

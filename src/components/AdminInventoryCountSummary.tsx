@@ -25,6 +25,8 @@ export function AdminInventoryCountSummary({ counts, loading, error }: AdminInve
   }
 
   const { catalog, import: imp, sell, customer } = counts;
+  const catalogOther = Math.max(0, catalog.total - catalog.fromImport);
+  const catalogMatchesImport = catalog.fromImport === imp.postedInCatalog;
 
   return (
     <div className="admin-invCountSummary" role="region" aria-label="Inventory counts">
@@ -32,6 +34,16 @@ export function AdminInventoryCountSummary({ counts, loading, error }: AdminInve
         <p className="admin-invCountSummaryTitle">Catalog</p>
         <p className="admin-invCountSummaryTotal">{formatAdminCount(catalog.total)} units</p>
         <ul className="admin-invCountSummaryList">
+          <li>
+            <span className="admin-invCountSummaryLabel">From import</span>
+            <span className="admin-invCountSummaryValue">{formatAdminCount(catalog.fromImport)}</span>
+          </li>
+          {catalogOther > 0 ? (
+            <li>
+              <span className="admin-invCountSummaryLabel">Sell / manual</span>
+              <span className="admin-invCountSummaryValue">{formatAdminCount(catalogOther)}</span>
+            </li>
+          ) : null}
           {INVENTORY_STATUS_VALUES.map((status) => (
             <li key={status}>
               <span className="admin-invCountSummaryLabel">{status}</span>
@@ -41,7 +53,7 @@ export function AdminInventoryCountSummary({ counts, loading, error }: AdminInve
         </ul>
       </div>
       <div className="admin-invCountSummaryBlock">
-        <p className="admin-invCountSummaryTitle">MSF import queue</p>
+        <p className="admin-invCountSummaryTitle">Import queue</p>
         <p className="admin-invCountSummaryTotal">{formatAdminCount(imp.total)} rows</p>
         <ul className="admin-invCountSummaryList">
           <li>
@@ -49,14 +61,27 @@ export function AdminInventoryCountSummary({ counts, loading, error }: AdminInve
             <span className="admin-invCountSummaryValue">{formatAdminCount(imp.pending)}</span>
           </li>
           <li>
-            <span className="admin-invCountSummaryLabel">Posted</span>
-            <span className="admin-invCountSummaryValue">{formatAdminCount(imp.posted)}</span>
+            <span className="admin-invCountSummaryLabel">Posted (in catalog)</span>
+            <span className="admin-invCountSummaryValue">{formatAdminCount(imp.postedInCatalog)}</span>
           </li>
+          {imp.postedRemoved > 0 ? (
+            <li>
+              <span className="admin-invCountSummaryLabel">Posted (removed)</span>
+              <span className="admin-invCountSummaryValue">{formatAdminCount(imp.postedRemoved)}</span>
+            </li>
+          ) : null}
           <li>
             <span className="admin-invCountSummaryLabel">Skipped</span>
             <span className="admin-invCountSummaryValue">{formatAdminCount(imp.skipped)}</span>
           </li>
         </ul>
+        {imp.postedRemoved > 0 ? (
+          <p className="admin-invCountSummaryNote">
+            {formatAdminCount(imp.posted)} total import posts in the log — {formatAdminCount(imp.postedRemoved)} no
+            longer in the catalog. Posted (in catalog) matches live import units
+            {catalogMatchesImport ? "" : " when counts are reconciled"} ({formatAdminCount(imp.postedInCatalog)}).
+          </p>
+        ) : null}
       </div>
       <div className="admin-invCountSummaryBlock">
         <p className="admin-invCountSummaryTitle">Sell submissions</p>

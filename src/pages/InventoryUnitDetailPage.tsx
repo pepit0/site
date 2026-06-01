@@ -10,6 +10,7 @@ import {
   type InventoryPublicRow,
   type VehicleCategory
 } from "../data/inventory";
+import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
 import { InventoryProductJsonLd } from "../seo/InventoryProductJsonLd";
@@ -37,7 +38,7 @@ function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
       <p className="inventory-detailDescriptionCtas">
         Take Next Steps:
         <br />
-        📱 CALL / TEXT: <a href="tel:+15878064214">587-806-4214</a>
+        📱 CALL / TEXT: <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a>
       </p>
       <Link
         to={`/pre-approval?unit=${encodeURIComponent(unitId)}`}

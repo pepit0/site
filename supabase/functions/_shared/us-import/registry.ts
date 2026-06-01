@@ -1,0 +1,231 @@
+import type { UsImportSourceConfig } from "./types.ts";
+
+
+
+/** Curated US import sources (keep in sync with config/us-import-sources.json). */
+
+export const US_IMPORT_SOURCES: UsImportSourceConfig[] = [
+
+  {
+
+    id: "ridenow",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.ridenow.com",
+
+    priority: 1,
+
+    label: "RideNow Powersports"
+
+  },
+
+  {
+
+    id: "foxpowersports",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.foxpowersports.com",
+
+    priority: 2,
+
+    label: "Fox Powersports"
+
+  },
+
+  {
+
+    id: "heartlandhonda",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.heartlandhonda.com",
+
+    priority: 3,
+
+    label: "Heartland Honda"
+
+  },
+
+  {
+
+    id: "hondaws",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.hondaws.com",
+
+    priority: 4,
+
+    label: "Honda WS"
+
+  },
+
+  {
+
+    id: "lakecycle",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.lakecycle.com",
+
+    priority: 5,
+
+    label: "Lake Cycle",
+
+    categories: ["Motorcycle"]
+
+  },
+
+  {
+
+    id: "magnummotorsports",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.magnummotorsports.com",
+
+    priority: 6,
+
+    label: "Magnum Motorsports",
+
+    listPath: "--inventory",
+
+    listCondition: "pre-owned",
+
+    categories: ["Motorcycle"]
+
+  },
+
+  {
+
+    id: "bertsmegamall",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.bertsmegamall.com",
+
+    priority: 7,
+
+    label: "Berts Mega Mall",
+
+    categories: ["Watercraft", "ATV", "Side by side", "Snowmobile", "Trailer"]
+
+  },
+
+  {
+
+    id: "boatcountryusa",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.boatcountryusa.com",
+
+    priority: 8,
+
+    label: "Boat Country USA",
+
+    categories: ["Watercraft"]
+
+  },
+
+  {
+
+    id: "extremepowersports",
+
+    adapter: "dx1",
+
+    baseUrl: "https://www.extremepowersports.com",
+
+    priority: 9,
+
+    label: "Extreme Power Sports",
+
+    dx1ListPath: "/Inventory/Used-Inventory",
+
+    dx1Filter: "Condition:Used",
+
+    categories: ["Side by side", "Snowmobile", "Motorcycle", "ATV"]
+
+  },
+
+  {
+
+    id: "powersportsplus",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.powersportsplus.com",
+
+    priority: 10,
+
+    label: "Powersports Plus",
+
+    listPath: "--inventory",
+
+    listCondition: "pre-owned"
+
+  },
+
+  {
+
+    id: "youngpowersportsxl",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.youngpowersportsxl.com",
+
+    priority: 11,
+
+    label: "Young Powersports XL",
+
+    listPath: "--inventory",
+
+    listCondition: "pre-owned",
+
+    listExtraParams: {
+      location: [
+        "burley, id",
+        "layton",
+        "logan",
+        "morgan",
+        "ogden",
+        "pleasant view",
+        "powersports xl",
+        "young honda powerhouse",
+        "yp euro",
+        "yp missoula north",
+        "yp missoula south"
+      ]
+    },
+
+    skipFirstPhoto: true
+
+  },
+
+  {
+
+    id: "mountainmotorsports",
+
+    adapter: "dealer_spike",
+
+    baseUrl: "https://www.mountainmotorsports.com",
+
+    priority: 12,
+
+    label: "Mountain Motorsports",
+
+    listPath: "default.asp",
+
+    listCondition: "pre-owned",
+
+    listExtraParams: { page: "inventory" },
+
+    skipFirstPhoto: true
+
+  }
+
+];
+
+

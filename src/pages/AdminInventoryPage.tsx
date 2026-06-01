@@ -1,11 +1,13 @@
-﻿import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdminCustomerUnitsPanel } from "../components/AdminCustomerUnitsPanel";
 import { AdminInventoryCountSummary } from "../components/AdminInventoryCountSummary";
 import { AdminImportQueuePanel } from "../components/AdminImportQueuePanel";
 import { AdminSellQueuePanel } from "../components/AdminSellQueuePanel";
 import { fetchAdminInventoryCounts, formatAdminCount, type AdminInventoryCounts } from "../lib/adminInventoryCounts";
+import { reconcileOrphanedImportCatalogLinks } from "../lib/reconcileImportCatalogLinks";
 import { AdminStockDuplicateError } from "../components/AdminStockDuplicateError";
+import { AdminSortablePhotoList } from "../components/AdminSortablePhotoList";
 import {
   INVENTORY_PHOTOS_BUCKET,
   INVENTORY_STATUS_VALUES,
@@ -54,6 +56,34 @@ function unitMatchesCatalogSearch(row: InventoryUnitRow, query: string): boolean
     .join(" ")
     .toLowerCase();
   return terms.every((term) => haystack.includes(term));
+}
+
+type CatalogCategoryFilter = VehicleCategory | "all";
+
+type CatalogSort = "updated" | "category" | "stock" | "year";
+
+const CATEGORY_SORT_ORDER = new Map(VEHICLE_CATEGORIES.map((category, index) => [category, index]));
+
+function sortCatalogUnits(rows: InventoryUnitRow[], sort: CatalogSort): InventoryUnitRow[] {
+  const copy = [...rows];
+  switch (sort) {
+    case "category":
+      return copy.sort((a, b) => {
+        const byCategory = (CATEGORY_SORT_ORDER.get(a.category) ?? 99) - (CATEGORY_SORT_ORDER.get(b.category) ?? 99);
+        if (byCategory !== 0) return byCategory;
+        return inventoryDisplayTitle(a).localeCompare(inventoryDisplayTitle(b), undefined, { sensitivity: "base" });
+      });
+    case "stock":
+      return copy.sort((a, b) => a.stock_number.localeCompare(b.stock_number, undefined, { numeric: true }));
+    case "year":
+      return copy.sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year;
+        return inventoryDisplayTitle(a).localeCompare(inventoryDisplayTitle(b), undefined, { sensitivity: "base" });
+      });
+    case "updated":
+    default:
+      return copy;
+  }
 }
 
 type FormFields = {
@@ -117,22 +147,41 @@ export function AdminInventoryPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [reorderingPhotos, setReorderingPhotos] = useState(false);
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<CatalogCategoryFilter>("all");
+  const [catalogSort, setCatalogSort] = useState<CatalogSort>("updated");
 
-  const filteredUnits = useMemo(
-    () => units.filter((row) => unitMatchesCatalogSearch(row, catalogSearch)),
-    [units, catalogSearch]
-  );
+  const filteredUnits = useMemo(() => {
+    let list = units.filter((row) => unitMatchesCatalogSearch(row, catalogSearch));
+    if (catalogCategoryFilter !== "all") {
+      list = list.filter((row) => row.category === catalogCategoryFilter);
+    }
+    if (catalogSort !== "updated") {
+      list = sortCatalogUnits(list, catalogSort);
+    }
+    return list;
+  }, [units, catalogSearch, catalogCategoryFilter, catalogSort]);
 
   const catalogSearchActive = catalogSearch.trim().length > 0;
+  const catalogFiltersActive = catalogSearchActive || catalogCategoryFilter !== "all" || catalogSort !== "updated";
 
   const [counts, setCounts] = useState<AdminInventoryCounts | null>(null);
   const [countsLoading, setCountsLoading] = useState(true);
   const [countsError, setCountsError] = useState<string | null>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const activeUnitItemRef = useRef<HTMLButtonElement>(null);
+  const [listScrollTick, setListScrollTick] = useState(0);
 
-  const loadUnits = useCallback(async () => {
-    setListLoading(true);
+  const scrollActiveUnitIntoView = useCallback(() => {
+    setListScrollTick((n) => n + 1);
+  }, []);
+
+  const loadUnits = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setListLoading(true);
+    }
     setLoadError(null);
     const { data, error } = await supabase.from("inventory_units").select("*").order("updated_at", { ascending: false });
     if (error) {
@@ -141,7 +190,9 @@ export function AdminInventoryPage() {
     } else {
       setUnits((data ?? []).map((r) => parseInventoryUnitRow(r)).filter((r): r is InventoryUnitRow => r != null));
     }
-    setListLoading(false);
+    if (!options?.silent) {
+      setListLoading(false);
+    }
   }, []);
 
   const loadCounts = useCallback(async () => {
@@ -156,15 +207,32 @@ export function AdminInventoryPage() {
     setCountsLoading(false);
   }, []);
 
-  const refreshInventory = useCallback(async () => {
-    await Promise.all([loadUnits(), loadCounts()]);
+  const refreshInventory = useCallback(async (options?: { silent?: boolean }) => {
+    try {
+      await reconcileOrphanedImportCatalogLinks(supabase);
+    } catch {
+      /* counts still load if reconcile fails */
+    }
+    const listScrollTop = options?.silent ? listScrollRef.current?.scrollTop : undefined;
+    await Promise.all([loadUnits(options), loadCounts()]);
+    if (options?.silent && listScrollRef.current != null && listScrollTop != null) {
+      listScrollRef.current.scrollTop = listScrollTop;
+    }
   }, [loadUnits, loadCounts]);
 
   useEffect(() => {
     void Promise.resolve().then(() => refreshInventory());
   }, [refreshInventory]);
 
+  useEffect(() => {
+    if (listScrollTick === 0) return;
+    requestAnimationFrame(() => {
+      activeUnitItemRef.current?.scrollIntoView({ block: "nearest" });
+    });
+  }, [listScrollTick]);
+
   const catalogTotal = counts?.catalog.total ?? null;
+  const catalogFromImport = counts?.catalog.fromImport ?? null;
   const catalogListCapped = catalogTotal != null && !listLoading && units.length < catalogTotal;
 
   const startEdit = useCallback((row: InventoryUnitRow) => {
@@ -222,6 +290,9 @@ export function AdminInventoryPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const advanceToNext =
+      submitter instanceof HTMLButtonElement && submitter.dataset.action === "save-next";
     setFormError(null);
     setStockDuplicate(null);
     const year = Number.parseInt(form.year, 10);
@@ -273,6 +344,15 @@ export function AdminInventoryPage() {
     }
 
     setIsSaving(true);
+    const savedEditingId = editingId;
+    const nextUnitId =
+      advanceToNext && savedEditingId
+        ? (() => {
+            const idx = filteredUnits.findIndex((u) => u.id === savedEditingId);
+            if (idx < 0) return null;
+            return filteredUnits[idx + 1]?.id ?? filteredUnits[0]?.id ?? null;
+          })()
+        : null;
     try {
       if (editingId) {
         const existing = units.find((u) => u.id === editingId);
@@ -346,8 +426,18 @@ export function AdminInventoryPage() {
           if (upErr) throw new Error(upErr.message);
         }
       }
-      await refreshInventory();
-      resetForm();
+      setPendingFiles(null);
+      await refreshInventory({ silent: true });
+      if (savedEditingId) {
+        const targetId =
+          advanceToNext && nextUnitId && nextUnitId !== savedEditingId ? nextUnitId : savedEditingId;
+        const { data } = await supabase.from("inventory_units").select("*").eq("id", targetId).maybeSingle();
+        const parsed = data ? parseInventoryUnitRow(data) : null;
+        if (parsed) startEdit(parsed);
+        scrollActiveUnitIntoView();
+      } else {
+        resetForm();
+      }
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Save failed.");
     }
@@ -411,6 +501,18 @@ export function AdminInventoryPage() {
     }
   };
 
+  const reorderPhotos = async (row: InventoryUnitRow, orderedPaths: string[]) => {
+    if (orderedPaths.join("\0") === row.photo_paths.join("\0")) return;
+    setReorderingPhotos(true);
+    const { error } = await supabase.from("inventory_units").update({ photo_paths: orderedPaths }).eq("id", row.id);
+    setReorderingPhotos(false);
+    if (error) {
+      window.alert(error.message);
+      return;
+    }
+    void refreshInventory();
+  };
+
   const wideAdminLayout = adminTab === "sell" || adminTab === "import" || adminTab === "customer";
   const rootClass = wideAdminLayout ? "admin-inv admin-inv--queues" : "admin-inv admin-inv--catalog";
 
@@ -434,7 +536,16 @@ export function AdminInventoryPage() {
           onClick={() => setAdminTab("catalog")}
         >
           Catalog
-          <span className="admin-invTabCount">{countsLoading ? "…" : formatAdminCount(counts?.catalog.total)}</span>
+          <span
+            className="admin-invTabCount"
+            title={
+              catalogFromImport != null && catalogTotal != null && catalogFromImport !== catalogTotal
+                ? `${catalogFromImport} from import · ${catalogTotal} total catalog units`
+                : undefined
+            }
+          >
+            {countsLoading ? "…" : formatAdminCount(counts?.catalog.total)}
+          </span>
         </button>
         <span className="admin-invTabDivider" aria-hidden />
         <button
@@ -493,9 +604,11 @@ export function AdminInventoryPage() {
                 Units
                 {!countsLoading && catalogTotal != null ? (
                   <span className="admin-invListCount">
-                    {catalogSearchActive
+                    {catalogFiltersActive
                       ? `${formatAdminCount(filteredUnits.length)} shown`
-                      : formatAdminCount(catalogTotal)}
+                      : catalogFromImport != null && catalogFromImport !== catalogTotal
+                        ? `${formatAdminCount(catalogTotal)} (${formatAdminCount(catalogFromImport)} from import)`
+                        : formatAdminCount(catalogTotal)}
                   </span>
                 ) : null}
               </h2>
@@ -513,11 +626,56 @@ export function AdminInventoryPage() {
                 {formatAdminCount(catalogTotal)}.
               </p>
             ) : null}
-            <div className="admin-invCatalogSearchWrap">
-              <label className="loginLabel admin-invCatalogSearchLabel" htmlFor="admin-inv-catalog-search">
-                Search
-              </label>
-              <div className="admin-invCatalogSearchRow">
+            <div className="admin-invCatalogFilters">
+              <div className="admin-invCatalogFilterBar">
+                <label className="admin-invCatalogFilterInline" htmlFor="admin-inv-catalog-type">
+                  <span className="admin-invCatalogFilterInlineLabel">Type</span>
+                  <select
+                    id="admin-inv-catalog-type"
+                    className="select admin-invCatalogFilterSelect"
+                    value={catalogCategoryFilter}
+                    onChange={(e) => setCatalogCategoryFilter(e.target.value as CatalogCategoryFilter)}
+                  >
+                    <option value="all">All</option>
+                    {VEHICLE_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-invCatalogFilterInline" htmlFor="admin-inv-catalog-sort">
+                  <span className="admin-invCatalogFilterInlineLabel">Sort</span>
+                  <select
+                    id="admin-inv-catalog-sort"
+                    className="select admin-invCatalogFilterSelect"
+                    value={catalogSort}
+                    onChange={(e) => setCatalogSort(e.target.value as CatalogSort)}
+                  >
+                    <option value="updated">Updated</option>
+                    <option value="category">Type</option>
+                    <option value="stock">Stock #</option>
+                    <option value="year">Year</option>
+                  </select>
+                </label>
+                {catalogFiltersActive ? (
+                  <button
+                    type="button"
+                    className="admin-invCatalogFilterClear"
+                    onClick={() => {
+                      setCatalogSearch("");
+                      setCatalogCategoryFilter("all");
+                      setCatalogSort("updated");
+                    }}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <div className="admin-invCatalogSearchWrap">
+                <label className="admin-invCatalogSearchLabel" htmlFor="admin-inv-catalog-search">
+                  Search
+                </label>
                 <input
                   id="admin-inv-catalog-search"
                   type="search"
@@ -528,15 +686,6 @@ export function AdminInventoryPage() {
                   autoComplete="off"
                   spellCheck={false}
                 />
-                {catalogSearchActive ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary admin-invMiniBtn"
-                    onClick={() => setCatalogSearch("")}
-                  >
-                    Clear
-                  </button>
-                ) : null}
               </div>
             </div>
             {loadError ? (
@@ -548,15 +697,16 @@ export function AdminInventoryPage() {
             ) : units.length === 0 ? (
               <p className="sell-ride-applyMuted">No units yet.</p>
             ) : filteredUnits.length === 0 ? (
-              <p className="sell-ride-applyMuted">No units match your search.</p>
+              <p className="sell-ride-applyMuted">No units match your filters.</p>
             ) : (
-              <div className="admin-invUnitListScroll">
+              <div className="admin-invUnitListScroll" ref={listScrollRef}>
                 <ul className="admin-invUnitItems">
                   {filteredUnits.map((row) => {
                     const active = row.id === editingId;
                     return (
                       <li key={row.id}>
                         <button
+                          ref={active ? activeUnitItemRef : undefined}
                           type="button"
                           className={`admin-invUnitItem${active ? " admin-invUnitItemActive" : ""}`}
                           onClick={() => startEdit(row)}
@@ -577,7 +727,8 @@ export function AdminInventoryPage() {
                               #{row.stock_number} · {inventoryDisplayTitle(row)}
                             </span>
                             <span className="admin-invUnitItemMeta">
-                              {row.year}
+                              {row.category}
+                              {` · ${row.year}`}
                               {row.odometer_km != null ? ` · ${row.odometer_km.toLocaleString()} km` : ""}
                               {` · ${formatMoney(row.cost)}`}
                             </span>
@@ -816,17 +967,17 @@ export function AdminInventoryPage() {
                   return (
                     <div className="form-row sell-ride-applyFullWidth">
                       <p className="loginLabel">Current photos</p>
-                      <div className="admin-invPhotoRow">
-                        {editRow.photo_paths.map((p) => (
-                          <span key={p} className="admin-invPhotoChip">
-                            <img className="admin-invThumb" src={inventoryPhotoPublicUrl(supabase, p)} alt="" />
-                            <button type="button" className="btn btn-secondary admin-invMiniBtn" onClick={() => void removePhoto(editRow, p)}>
-                              Remove
-                            </button>
-                          </span>
-                        ))}
-                        {editRow.photo_paths.length === 0 ? <span className="sell-ride-applyMuted">None yet</span> : null}
-                      </div>
+                      <AdminSortablePhotoList
+                        variant="chip"
+                        items={editRow.photo_paths.map((p) => ({
+                          id: p,
+                          src: inventoryPhotoPublicUrl(supabase, p)
+                        }))}
+                        busy={reorderingPhotos}
+                        emptyMessage="None yet"
+                        onReorder={(orderedPaths) => void reorderPhotos(editRow, orderedPaths)}
+                        onRemove={(path) => void removePhoto(editRow, path)}
+                      />
                     </div>
                   );
                 })() : null}
@@ -844,6 +995,16 @@ export function AdminInventoryPage() {
                   {isSaving ? "Saving…" : editingId ? "Save changes" : "Create unit"}
                 </button>
                 {editingId ? (
+                  <button
+                    className="btn btn-secondary"
+                    type="submit"
+                    data-action="save-next"
+                    disabled={isSaving || filteredUnits.length <= 1}
+                  >
+                    {isSaving ? "Saving…" : "Save & next"}
+                  </button>
+                ) : null}
+                {editingId ? (
                   <>
                     <button type="button" className="btn btn-secondary" onClick={resetForm} disabled={isSaving}>
                       Cancel edit
@@ -855,7 +1016,7 @@ export function AdminInventoryPage() {
                     ) : null}
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-danger"
                       disabled={isSaving}
                       onClick={() => {
                         const row = units.find((u) => u.id === editingId);

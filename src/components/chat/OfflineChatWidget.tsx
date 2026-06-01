@@ -11,12 +11,10 @@ import { buildUnitPickIds } from "../../lib/recentInventoryViews";
 import { submitPublicChatLead } from "../../lib/submitChatLead";
 import { CHAT_HANDOFF_FADE_MS } from "../../lib/chatTheme";
 import { openTawkHandoff, tawkHandoffFromUnit } from "../../lib/tawkHandoff";
+import { SITE_CONTACT } from "../../data/preapprovalCopy";
 import { useTawkAgentStatus } from "../../hooks/useTawkAgentStatus";
 
 type Step = "contact" | "loading" | "unitPick" | "handoff" | "handoffRetry" | "message" | "done";
-
-const PHONE_DISPLAY = "(587) 741-1945";
-const PHONE_TEL = "+15877411945";
 
 function ChatIcon() {
   return (
@@ -505,8 +503,8 @@ export function OfflineChatWidget() {
                 <button type="button" className="btn btn-primary site-chatSubmitBtn" onClick={() => void retryTawkHandoff()}>
                   Open live chat
                 </button>
-                <a href={`tel:${PHONE_TEL}`} className="btn btn-secondary site-chatSecondaryBtn">
-                  Call / text {PHONE_DISPLAY}
+                <a href={`tel:${SITE_CONTACT.phoneTel}`} className="btn btn-secondary site-chatSecondaryBtn">
+                  Call / text {SITE_CONTACT.phoneDisplay}
                 </a>
                 <button type="button" className="site-chatTextBtn" onClick={() => setStep("unitPick")}>
                   Back
@@ -567,8 +565,8 @@ export function OfflineChatWidget() {
                   <Link to={preApprovalHref} className="btn btn-primary site-chatSubmitBtn site-chatCtaBtn" onClick={close}>
                     Get pre-approved
                   </Link>
-                  <a href={`tel:${PHONE_TEL}`} className="btn btn-secondary site-chatSecondaryBtn">
-                    Call / text {PHONE_DISPLAY}
+                  <a href={`tel:${SITE_CONTACT.phoneTel}`} className="btn btn-secondary site-chatSecondaryBtn">
+                    Call / text {SITE_CONTACT.phoneDisplay}
                   </a>
                   <Link to="/inventory" className="site-chatLink site-chatDoneBrowse" onClick={close}>
                     Browse inventory

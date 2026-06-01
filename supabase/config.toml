@@ -366,6 +366,10 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# US import scans RideNow with parallel detail fetches; allow extra headroom vs default 60s.
+[functions.import-us-dealer-inventory]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

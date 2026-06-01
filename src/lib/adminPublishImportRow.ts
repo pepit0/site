@@ -5,6 +5,7 @@ import {
 } from "../data/inventory";
 import type { InventoryImportQueueRow } from "../data/inventoryImportQueue";
 import { findInventoryUnitByStock, isStockNumberUniqueViolation, normalizeStockNumber } from "./inventoryStockDuplicate";
+import { findStockConflict, stockConflictMessage } from "./tmsStockNumber";
 import { downloadImportSourceImage } from "./downloadImportSourceImage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -59,12 +60,73 @@ type PublishEdgeResponse = {
   error?: string | null;
 };
 
+type EdgePublishOutcome =
+  | { type: "success"; result: Extract<PublishImportRowResult, { ok: true }> }
+  | { type: "failure"; result: Extract<PublishImportRowResult, { ok: false }> }
+  | { type: "unavailable" };
+
+async function ensureFreshAdminSession(supabase: SupabaseClient): Promise<void> {
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("Sign in required.");
+  }
+  const expiresAt = session.expires_at ?? 0;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (expiresAt - nowSec < 120) {
+    const { error } = await supabase.auth.refreshSession();
+    if (error) {
+      throw new Error(`Session expired (${error.message}). Sign in again and retry.`);
+    }
+  }
+}
+
+/** After a timeout or network error, check whether the edge publish actually succeeded. */
+async function reconcilePublishState(
+  supabase: SupabaseClient,
+  row: InventoryImportQueueRow,
+  stock: string
+): Promise<Extract<PublishImportRowResult, { ok: true }> | null> {
+  const { data: queueRow, error: qErr } = await supabase
+    .from("inventory_import_queue")
+    .select("status, imported_inventory_id")
+    .eq("id", row.id)
+    .maybeSingle();
+  if (qErr) return null;
+
+  if (queueRow?.status === "posted" && typeof queueRow.imported_inventory_id === "string") {
+    return { ok: true, unitId: queueRow.imported_inventory_id, stock };
+  }
+
+  const dup = await findInventoryUnitByStock(supabase, stock);
+  if (!dup) return null;
+
+  if (queueRow?.status === "pending") {
+    await supabase
+      .from("inventory_import_queue")
+      .update({ status: "posted", imported_inventory_id: dup.id })
+      .eq("id", row.id)
+      .eq("status", "pending");
+  }
+
+  return { ok: true, unitId: dup.id, stock };
+}
+
+function isEdgeUnavailableMessage(message: string): boolean {
+  return /404|not found|function not found/i.test(message);
+}
+
+function isLikelyNetworkError(message: string): boolean {
+  return /failed to fetch|network|timeout|timed out|aborted|connection|load failed/i.test(message);
+}
+
 /** Server-side publish (parallel photos, no per-image browser round trips). */
 async function publishViaEdgeFunction(
   supabase: SupabaseClient,
   row: InventoryImportQueueRow,
   options: PublishImportRowOptions
-): Promise<PublishImportRowResult | null> {
+): Promise<EdgePublishOutcome> {
   const stock = normalizeStockNumber(row.stock_number);
   const { data, error } = await supabase.functions.invoke("publish-import-queue-row", {
     method: "POST",
@@ -84,22 +146,81 @@ async function publishViaEdgeFunction(
   });
 
   if (error) {
-    if (/404|not found|failed to fetch/i.test(error.message)) return null;
-    return { ok: false, stock: stock || row.stock_number, error: error.message };
+    if (isEdgeUnavailableMessage(error.message)) {
+      return { type: "unavailable" };
+    }
+
+    const reconciled = await reconcilePublishState(supabase, row, stock);
+    if (reconciled) {
+      return { type: "success", result: reconciled };
+    }
+
+    return {
+      type: "failure",
+      result: {
+        ok: false,
+        stock: stock || row.stock_number,
+        error: isLikelyNetworkError(error.message)
+          ? `Connection lost posting #${stock}. Check the catalog — if the unit is there, it posted; otherwise retry.`
+          : error.message
+      }
+    };
   }
 
   const body = data as PublishEdgeResponse | null;
   if (!body || typeof body !== "object") {
-    return { ok: false, stock: stock || row.stock_number, error: "Empty publish response." };
+    const reconciled = await reconcilePublishState(supabase, row, stock);
+    if (reconciled) {
+      return { type: "success", result: reconciled };
+    }
+    return {
+      type: "failure",
+      result: { ok: false, stock: stock || row.stock_number, error: "Empty publish response." }
+    };
   }
+
   if (body.ok === true && typeof body.unitId === "string") {
-    return { ok: true, unitId: body.unitId, stock: typeof body.stock === "string" ? body.stock : stock };
+    return {
+      type: "success",
+      result: { ok: true, unitId: body.unitId, stock: typeof body.stock === "string" ? body.stock : stock }
+    };
   }
+
+  const errStock = typeof body.stock === "string" ? body.stock : stock || row.stock_number;
+  const errMsg = typeof body.error === "string" ? body.error : "Publish failed.";
+
+  const reconciled = await reconcilePublishState(supabase, row, stock);
+  if (reconciled) {
+    return { type: "success", result: reconciled };
+  }
+
   return {
-    ok: false,
-    stock: typeof body.stock === "string" ? body.stock : stock || row.stock_number,
-    error: typeof body.error === "string" ? body.error : "Publish failed."
+    type: "failure",
+    result: { ok: false, stock: errStock, error: errMsg }
   };
+}
+
+async function downloadPhotosInBrowser(
+  supabase: SupabaseClient,
+  unitId: string,
+  urls: string[]
+): Promise<string[]> {
+  const results = await mapPool(urls, PARALLEL_PHOTOS, async (imageUrl, index) => {
+    try {
+      const blob = await downloadImportSourceImage(supabase, imageUrl);
+      const ext = guessImageExt(imageUrl, blob.type || null);
+      const nextPath = `${unitId}/import-${String(index).padStart(2, "0")}.${ext}`;
+      const { error: upErr } = await supabase.storage.from(INVENTORY_PHOTOS_BUCKET).upload(nextPath, blob, {
+        cacheControl: "3600",
+        upsert: false
+      });
+      if (upErr) return null;
+      return nextPath;
+    } catch {
+      return null;
+    }
+  });
+  return results.filter((p): p is string => typeof p === "string");
 }
 
 /** Browser fallback when edge publish is unavailable (parallelized). */
@@ -134,6 +255,8 @@ async function publishInBrowser(
       .single();
     if (insErr) {
       if (isStockNumberUniqueViolation(insErr.message)) {
+        const reconciled = await reconcilePublishState(supabase, row, stock);
+        if (reconciled) return reconciled;
         return { ok: false, stock, error: `Stock #${stock} already in catalog.` };
       }
       throw new Error(insErr.message);
@@ -142,18 +265,10 @@ async function publishInBrowser(
     if (!parsed) throw new Error("Invalid inventory response.");
     unitId = parsed.id;
 
-    const paths = await mapPool(row.source_photo_urls, PARALLEL_PHOTOS, async (imageUrl, index) => {
-      const blob = await downloadImportSourceImage(supabase, imageUrl);
-      const ext = guessImageExt(imageUrl, blob.type || null);
-      const nextPath = `${unitId}/import-${String(index).padStart(2, "0")}.${ext}`;
-      const { error: upErr } = await supabase.storage.from(INVENTORY_PHOTOS_BUCKET).upload(nextPath, blob, {
-        cacheControl: "3600",
-        upsert: false
-      });
-      if (upErr) throw new Error(upErr.message);
-      return nextPath;
-    });
-    newPaths.push(...paths);
+    newPaths.push(...(await downloadPhotosInBrowser(supabase, unitId, row.source_photo_urls)));
+    if (newPaths.length < 1) {
+      throw new Error("No photos could be downloaded.");
+    }
 
     const { error: upRowErr } = await supabase.from("inventory_units").update({ photo_paths: newPaths }).eq("id", unitId);
     if (upRowErr) throw new Error(upRowErr.message);
@@ -181,6 +296,8 @@ export async function publishImportQueueRow(
   row: InventoryImportQueueRow,
   options: PublishImportRowOptions
 ): Promise<PublishImportRowResult> {
+  await ensureFreshAdminSession(supabase);
+
   const stock = normalizeStockNumber(row.stock_number);
   if (!stock) {
     return { ok: false, stock: row.stock_number, error: "Missing stock number." };
@@ -199,16 +316,21 @@ export async function publishImportQueueRow(
   }
 
   try {
-    const dup = await findInventoryUnitByStock(supabase, stock);
-    if (dup) {
-      return { ok: false, stock, error: `Stock #${stock} already in catalog.` };
+    const conflict = await findStockConflict(supabase, stock, { excludeQueueId: row.id });
+    if (conflict) {
+      if (conflict.kind === "catalog") {
+        const reconciled = await reconcilePublishState(supabase, row, stock);
+        if (reconciled) return reconciled;
+      }
+      return { ok: false, stock, error: stockConflictMessage(conflict, stock) };
     }
   } catch (e) {
     return { ok: false, stock, error: e instanceof Error ? e.message : "Stock check failed." };
   }
 
-  const edgeResult = await publishViaEdgeFunction(supabase, row, options);
-  if (edgeResult) return edgeResult;
+  const edge = await publishViaEdgeFunction(supabase, row, options);
+  if (edge.type === "success") return edge.result;
+  if (edge.type === "failure") return edge.result;
 
   return publishInBrowser(supabase, row, options);
 }

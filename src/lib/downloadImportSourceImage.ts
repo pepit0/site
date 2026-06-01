@@ -1,11 +1,29 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const IMPORT_IMAGE_PROXY_HOSTS = new Set(["overlandram.ca", "www.overlandram.ca", "motorsportsfinancing.ca"]);
+const IMPORT_IMAGE_PROXY_HOSTS = new Set([
+  "overlandram.ca",
+  "www.overlandram.ca",
+  "motorsportsfinancing.ca",
+  "ridenow.com",
+  "www.ridenow.com",
+  "foxpowersports.com",
+  "heartlandhonda.com",
+  "hondaws.com",
+  "cdn.dealerspike.com"
+]);
+
+function isAllowedImportImageHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (IMPORT_IMAGE_PROXY_HOSTS.has(h)) return true;
+  if (h.endsWith(".dealerspike.com")) return true;
+  if (h.endsWith(".ridenow.com")) return true;
+  return false;
+}
 
 export function importSourceImageNeedsProxy(url: string): boolean {
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && IMPORT_IMAGE_PROXY_HOSTS.has(u.hostname.toLowerCase());
+    return u.protocol === "https:" && isAllowedImportImageHost(u.hostname);
   } catch {
     return false;
   }

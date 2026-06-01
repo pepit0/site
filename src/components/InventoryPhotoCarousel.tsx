@@ -23,8 +23,12 @@ export function InventoryPhotoCarousel({
   const [photoIndex, setPhotoIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [fillMinHeight, setFillMinHeight] = useState<number | undefined>();
+  const [thumbsOverflow, setThumbsOverflow] = useState(false);
+  const [canScrollThumbsLeft, setCanScrollThumbsLeft] = useState(false);
+  const [canScrollThumbsRight, setCanScrollThumbsRight] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
+  const thumbsTrackRef = useRef<HTMLDivElement>(null);
 
   const count = photoPaths.length;
   const safeIndex = count > 0 ? ((photoIndex % count) + count) % count : 0;
@@ -74,7 +78,65 @@ export function InventoryPhotoCarousel({
     [captureFillHeight, count, variant]
   );
 
+  const selectPhoto = useCallback(
+    (index: number, e?: MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      if (count <= 0 || index === safeIndex) return;
+      if (variant === "detail") captureFillHeight();
+      setPhotoIndex(index);
+    },
+    [captureFillHeight, count, safeIndex, variant]
+  );
+
+  const updateThumbsScroll = useCallback(() => {
+    const el = thumbsTrackRef.current;
+    if (!el) return;
+    const overflow = el.scrollWidth > el.clientWidth + 2;
+    setThumbsOverflow(overflow);
+    setCanScrollThumbsLeft(el.scrollLeft > 2);
+    setCanScrollThumbsRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  }, []);
+
+  const scrollThumbs = useCallback(
+    (direction: -1 | 1, e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = thumbsTrackRef.current;
+      if (!el) return;
+      const amount = Math.max(140, el.clientWidth * 0.8) * direction;
+      el.scrollBy({ left: amount, behavior: "smooth" });
+    },
+    []
+  );
+
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [photoPaths]);
+
+  useEffect(() => {
+    if (variant !== "detail" || count <= 1) return;
+    updateThumbsScroll();
+    const el = thumbsTrackRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(updateThumbsScroll);
+    ro.observe(el);
+    el.addEventListener("scroll", updateThumbsScroll, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", updateThumbsScroll);
+    };
+  }, [count, photoPaths, updateThumbsScroll, variant]);
+
+  useEffect(() => {
+    if (variant !== "detail" || count <= 1) return;
+    thumbsTrackRef.current
+      ?.querySelector(`[data-thumb-index="${safeIndex}"]`)
+      ?.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [count, safeIndex, variant]);
+
   const showNav = count > 1;
+  const showThumbStrip = variant === "detail" && count > 1;
   const variantClass = variant === "detail" ? "Detail" : "Card";
   const carouselClass = `inventory-photoCarousel inventory-photoCarousel${variantClass}${soldOverlay ? " inventory-photoCarouselSold" : ""}`;
 
@@ -132,61 +194,114 @@ export function InventoryPhotoCarousel({
     isLoading && fillMinHeight ? ({ minHeight: fillMinHeight } as const) : undefined;
 
   return (
-    <div className={carouselClass}>
-      <div
-        ref={fillRef}
-        className={`inventory-photoCarouselFill${isLoading ? " inventory-photoCarouselFill--loading" : ""}`}
-        style={fillStyle}
-      >
-        {currentPath ? (
+    <div className="inventory-photoGallery inventory-photoGalleryDetail">
+      <div className={carouselClass}>
+        <div
+          ref={fillRef}
+          className={`inventory-photoCarouselFill${isLoading ? " inventory-photoCarouselFill--loading" : ""}`}
+          style={fillStyle}
+        >
+          {currentPath ? (
+            <>
+              <img
+                ref={imgRef}
+                key={currentPath}
+                className="inventory-photoCarouselPhoto"
+                src={inventoryPhotoPublicUrl(supabase, currentPath)}
+                alt={alt}
+                loading="eager"
+                onLoad={handlePhotoLoad}
+              />
+              <img className="inventory-photoWatermark" src={logoWatermark} alt="" aria-hidden />
+              {isLoading ? (
+                <span className="inventory-photoSpinner" role="status" aria-label="Loading photo" />
+              ) : null}
+            </>
+          ) : (
+            <InventoryPlaceholder category={category} />
+          )}
+        </div>
+
+        {soldOverlay ? (
+          <span className="inventory-soldRibbon" aria-hidden>
+            Sold
+          </span>
+        ) : null}
+
+        {showNav ? (
           <>
-            <img
-              ref={imgRef}
-              key={currentPath}
-              className="inventory-photoCarouselPhoto"
-              src={inventoryPhotoPublicUrl(supabase, currentPath)}
-              alt={alt}
-              loading="eager"
-              onLoad={handlePhotoLoad}
-            />
-            <img className="inventory-photoWatermark" src={logoWatermark} alt="" aria-hidden />
-            {isLoading ? (
-              <span className="inventory-photoSpinner" role="status" aria-label="Loading photo" />
-            ) : null}
+            <button
+              type="button"
+              className="inventory-photoNav inventory-photoNavPrev"
+              aria-label="Previous photo"
+              onClick={goPrev}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="inventory-photoNav inventory-photoNavNext"
+              aria-label="Next photo"
+              onClick={goNext}
+            >
+              ›
+            </button>
+            <span className="inventory-photoCounter" aria-live="polite">
+              {safeIndex + 1} / {count}
+            </span>
           </>
-        ) : (
-          <InventoryPlaceholder category={category} />
-        )}
+        ) : null}
       </div>
 
-      {soldOverlay ? (
-        <span className="inventory-soldRibbon" aria-hidden>
-          Sold
-        </span>
-      ) : null}
+      {showThumbStrip ? (
+        <div className="inventory-photoThumbs" aria-label="Photo gallery">
+          {thumbsOverflow ? (
+            <button
+              type="button"
+              className="inventory-photoThumbsNav inventory-photoThumbsNavPrev"
+              aria-label="Scroll thumbnails back"
+              disabled={!canScrollThumbsLeft}
+              onClick={(e) => scrollThumbs(-1, e)}
+            >
+              ‹
+            </button>
+          ) : null}
 
-      {showNav ? (
-        <>
-          <button
-            type="button"
-            className="inventory-photoNav inventory-photoNavPrev"
-            aria-label="Previous photo"
-            onClick={goPrev}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="inventory-photoNav inventory-photoNavNext"
-            aria-label="Next photo"
-            onClick={goNext}
-          >
-            ›
-          </button>
-          <span className="inventory-photoCounter" aria-live="polite">
-            {safeIndex + 1} / {count}
-          </span>
-        </>
+          <div ref={thumbsTrackRef} className="inventory-photoThumbsTrack" role="tablist" aria-label="Choose photo">
+            {photoPaths.map((path, index) => (
+              <button
+                key={path}
+                type="button"
+                role="tab"
+                data-thumb-index={index}
+                className={`inventory-photoThumb${index === safeIndex ? " inventory-photoThumbActive" : ""}`}
+                aria-label={`Photo ${index + 1} of ${count}`}
+                aria-selected={index === safeIndex}
+                onClick={(e) => selectPhoto(index, e)}
+              >
+                <img
+                  src={inventoryPhotoPublicUrl(supabase, path)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                />
+              </button>
+            ))}
+          </div>
+
+          {thumbsOverflow ? (
+            <button
+              type="button"
+              className="inventory-photoThumbsNav inventory-photoThumbsNavNext"
+              aria-label="Scroll thumbnails forward"
+              disabled={!canScrollThumbsRight}
+              onClick={(e) => scrollThumbs(1, e)}
+            >
+              ›
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

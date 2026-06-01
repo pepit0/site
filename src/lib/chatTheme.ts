@@ -48,7 +48,7 @@ export const CHAT_HANDOFF_FADE_MS = 340;
  * Optional add-on (do NOT replace Bob’s full Base Prompt if Tawk warns you).
  * Paste under AI Assist → Knowledge / Additional instructions / Custom training — wherever Tawk allows a short add-on.
  */
-export const TAWK_AI_ADDON_INSTRUCTION = `Website visitors often complete intake before chat. If their first message mentions a stock number or listing URL, use that as their selected unit. Never say you cannot see their unit when they already sent year/make/model/stock or a temptmotorsports.com/inventory/ link. For price or financing, offer pre-approval or callback at (587) 741-1945.`;
+export const TAWK_AI_ADDON_INSTRUCTION = `Website visitors often complete intake before chat. If their first message mentions a stock number or listing URL, use that as their selected unit. Never say you cannot see their unit when they already sent year/make/model/stock or a temptmotorsports.com/inventory/ link. For price or financing, offer pre-approval or callback at (587) 415-7424.`;
 
 /** Legacy full prompt — use TAWK_AI_ADDON_INSTRUCTION instead of replacing Base Prompt when possible. */
 export const TAWK_AI_UNIT_CONTEXT_PROMPT = TAWK_AI_ADDON_INSTRUCTION;

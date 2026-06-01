@@ -21,6 +21,7 @@ export type InventoryImportQueueRow = {
   source_photo_urls: string[];
   source_permalink: string | null;
   source_product_name: string | null;
+  source_notes: string | null;
   status: InventoryImportQueueStatus;
   imported_inventory_id: string | null;
   created_at: string;
@@ -78,6 +79,8 @@ export function parseInventoryImportQueueRow(row: unknown): InventoryImportQueue
   const source_product_name =
     r.source_product_name == null ? null : typeof r.source_product_name === "string" ? r.source_product_name : null;
 
+  const source_notes = r.source_notes == null ? null : typeof r.source_notes === "string" ? r.source_notes : null;
+
   const iid = r.imported_inventory_id;
   const imported_inventory_id = iid == null ? null : typeof iid === "string" ? iid : null;
 
@@ -94,6 +97,7 @@ export function parseInventoryImportQueueRow(row: unknown): InventoryImportQueue
     source_photo_urls,
     source_permalink,
     source_product_name,
+    source_notes,
     status,
     imported_inventory_id,
     created_at,

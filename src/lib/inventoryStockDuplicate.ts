@@ -6,7 +6,7 @@ export type StockDuplicateMatch = {
 };
 
 export function normalizeStockNumber(stock: string): string {
-  return stock.trim();
+  return stock.trim().toUpperCase();
 }
 
 export function isStockNumberUniqueViolation(message: string): boolean {

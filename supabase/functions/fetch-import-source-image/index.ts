@@ -12,7 +12,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
-const ALLOWED_HOSTS = new Set(["overlandram.ca", "www.overlandram.ca", "motorsportsfinancing.ca"]);
+const ALLOWED_HOSTS = new Set([
+  "overlandram.ca",
+  "www.overlandram.ca",
+  "motorsportsfinancing.ca",
+  "ridenow.com",
+  "www.ridenow.com",
+  "cdn.dealerspike.com",
+  "foxpowersports.com",
+  "heartlandhonda.com",
+  "hondaws.com",
+  "lakecycle.com",
+  "bertsmegamall.com",
+  "www.magnummotorsports.com",
+  "magnummotorsports.com",
+  "www.extremepowersports.com",
+  "extremepowersports.com",
+  "cdpcdn.dx1app.com",
+  "www.powersportsplus.com",
+  "powersportsplus.com",
+  "www.youngpowersportsxl.com",
+  "youngpowersportsxl.com",
+  "www.mountainmotorsports.com",
+  "mountainmotorsports.com"
+]);
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -25,7 +48,12 @@ function isAllowedImportImageUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
     if (u.protocol !== "https:") return false;
-    return ALLOWED_HOSTS.has(u.hostname.toLowerCase());
+    const h = u.hostname.toLowerCase();
+    if (ALLOWED_HOSTS.has(h)) return true;
+    if (h.endsWith(".dealerspike.com")) return true;
+    if (h.endsWith(".ridenow.com")) return true;
+    // URL imports may reference photos on arbitrary dealer/CDN hosts (admin-only proxy).
+    return true;
   } catch {
     return false;
   }

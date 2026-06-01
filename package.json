@@ -21,6 +21,13 @@
     "supabase:deploy-overlandram": "supabase functions deploy sync-overlandram-import-queue",
     "supabase:deploy-import-image-proxy": "supabase functions deploy fetch-import-source-image",
     "supabase:deploy-import-publish": "supabase functions deploy publish-import-queue-row",
+    "supabase:deploy-us-import": "supabase functions deploy import-us-dealer-inventory",
+    "supabase:deploy-us-bulk-sync": "supabase functions deploy bulk-sync-us-import-queue",
+    "supabase:deploy-import-url": "supabase functions deploy import-url-to-queue",
+    "us:discover-dealers": "node scripts/discover-us-dealer-apis.mjs",
+    "us:probe-inventory": "node scripts/probe-us-inventory-counts.mjs",
+    "us:bulk-queue": "node scripts/bulk-us-import-queue.mjs",
+    "us:bulk-queue:all": "node scripts/bulk-us-import-queue.mjs -- --all",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -7,6 +7,11 @@
  * - Remove stale pending queue rows for products no longer on MSF
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  createTmsStockAllocator,
+  loadAllReservedStockNumbers,
+  normalizeStock
+} from "../_shared/tms-stock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -167,7 +172,6 @@ function mapProduct(p: unknown): Omit<QueueRow, "status"> | null {
   return {
     import_source: IMPORT_SOURCE,
     source_product_id: pid,
-    stock_number: `MSF-${pid}`,
     year: Number.isFinite(year) && year >= 1900 && year <= 2100 ? year : null,
     make: attrTerm(o.attributes, "Make"),
     model: attrTerm(o.attributes, "Model"),
@@ -195,14 +199,16 @@ async function fetchJson(url: string) {
 async function loadQueueState(supabase: SupabaseClient): Promise<{
   statusByPid: Map<string, string>;
   importedUnitIdByPid: Map<string, string>;
+  stockByPid: Map<string, string>;
 }> {
   const statusByPid = new Map<string, string>();
   const importedUnitIdByPid = new Map<string, string>();
+  const stockByPid = new Map<string, string>();
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("inventory_import_queue")
-      .select("source_product_id,status,imported_inventory_id")
+      .select("source_product_id,status,imported_inventory_id,stock_number")
       .eq("import_source", IMPORT_SOURCE)
       .order("source_product_id", { ascending: true })
       .range(from, from + pageSize - 1);
@@ -215,10 +221,13 @@ async function loadQueueState(supabase: SupabaseClient): Promise<{
       if (typeof r.imported_inventory_id === "string" && r.imported_inventory_id) {
         importedUnitIdByPid.set(pid, r.imported_inventory_id);
       }
+      if (typeof r.stock_number === "string" && r.stock_number.trim()) {
+        stockByPid.set(pid, normalizeStock(r.stock_number));
+      }
     }
     if (rows.length < pageSize) break;
   }
-  return { statusByPid, importedUnitIdByPid };
+  return { statusByPid, importedUnitIdByPid, stockByPid };
 }
 
 async function loadCatalogUnits(supabase: SupabaseClient): Promise<CatalogUnitRow[]> {
@@ -259,7 +268,6 @@ function catalogPidSet(units: CatalogUnitRow[]): Set<string> {
 
 function resolveCatalogUnit(
   pid: string,
-  stockNumber: string,
   catalogById: Map<string, CatalogUnitRow>,
   catalogByMsfPid: Map<string, CatalogUnitRow>,
   importedUnitIdByPid: Map<string, string>
@@ -268,11 +276,6 @@ function resolveCatalogUnit(
   if (linkedId) {
     const linked = catalogById.get(linkedId);
     if (linked) return linked;
-  }
-  const stockPid = stockNumber.match(MSF_STOCK_RE)?.[1];
-  if (stockPid) {
-    const byStock = catalogByMsfPid.get(stockPid);
-    if (byStock) return byStock;
   }
   return catalogByMsfPid.get(pid) ?? null;
 }
@@ -306,7 +309,6 @@ async function applyCatalogCategoryUpdates(
 
 function isAlreadyInCatalog(
   pid: string,
-  stockNumber: string,
   catalogPids: Set<string>,
   catalogUnitIds: Set<string>,
   statusByPid: Map<string, string>,
@@ -314,8 +316,6 @@ function isAlreadyInCatalog(
 ): boolean {
   if (statusByPid.get(pid) === "posted") return true;
   if (catalogPids.has(pid)) return true;
-  const stockPid = stockNumber.match(MSF_STOCK_RE)?.[1];
-  if (stockPid && catalogPids.has(stockPid)) return true;
   const linkedId = importedUnitIdByPid.get(pid);
   if (linkedId && catalogUnitIds.has(linkedId)) return true;
   return false;
@@ -394,7 +394,9 @@ async function removePendingOffMsf(supabase: SupabaseClient, activePids: Set<str
 }
 
 async function runSync(supabase: SupabaseClient) {
-  const { statusByPid, importedUnitIdByPid } = await loadQueueState(supabase);
+  const { statusByPid, importedUnitIdByPid, stockByPid } = await loadQueueState(supabase);
+  const reservedStocks = await loadAllReservedStockNumbers(supabase);
+  const tmsStock = createTmsStockAllocator(reservedStocks);
   const catalogUnits = await loadCatalogUnits(supabase);
   const catalogPids = catalogPidSet(catalogUnits);
   const catalogUnitIds = new Set(catalogUnits.map((u) => u.id));
@@ -450,7 +452,6 @@ async function runSync(supabase: SupabaseClient) {
 
     const inCatalog = isAlreadyInCatalog(
       mapped.source_product_id,
-      mapped.stock_number,
       catalogPids,
       catalogUnitIds,
       statusByPid,
@@ -458,6 +459,7 @@ async function runSync(supabase: SupabaseClient) {
     );
 
     const st = statusByPid.get(mapped.source_product_id);
+    const existingStock = stockByPid.get(mapped.source_product_id);
 
     if (inCatalog) {
       if (st === "posted") ignoredPosted += 1;
@@ -465,7 +467,6 @@ async function runSync(supabase: SupabaseClient) {
 
       const unit = resolveCatalogUnit(
         mapped.source_product_id,
-        mapped.stock_number,
         catalogById,
         catalogByMsfPid,
         importedUnitIdByPid
@@ -474,24 +475,37 @@ async function runSync(supabase: SupabaseClient) {
         catalogCategoryUpdates.set(unit.id, mapped.category);
       }
       if (st === "pending" || st === "posted" || st === "skipped") {
-        queueRefresh.push({ ...mapped, status: st });
+        queueRefresh.push({
+          ...mapped,
+          stock_number: existingStock ?? tmsStock.next(),
+          status: st
+        });
       }
       continue;
     }
 
     if (st === "pending") {
       alreadyPending += 1;
-      queueRefresh.push({ ...mapped, status: "pending" });
+      queueRefresh.push({
+        ...mapped,
+        stock_number: existingStock ?? tmsStock.next(),
+        status: "pending"
+      });
       continue;
     }
     if (st === "skipped") {
       alreadySkipped += 1;
-      queueRefresh.push({ ...mapped, status: "skipped" });
+      queueRefresh.push({
+        ...mapped,
+        stock_number: existingStock ?? tmsStock.next(),
+        status: "skipped"
+      });
       continue;
     }
     importedNew += 1;
     byPid.set(mapped.source_product_id, {
       ...mapped,
+      stock_number: tmsStock.next(),
       status: "pending"
     });
   }
