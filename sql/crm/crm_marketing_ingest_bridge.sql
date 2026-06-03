@@ -514,6 +514,25 @@ begin
       else '{}'::jsonb
     end;
 
+  v_application_status := lower(trim(coalesce(v_row ->> 'application_status', v_row ->> 'applicationStatus', '')));
+
+  -- In-progress rows: do not default to submitted (that would require consent_contact).
+  if v_application_status not in ('partial', 'submitted') then
+    if jsonb_typeof(v_row -> 'wizard_snapshot') = 'object'
+       and coalesce(v_row -> 'wizard_snapshot', '{}'::jsonb) <> '{}'::jsonb then
+      v_application_status := 'partial';
+    elsif jsonb_typeof(v_row -> 'wizardSnapshot') = 'object'
+       and coalesce(v_row -> 'wizardSnapshot', '{}'::jsonb) <> '{}'::jsonb then
+      v_application_status := 'partial';
+    elsif v_wizard_step is not null then
+      v_application_status := 'partial';
+    else
+      v_application_status := 'submitted';
+    end if;
+  end if;
+
+  v_is_partial := v_application_status = 'partial';
+
   v_erased_block := '';
   if v_is_partial and v_erased_fields <> '{}'::jsonb then
     select string_agg(
