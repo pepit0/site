@@ -1,8 +1,12 @@
+/** Production site origin (no trailing slash). Override with VITE_PUBLIC_SITE_URL if needed. */
+export const DEFAULT_PUBLIC_SITE_ORIGIN = "https://temptmotorsports.com";
+
 /**
  * Canonical site origin for meta tags (no trailing slash).
- * Set VITE_PUBLIC_SITE_URL in .env.local or Vercel env (e.g. https://temptationmotorsports.com).
+ * Set VITE_PUBLIC_SITE_URL in .env.local or Vercel Production to match your live host.
  */
-const raw = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim() ?? "";
+const raw =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim() || DEFAULT_PUBLIC_SITE_ORIGIN;
 
 export function getPublicSiteOrigin(): string {
   return raw.replace(/\/+$/, "");

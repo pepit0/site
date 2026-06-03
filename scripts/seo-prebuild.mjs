@@ -7,13 +7,14 @@ import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 
+const DEFAULT_ORIGIN = "https://temptmotorsports.com";
 const { siteUrl, supabaseUrl, supabaseAnonKey } = loadViteBuildEnv(root);
-const origin = siteUrl || "https://example.com";
+const origin = siteUrl || DEFAULT_ORIGIN;
 
 if (!siteUrl) {
   console.warn(
-    "[seo-prebuild] VITE_PUBLIC_SITE_URL is not set. Using https://example.com for sitemap/robots. " +
-      "Set VITE_PUBLIC_SITE_URL in .env.local or your host (e.g. Vercel) before deploying."
+    `[seo-prebuild] VITE_PUBLIC_SITE_URL is not set. Using ${DEFAULT_ORIGIN} for sitemap/robots. ` +
+      "Set VITE_PUBLIC_SITE_URL in .env.local or Vercel Production if your live host differs."
   );
 }
 

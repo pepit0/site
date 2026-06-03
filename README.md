@@ -26,9 +26,9 @@ npm run dev
 
 ## SEO (search)
 
-1. Set **`VITE_PUBLIC_SITE_URL`** in `.env.local` and on your host (e.g. Vercel) to your canonical site root **without** a trailing slash, e.g. `https://www.yourdomain.com`. This powers **canonical URLs**, **Open Graph** links, and **MotorcycleDealer** JSON-LD on the home page.
-2. Every production **`npm run build`** runs **`prebuild`**, which writes **`public/sitemap.xml`** and overwrites **`public/robots.txt`** from that URL (sitemap is gitignored). Set **`VITE_PUBLIC_SITE_URL`** on Vercel Production before deploy so canonical, JSON-LD, and sitemap URLs match your live domain.
-3. In **[Google Search Console](https://search.google.com/search-console)** (and Bing Webmaster), verify the property and submit **`https://YOURDOMAIN/sitemap.xml`**.
+1. Set **`VITE_PUBLIC_SITE_URL`** in `.env.local` and on Vercel Production to **`https://temptmotorsports.com`** (no trailing slash). If unset, the app defaults to that origin for canonical URLs, Open Graph, and JSON-LD.
+2. Every production **`npm run build`** runs **`prebuild`**, which writes **`public/sitemap.xml`** and overwrites **`public/robots.txt`** from that URL (sitemap is gitignored).
+3. In **[Google Search Console](https://search.google.com/search-console)** (and Bing Webmaster), verify **`https://temptmotorsports.com`** and submit **`https://temptmotorsports.com/sitemap.xml`**.
 4. Match your **Google Business Profile** name, phone, and address to what appears on the site (footer) so local listings and the site reinforce each other.
 
 5. **Optional NAP / profiles in JSON-LD:** set `VITE_PUBLIC_BUSINESS_STREET_ADDRESS`, `VITE_PUBLIC_BUSINESS_POSTAL_CODE`, and `VITE_PUBLIC_BUSINESS_SAME_AS` in `.env.local` (see `.env.example`) when you want richer `MotorcycleDealer` markup (keep values identical to GBP).
