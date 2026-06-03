@@ -281,7 +281,7 @@ export function InventoryPhotoCarousel({
               >
                 <img
                   src={inventoryPhotoPublicUrl(supabase, path)}
-                  alt=""
+                  alt={`${alt} — photo ${index + 1} of ${count}`}
                   loading="lazy"
                   decoding="async"
                   draggable={false}

@@ -547,7 +547,11 @@ export function SellYourRideApplyPage() {
               <ul className="sell-ride-applyPhotoList">
                 {fileItems.map((item, i) => (
                   <li key={item.clientId} className="sell-ride-applyPhotoItem">
-                    <img src={previewUrls[i]} alt="" className="sell-ride-applyPhotoThumb" />
+                    <img
+                      src={previewUrls[i]}
+                      alt={`Vehicle photo ${i + 1} for sell-your-ride application`}
+                      className="sell-ride-applyPhotoThumb"
+                    />
                     <div className="sell-ride-applyPhotoMeta">
                       <span className="sell-ride-applyPhotoName">{item.file.name}</span>
                       <button type="button" className="btn btn-secondary sell-ride-applyPhotoRemove" onClick={() => removeFileById(item.clientId)}>

@@ -1,0 +1,11 @@
+# Generated on production build by scripts/seo-prebuild.mjs (overwrites this file).
+# For local preview, run: npm run build or node scripts/seo-prebuild.mjs
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /login
+Disallow: /staff
+Disallow: /pre-approval/complete
+
+Sitemap: https://temptationmotorsports.com/sitemap.xml

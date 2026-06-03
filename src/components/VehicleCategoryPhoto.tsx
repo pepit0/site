@@ -3,6 +3,7 @@ import {
   getVehicleCategoryPhotoSecondaryUrl,
   getVehicleCategoryPhotoUrl
 } from "../lib/vehicleCategoryIcons";
+import { vehicleCategoryAlt } from "../lib/vehicleCategoryAlt";
 
 export type VehicleCategoryPhotoProps = {
   category: VehicleCategory;
@@ -14,6 +15,7 @@ export function VehicleCategoryPhoto({ category, className }: VehicleCategoryPho
   const src = getVehicleCategoryPhotoUrl(category);
   const secondarySrc = getVehicleCategoryPhotoSecondaryUrl(category);
   const imgClass = ["vehicle-category-photo", className].filter(Boolean).join(" ");
+  const alt = vehicleCategoryAlt(category);
 
   if (!src) {
     return null;
@@ -32,14 +34,14 @@ export function VehicleCategoryPhoto({ category, className }: VehicleCategoryPho
         <img
           className={`${imgClass} vehicle-category-photo--primary`}
           src={src}
-          alt=""
+          alt={alt}
           decoding="async"
           loading="lazy"
         />
         <img
           className={`${imgClass} vehicle-category-photo--secondary`}
           src={secondarySrc}
-          alt=""
+          alt={alt}
           decoding="async"
           loading="lazy"
         />
@@ -47,5 +49,5 @@ export function VehicleCategoryPhoto({ category, className }: VehicleCategoryPho
     );
   }
 
-  return <img className={imgClass} src={src} alt="" decoding="async" loading="lazy" />;
+  return <img className={imgClass} src={src} alt={alt} decoding="async" loading="lazy" />;
 }

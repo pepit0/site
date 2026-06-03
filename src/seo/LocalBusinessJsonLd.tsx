@@ -5,10 +5,11 @@ import {
   optionalSameAsUrls
 } from "../lib/businessPublic";
 import { absoluteUrl, hasPublicSiteOrigin } from "../lib/siteUrl";
+import { HOME_PAGE_DESCRIPTION } from "./homeSeo";
 
 /**
- * Rich result hint for local/dealer context. Skipped when VITE_PUBLIC_SITE_URL is unset
- * so we do not emit example.com markup in dev.
+ * Local + automotive business schema for homepage rich results.
+ * Skipped when VITE_PUBLIC_SITE_URL is unset so dev does not emit example.com markup.
  */
 export function LocalBusinessJsonLd() {
   if (!hasPublicSiteOrigin()) return null;
@@ -19,16 +20,15 @@ export function LocalBusinessJsonLd() {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "MotorcycleDealer",
+    "@type": ["LocalBusiness", "AutomotiveBusiness"],
     name: "Temptation Motorsports",
-    description:
-      "Powersports financing in Edmonton for motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, trailers, and RVs—serving customers across Canada.",
+    description: HOME_PAGE_DESCRIPTION,
     telephone: "+1-587-415-7424",
     url: absoluteUrl("/"),
     address: {
       "@type": "PostalAddress",
       ...(streetAddress ? { streetAddress } : {}),
-      addressLocality: "Edmonton",
+      addressLocality: "Sherwood Park",
       addressRegion: "AB",
       addressCountry: "CA",
       ...(postalCode ? { postalCode } : {})

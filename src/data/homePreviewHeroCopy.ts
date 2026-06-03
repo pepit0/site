@@ -1,7 +1,7 @@
 /** Hero copy for /home-preview landing experiment */
 
 export const HOME_PREVIEW_HERO = {
-  hook: "Ready to unlock your dream ride this summer?",
+  hook: "Canada-Wide Powersports Financing | Temptation Motorsports",
   subhook: "Finance across Canada no matter your credit situation",
   lede:
     "ATVs, Motorcycles, Side by Sides, Boats, Jetskis, Sleds, Trailers and more. Fast approvals, flexible terms and fast service that gets you riding sooner.",

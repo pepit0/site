@@ -8,8 +8,9 @@ import { HOME_PREVIEW_SLIDESHOW, HOME_PREVIEW_SLIDESHOW_MS } from "../data/homeP
 import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
+import { homeSlideAlt, HOME_SHOWROOM_BACKDROP_ALT } from "../seo/homeSeo";
+import { HomePageSeo } from "../seo/HomePageSeo";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
-import { Seo } from "../seo/Seo";
 
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
@@ -117,11 +118,7 @@ export function HomePage() {
 
   return (
     <div className="home home-preview">
-      <Seo
-        title="Powersports financing in Edmonton"
-        description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, boat, trailer, and RV financing. Fast, friendly credit help from Edmonton for riders across Canada."
-        path="/"
-      />
+      <HomePageSeo />
       <LocalBusinessJsonLd />
       <div className="home-backdropAmbience" aria-hidden />
       <div className="home-backdropWarmth" aria-hidden />
@@ -130,7 +127,7 @@ export function HomePage() {
         <div className="home-previewSlideshow" aria-hidden>
           <img
             src={activeSlide.src}
-            alt=""
+            alt={homeSlideAlt(activeSlide.label)}
             className="home-previewSlideshowSizer"
             decoding="async"
             draggable={false}
@@ -140,7 +137,10 @@ export function HomePage() {
               key={slide.id}
               className={`home-previewSlideshowSlide${index === slideIndex ? " home-previewSlideshowSlide--active" : ""}`}
             >
-              <img src={slide.src} alt="" className="home-previewSlideshowImg" decoding="async" draggable={false} />
+              <img
+                src={slide.src}
+                alt={homeSlideAlt(slide.label)}
+                className="home-previewSlideshowImg" decoding="async" draggable={false} />
             </div>
           ))}
         </div>
@@ -253,7 +253,7 @@ export function HomePage() {
             <source type="image/webp" srcSet={heroBackgroundWebp} />
             <img
               src={heroBackgroundPng}
-              alt=""
+              alt={HOME_SHOWROOM_BACKDROP_ALT}
               className="home-backdropImg home-previewShowroomImg"
               decoding="async"
               draggable={false}

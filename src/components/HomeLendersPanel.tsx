@@ -10,7 +10,7 @@ export function HomeLendersPanel() {
             <img
               className={`home-lendersLogo${lender.logoClassName ? ` ${lender.logoClassName}` : ""}`}
               src={lender.logoSrc}
-              alt=""
+              alt={`${lender.name} lending partner`}
               width={lender.logoClassName ? 72 : 32}
               height={32}
               loading="lazy"

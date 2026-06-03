@@ -27,7 +27,7 @@ npm run dev
 ## SEO (search)
 
 1. Set **`VITE_PUBLIC_SITE_URL`** in `.env.local` and on your host (e.g. Vercel) to your canonical site root **without** a trailing slash, e.g. `https://www.yourdomain.com`. This powers **canonical URLs**, **Open Graph** links, and **MotorcycleDealer** JSON-LD on the home page.
-2. Every production **`npm run build`** runs **`prebuild`**, which writes **`public/sitemap.xml`** and **`public/robots.txt`** from that URL. Those files are gitignored; deploy via CI/Vercel so the build always runs with the env var set.
+2. Every production **`npm run build`** runs **`prebuild`**, which writes **`public/sitemap.xml`** and overwrites **`public/robots.txt`** from that URL (sitemap is gitignored). Set **`VITE_PUBLIC_SITE_URL`** on Vercel Production before deploy so canonical, JSON-LD, and sitemap URLs match your live domain.
 3. In **[Google Search Console](https://search.google.com/search-console)** (and Bing Webmaster), verify the property and submit **`https://YOURDOMAIN/sitemap.xml`**.
 4. Match your **Google Business Profile** name, phone, and address to what appears on the site (footer) so local listings and the site reinforce each other.
 

@@ -829,6 +829,7 @@ export function PreApprovalPage() {
               className="preapproval-decorBg preapproval-decorBg--1"
               src={preapprovalBg1}
               alt=""
+              aria-hidden
               loading="lazy"
               decoding="async"
             />
@@ -836,6 +837,7 @@ export function PreApprovalPage() {
               className="preapproval-decorBg preapproval-decorBg--2"
               src={preapprovalBg2}
               alt=""
+              aria-hidden
               loading="lazy"
               decoding="async"
             />

@@ -1,5 +1,6 @@
 import type { VehicleCategory } from "../data/inventory";
 import { getVehicleCategoryIconUrl } from "../lib/vehicleCategoryIcons";
+import { vehicleCategoryAlt } from "../lib/vehicleCategoryAlt";
 
 export type VehicleSilhouetteProps = {
   category: VehicleCategory;
@@ -15,5 +16,7 @@ export function VehicleSilhouette({ category, className }: VehicleSilhouetteProp
     return null;
   }
 
-  return <img className={imgClass} src={src} alt="" decoding="async" loading="lazy" />;
+  return (
+    <img className={imgClass} src={src} alt={vehicleCategoryAlt(category)} decoding="async" loading="lazy" />
+  );
 }
