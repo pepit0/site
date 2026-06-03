@@ -5294,6 +5294,23 @@ img.vehicle-category-icon {
   display: block;
 }
 
+.admin-invPhotosHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-invPhotosHead .loginLabel {
+  margin: 0;
+}
+
+.admin-invDownloadPhotosBtn {
+  flex-shrink: 0;
+}
+
 .admin-invPhotoRow {
   display: flex;
   flex-wrap: wrap;

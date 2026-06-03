@@ -19,6 +19,7 @@ import {
   type InventoryUnitRow,
   type VehicleCategory
 } from "../data/inventory";
+import { downloadListingPhotos } from "../lib/downloadListingPhotos";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import {
   findInventoryUnitByStock,
@@ -148,6 +149,8 @@ export function AdminInventoryPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [reorderingPhotos, setReorderingPhotos] = useState(false);
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [photoDownloadMessage, setPhotoDownloadMessage] = useState<string | null>(null);
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<CatalogCategoryFilter>("all");
@@ -255,6 +258,7 @@ export function AdminInventoryPage() {
     setPendingFiles(null);
     setFormError(null);
     setStockDuplicate(null);
+    setPhotoDownloadMessage(null);
   }, []);
 
   useEffect(() => {
@@ -271,6 +275,7 @@ export function AdminInventoryPage() {
     setPendingFiles(null);
     setFormError(null);
     setStockDuplicate(null);
+    setPhotoDownloadMessage(null);
     if (editParam) setSearchParams({}, { replace: true });
   };
 
@@ -511,6 +516,27 @@ export function AdminInventoryPage() {
       return;
     }
     void refreshInventory();
+  };
+
+  const downloadAllPhotos = async (row: InventoryUnitRow) => {
+    setPhotoDownloadMessage(null);
+    setDownloadingPhotos(true);
+    try {
+      const result = await downloadListingPhotos(supabase, row.photo_paths, row.stock_number);
+      if (!result.ok) {
+        if (!result.cancelled) {
+          setPhotoDownloadMessage(result.error);
+        }
+        return;
+      }
+      setPhotoDownloadMessage(
+        result.method === "directory"
+          ? `Saved ${result.saved} photo${result.saved === 1 ? "" : "s"} to the folder you chose. Filenames use stock #${row.stock_number} and photo order (01-cover is the listing cover).`
+          : `Downloaded ${result.saved} photo${result.saved === 1 ? "" : "s"} to your browser downloads folder. Use Chrome or Edge to choose a save folder instead.`
+      );
+    } finally {
+      setDownloadingPhotos(false);
+    }
   };
 
   const wideAdminLayout = adminTab === "sell" || adminTab === "import" || adminTab === "customer";
@@ -966,18 +992,48 @@ export function AdminInventoryPage() {
                   if (!editRow) return null;
                   return (
                     <div className="form-row sell-ride-applyFullWidth">
-                      <p className="loginLabel">Current photos</p>
+                      <div className="admin-invPhotosHead">
+                        <p className="loginLabel">Current photos</p>
+                        {editRow.photo_paths.length > 0 ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary admin-invDownloadPhotosBtn"
+                            disabled={downloadingPhotos || reorderingPhotos || isSaving}
+                            onClick={() => void downloadAllPhotos(editRow)}
+                          >
+                            {downloadingPhotos ? "Downloading…" : "Download all photos"}
+                          </button>
+                        ) : null}
+                      </div>
                       <AdminSortablePhotoList
                         variant="chip"
                         items={editRow.photo_paths.map((p) => ({
                           id: p,
                           src: inventoryPhotoPublicUrl(supabase, p)
                         }))}
-                        busy={reorderingPhotos}
+                        busy={reorderingPhotos || downloadingPhotos}
                         emptyMessage="None yet"
                         onReorder={(orderedPaths) => void reorderPhotos(editRow, orderedPaths)}
                         onRemove={(path) => void removePhoto(editRow, path)}
                       />
+                      {photoDownloadMessage ? (
+                        <p
+                          className={
+                            photoDownloadMessage.toLowerCase().includes("failed") ||
+                            photoDownloadMessage.toLowerCase().includes("could not")
+                              ? "sell-ride-applyError"
+                              : "sell-ride-applyHint"
+                          }
+                          role="status"
+                        >
+                          {photoDownloadMessage}
+                        </p>
+                      ) : (
+                        <p className="sell-ride-applyHint">
+                          Download all photos to a folder for Facebook Marketplace. In Chrome or Edge you can choose
+                          where to save; other browsers save to Downloads.
+                        </p>
+                      )}
                     </div>
                   );
                 })() : null}
