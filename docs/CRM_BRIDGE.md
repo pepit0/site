@@ -22,6 +22,8 @@ If someone enters **first name, last name, and email** on the pre-approval wizar
 
 After 30 minutes with no edits, **`promote_due_preapproval_partials()`** (scheduled with **pg_cron**, every 3 minutes) copies the row into `preapproval_leads` with `application_status = 'partial'`. The CRM ingest creates a **System lead** titled **“New partial pre-approval”** (consent and phone are not required for partial rows).
 
+If partials fail with **“Consent to be contacted is required”**, re-run [`sql/crm/crm_marketing_ingest_bridge.sql`](crm/crm_marketing_ingest_bridge.sql) on the **CRM** project so ingest treats rows with `wizard_snapshot` / `wizard_step` as partial even when `application_status` is omitted from the webhook body.
+
 **This is not instant.** Full submits appear in CRM immediately; partials appear only after the idle window + cron promotion + webhook.
 
 ### Expected timeline (testing with `28`)
