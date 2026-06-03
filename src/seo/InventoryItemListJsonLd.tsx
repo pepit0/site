@@ -7,10 +7,10 @@ type Props = {
 };
 
 export function InventoryItemListJsonLd({ rows }: Props) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
-  if (!supabaseUrl || rows.length === 0) return null;
+  if (rows.length === 0) return null;
 
-  const jsonLd = buildInventoryItemListJsonLd(rows, { supabaseUrl });
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
+  const jsonLd = buildInventoryItemListJsonLd(rows, { supabaseUrl: supabaseUrl || undefined });
   if (!jsonLd) return null;
 
   return (
