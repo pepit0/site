@@ -55,49 +55,28 @@ export function buildInventoryProductJsonLd(row, { siteOrigin, supabaseUrl }) {
     "@type": "Product",
     name: `${row.year} ${title}`,
     description: inventoryUnitSeoDescription(row),
+    url,
     sku: row.stock_number,
     category: row.category,
     brand: { "@type": "Brand", name: row.make },
     ...(image ? { image: [image] } : {}),
-    offers: {
-      "@type": "Offer",
-      url,
-      availability: inventorySchemaAvailability(row.status),
-      priceCurrency: "CAD",
-      seller: {
-        "@type": "Organization",
-        name: "Temptation Motorsports",
-        url: siteOrigin
-      },
-      itemCondition: "https://schema.org/UsedCondition"
-    },
     additionalProperty: [
       { "@type": "PropertyValue", name: "Model year", value: String(row.year) },
       { "@type": "PropertyValue", name: "Odometer", value: inventoryOdometerLabel(row) },
-      { "@type": "PropertyValue", name: "Listing price", value: INVENTORY_CALL_FOR_PRICING }
+      { "@type": "PropertyValue", name: "Listing price", value: INVENTORY_CALL_FOR_PRICING },
+      { "@type": "PropertyValue", name: "Availability", value: row.status }
     ]
   };
 }
 
-export function buildInventoryItemListJsonLd(rows, { siteOrigin, supabaseUrl }) {
+export function buildInventoryItemListJsonLd(rows, { siteOrigin }) {
   const itemListElement = rows.map((row, index) => {
     const path = `/inventory/${row.id}`;
-    const image = row.photo_paths?.[0] ? inventoryPhotoAbsoluteUrl(row.photo_paths[0], supabaseUrl) : null;
     return {
       "@type": "ListItem",
       position: index + 1,
-      url: `${siteOrigin}${path}`,
-      item: {
-        "@type": "Product",
-        name: `${row.year} ${inventoryMakeModelTitle(row)}`,
-        ...(image ? { image } : {}),
-        offers: {
-          "@type": "Offer",
-          availability: inventorySchemaAvailability(row.status),
-          priceCurrency: "CAD",
-          seller: { "@type": "Organization", name: "Temptation Motorsports", url: siteOrigin }
-        }
-      }
+      name: `${row.year} ${inventoryMakeModelTitle(row)}`,
+      url: `${siteOrigin}${path}`
     };
   });
 

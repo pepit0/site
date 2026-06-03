@@ -9,14 +9,6 @@ import { absoluteUrl, hasPublicSiteOrigin } from "../lib/siteUrl";
 
 export const INVENTORY_CALL_FOR_PRICING = "Call for pricing";
 
-function inventorySeller(siteOrigin: string) {
-  return {
-    "@type": "Organization" as const,
-    name: "Temptation Motorsports",
-    url: siteOrigin
-  };
-}
-
 /** Schema.org availability URL for public inventory status. */
 export function inventorySchemaAvailability(status: InventoryPublicStatus): string {
   switch (status) {
@@ -56,6 +48,10 @@ export function inventoryUnitPrimaryImage(row: InventoryPublicRow, supabaseUrl: 
   return first ? inventoryPhotoAbsoluteUrl(first, supabaseUrl) : undefined;
 }
 
+/**
+ * Product JSON-LD for a unit detail page. No Offer block: listings show "Call for pricing"
+ * and Google requires a numeric price on Offer/Product rich-result markup.
+ */
 export function buildInventoryProductJsonLd(
   row: InventoryPublicRow,
   options: { supabaseUrl: string; siteOrigin?: string }
@@ -73,6 +69,7 @@ export function buildInventoryProductJsonLd(
     "@type": "Product",
     name: `${row.year} ${title}`,
     description: inventoryUnitSeoDescription(row),
+    url,
     sku: row.stock_number,
     category: row.category,
     brand: {
@@ -80,14 +77,6 @@ export function buildInventoryProductJsonLd(
       name: row.make
     },
     ...(image ? { image: [image] } : {}),
-    offers: {
-      "@type": "Offer",
-      url,
-      availability: inventorySchemaAvailability(row.status),
-      priceCurrency: "CAD",
-      seller: inventorySeller(origin),
-      itemCondition: "https://schema.org/UsedCondition"
-    },
     additionalProperty: [
       {
         "@type": "PropertyValue",
@@ -103,36 +92,34 @@ export function buildInventoryProductJsonLd(
         "@type": "PropertyValue",
         name: "Listing price",
         value: INVENTORY_CALL_FOR_PRICING
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Availability",
+        value: row.status
       }
     ]
   };
 }
 
+/**
+ * ItemList for /inventory. List items link to unit pages only (no nested Product/Offer),
+ * so Google does not expect price/review fields on the listing page.
+ */
 export function buildInventoryItemListJsonLd(
   rows: InventoryPublicRow[],
-  options: { supabaseUrl: string; siteOrigin?: string }
+  options: { siteOrigin?: string } = {}
 ): Record<string, unknown> | null {
   const origin = options.siteOrigin ?? (hasPublicSiteOrigin() ? absoluteUrl("").replace(/\/$/, "") : "");
   if (!origin) return null;
 
   const elements = rows.map((row, index) => {
     const path = inventoryUnitCanonicalPath(row.id);
-    const image = inventoryUnitPrimaryImage(row, options.supabaseUrl);
     return {
       "@type": "ListItem",
       position: index + 1,
-      url: `${origin}${path}`,
-      item: {
-        "@type": "Product",
-        name: `${row.year} ${inventoryMakeModelTitle(row)}`,
-        ...(image ? { image } : {}),
-        offers: {
-          "@type": "Offer",
-          availability: inventorySchemaAvailability(row.status),
-          priceCurrency: "CAD",
-          seller: inventorySeller(origin)
-        }
-      }
+      name: `${row.year} ${inventoryMakeModelTitle(row)}`,
+      url: `${origin}${path}`
     };
   });
 
