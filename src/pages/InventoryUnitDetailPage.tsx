@@ -14,8 +14,8 @@ import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
 import { InventoryProductJsonLd } from "../seo/InventoryProductJsonLd";
+import { inventoryPublicPriceLabel } from "../lib/inventoryPublicPrice";
 import {
-  INVENTORY_CALL_FOR_PRICING,
   inventoryUnitCanonicalPath,
   inventoryUnitSeoDescription,
   inventoryUnitSeoTitle
@@ -155,7 +155,7 @@ export function InventoryUnitDetailPage() {
                 </p>
                 <h1 className="inventory-detailTitle">{title}</h1>
                 <p className="inventory-detailYearKm">{inventoryYearKmLine(row)}</p>
-                <p className="inventory-detailPrice">{INVENTORY_CALL_FOR_PRICING}</p>
+                <p className="inventory-detailPrice">{inventoryPublicPriceLabel(row)}</p>
               </header>
 
               <section className="inventory-detailDescription" aria-labelledby="inventory-detail-desc-heading">

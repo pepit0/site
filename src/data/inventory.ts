@@ -1,3 +1,5 @@
+import { parseInventoryListPriceCad } from "../lib/inventoryPublicPrice";
+
 export type VehicleCategory =
   | "Motorcycle"
   | "ATV"
@@ -48,6 +50,7 @@ export type InventoryPublicRow = {
   category: VehicleCategory;
   status: InventoryPublicStatus;
   photo_paths: string[];
+  list_price_cad: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -217,6 +220,7 @@ function parseInventoryCore(row: unknown): InventoryCoreFields | null {
     category,
     status,
     photo_paths,
+    list_price_cad: parseInventoryListPriceCad(r.list_price_cad),
     created_at,
     updated_at
   };

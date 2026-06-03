@@ -19,7 +19,6 @@ import {
   type InventoryUnitRow,
   type VehicleCategory
 } from "../data/inventory";
-import { downloadListingPhotos } from "../lib/downloadListingPhotos";
 import { inventoryPhotoPublicUrl } from "../lib/inventoryPhotos";
 import {
   findInventoryUnitByStock,
@@ -96,6 +95,7 @@ type FormFields = {
   category: VehicleCategory;
   cost: string;
   marketplace_list_price: string;
+  list_price_cad: string;
   status: InventoryStatus;
   is_customer_unit: boolean;
   vin: string;
@@ -111,6 +111,7 @@ const emptyForm = (): FormFields => ({
   category: "Motorcycle",
   cost: "0",
   marketplace_list_price: "",
+  list_price_cad: "",
   status: "Available",
   is_customer_unit: false,
   vin: "",
@@ -149,8 +150,6 @@ export function AdminInventoryPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [reorderingPhotos, setReorderingPhotos] = useState(false);
-  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [photoDownloadMessage, setPhotoDownloadMessage] = useState<string | null>(null);
   const [stockDuplicate, setStockDuplicate] = useState<StockDuplicateMatch | null>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<CatalogCategoryFilter>("all");
@@ -250,6 +249,7 @@ export function AdminInventoryPage() {
       cost: String(row.cost),
       marketplace_list_price:
         row.marketplace_list_price != null ? String(row.marketplace_list_price) : "",
+      list_price_cad: row.list_price_cad != null ? String(row.list_price_cad) : "",
       status: row.status,
       is_customer_unit: row.is_customer_unit,
       vin: row.vin ?? "",
@@ -258,7 +258,6 @@ export function AdminInventoryPage() {
     setPendingFiles(null);
     setFormError(null);
     setStockDuplicate(null);
-    setPhotoDownloadMessage(null);
   }, []);
 
   useEffect(() => {
@@ -275,7 +274,6 @@ export function AdminInventoryPage() {
     setPendingFiles(null);
     setFormError(null);
     setStockDuplicate(null);
-    setPhotoDownloadMessage(null);
     if (editParam) setSearchParams({}, { replace: true });
   };
 
@@ -336,6 +334,15 @@ export function AdminInventoryPage() {
       setFormError("Enter a valid Facebook list price or leave blank.");
       return;
     }
+    const list_price_cad: number | null = (() => {
+      if (form.list_price_cad.trim() === "") return null;
+      const p = Number.parseFloat(form.list_price_cad);
+      return Number.isFinite(p) && p > 0 ? p : NaN;
+    })();
+    if (list_price_cad !== null && Number.isNaN(list_price_cad)) {
+      setFormError("Enter a valid website list price (CAD) or leave blank.");
+      return;
+    }
 
     try {
       const dup = await findInventoryUnitByStock(supabase, stock, editingId);
@@ -376,6 +383,7 @@ export function AdminInventoryPage() {
             category: form.category,
             cost,
             marketplace_list_price,
+            list_price_cad,
             status: form.status,
             photo_paths,
             is_customer_unit: form.is_customer_unit,
@@ -405,6 +413,7 @@ export function AdminInventoryPage() {
             category: form.category,
             cost,
             marketplace_list_price,
+            list_price_cad,
             status: form.status,
             photo_paths: [],
             is_customer_unit: form.is_customer_unit,
@@ -516,27 +525,6 @@ export function AdminInventoryPage() {
       return;
     }
     void refreshInventory();
-  };
-
-  const downloadAllPhotos = async (row: InventoryUnitRow) => {
-    setPhotoDownloadMessage(null);
-    setDownloadingPhotos(true);
-    try {
-      const result = await downloadListingPhotos(supabase, row.photo_paths, row.stock_number);
-      if (!result.ok) {
-        if (!result.cancelled) {
-          setPhotoDownloadMessage(result.error);
-        }
-        return;
-      }
-      setPhotoDownloadMessage(
-        result.method === "directory"
-          ? `Saved ${result.saved} photo${result.saved === 1 ? "" : "s"} to the folder you chose. Filenames use stock #${row.stock_number} and photo order (01-cover is the listing cover).`
-          : `Downloaded ${result.saved} photo${result.saved === 1 ? "" : "s"} to your browser downloads folder. Use Chrome or Edge to choose a save folder instead.`
-      );
-    } finally {
-      setDownloadingPhotos(false);
-    }
   };
 
   const wideAdminLayout = adminTab === "sell" || adminTab === "import" || adminTab === "customer";
@@ -883,6 +871,24 @@ export function AdminInventoryPage() {
                   />
                 </div>
                 <div className="form-row">
+                  <label className="loginLabel" htmlFor="adm-list-price">
+                    Website list price (CAD)
+                  </label>
+                  <input
+                    id="adm-list-price"
+                    className="loginInput"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.list_price_cad}
+                    onChange={(e) => setForm((f) => ({ ...f, list_price_cad: e.target.value }))}
+                    placeholder="Optional — Call for pricing when blank"
+                  />
+                  <p className="sell-ride-applyHint">
+                    Shown on inventory pages and in Google structured data when set.
+                  </p>
+                </div>
+                <div className="form-row">
                   <label className="loginLabel" htmlFor="adm-fb-price">
                     Facebook list price (CAD)
                   </label>
@@ -992,48 +998,18 @@ export function AdminInventoryPage() {
                   if (!editRow) return null;
                   return (
                     <div className="form-row sell-ride-applyFullWidth">
-                      <div className="admin-invPhotosHead">
-                        <p className="loginLabel">Current photos</p>
-                        {editRow.photo_paths.length > 0 ? (
-                          <button
-                            type="button"
-                            className="btn btn-secondary admin-invDownloadPhotosBtn"
-                            disabled={downloadingPhotos || reorderingPhotos || isSaving}
-                            onClick={() => void downloadAllPhotos(editRow)}
-                          >
-                            {downloadingPhotos ? "Downloading…" : "Download all photos"}
-                          </button>
-                        ) : null}
-                      </div>
+                      <p className="loginLabel">Current photos</p>
                       <AdminSortablePhotoList
                         variant="chip"
                         items={editRow.photo_paths.map((p) => ({
                           id: p,
                           src: inventoryPhotoPublicUrl(supabase, p)
                         }))}
-                        busy={reorderingPhotos || downloadingPhotos}
+                        busy={reorderingPhotos}
                         emptyMessage="None yet"
                         onReorder={(orderedPaths) => void reorderPhotos(editRow, orderedPaths)}
                         onRemove={(path) => void removePhoto(editRow, path)}
                       />
-                      {photoDownloadMessage ? (
-                        <p
-                          className={
-                            photoDownloadMessage.toLowerCase().includes("failed") ||
-                            photoDownloadMessage.toLowerCase().includes("could not")
-                              ? "sell-ride-applyError"
-                              : "sell-ride-applyHint"
-                          }
-                          role="status"
-                        >
-                          {photoDownloadMessage}
-                        </p>
-                      ) : (
-                        <p className="sell-ride-applyHint">
-                          Download all photos to a folder for Facebook Marketplace. In Chrome or Edge you can choose
-                          where to save; other browsers save to Downloads.
-                        </p>
-                      )}
                     </div>
                   );
                 })() : null}

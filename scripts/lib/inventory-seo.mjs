@@ -1,6 +1,33 @@
-/** Build-time SEO helpers (keep in sync with src/seo/inventoryStructuredData.ts). */
+/** Build-time SEO helpers (keep in sync with src/seo/inventoryStructuredData.ts + inventoryPublicPrice.ts). */
 
 export const INVENTORY_CALL_FOR_PRICING = "Call for pricing";
+
+export function parseInventoryListPriceCad(raw) {
+  if (raw == null || raw === "") return null;
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function inventoryPublicListPriceCad(row) {
+  return parseInventoryListPriceCad(row.list_price_cad);
+}
+
+export function formatInventoryPriceCad(amount) {
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+export function inventoryPublicPriceLabel(row) {
+  const price = inventoryPublicListPriceCad(row);
+  return price != null ? formatInventoryPriceCad(price) : INVENTORY_CALL_FOR_PRICING;
+}
+
+export function schemaOfferPriceCad(amount) {
+  return amount.toFixed(2);
+}
 
 export function inventorySchemaAvailability(status) {
   switch (status) {
@@ -32,7 +59,7 @@ export function inventoryUnitSeoTitle(row) {
 }
 
 export function inventoryUnitSeoDescription(row) {
-  return `${row.year} ${inventoryMakeModelTitle(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${INVENTORY_CALL_FOR_PRICING}. View photos at Temptation Motorsports, Edmonton.`;
+  return `${row.year} ${inventoryMakeModelTitle(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${inventoryPublicPriceLabel(row)}. View photos at Temptation Motorsports, Edmonton.`;
 }
 
 export function inventoryPhotoAbsoluteUrl(photoPath, supabaseUrl) {
@@ -44,11 +71,30 @@ export function inventoryPhotoAbsoluteUrl(photoPath, supabaseUrl) {
   return `${base}/storage/v1/object/public/inventory-photos/${encoded}`;
 }
 
+function inventorySeller(siteOrigin) {
+  return { "@type": "Organization", name: "Temptation Motorsports", url: siteOrigin };
+}
+
+export function buildInventoryProductOffer(row, { siteOrigin, offerUrl }) {
+  const price = inventoryPublicListPriceCad(row);
+  if (price == null) return undefined;
+  return {
+    "@type": "Offer",
+    url: offerUrl,
+    price: schemaOfferPriceCad(price),
+    priceCurrency: "CAD",
+    availability: inventorySchemaAvailability(row.status),
+    seller: inventorySeller(siteOrigin),
+    itemCondition: "https://schema.org/UsedCondition"
+  };
+}
+
 export function buildInventoryProductJsonLd(row, { siteOrigin, supabaseUrl }) {
   const path = `/inventory/${row.id}`;
   const url = `${siteOrigin}${path}`;
   const title = inventoryMakeModelTitle(row);
   const image = row.photo_paths?.[0] ? inventoryPhotoAbsoluteUrl(row.photo_paths[0], supabaseUrl) : null;
+  const offers = buildInventoryProductOffer(row, { siteOrigin, offerUrl: url });
 
   return {
     "@context": "https://schema.org",
@@ -60,23 +106,37 @@ export function buildInventoryProductJsonLd(row, { siteOrigin, supabaseUrl }) {
     category: row.category,
     brand: { "@type": "Brand", name: row.make },
     ...(image ? { image: [image] } : {}),
+    ...(offers ? { offers } : {}),
     additionalProperty: [
       { "@type": "PropertyValue", name: "Model year", value: String(row.year) },
       { "@type": "PropertyValue", name: "Odometer", value: inventoryOdometerLabel(row) },
-      { "@type": "PropertyValue", name: "Listing price", value: INVENTORY_CALL_FOR_PRICING },
+      { "@type": "PropertyValue", name: "Listing price", value: inventoryPublicPriceLabel(row) },
       { "@type": "PropertyValue", name: "Availability", value: row.status }
     ]
   };
 }
 
-export function buildInventoryItemListJsonLd(rows, { siteOrigin }) {
+export function buildInventoryItemListJsonLd(rows, { siteOrigin, supabaseUrl }) {
   const itemListElement = rows.map((row, index) => {
     const path = `/inventory/${row.id}`;
-    return {
+    const url = `${siteOrigin}${path}`;
+    const listItem = {
       "@type": "ListItem",
       position: index + 1,
       name: `${row.year} ${inventoryMakeModelTitle(row)}`,
-      url: `${siteOrigin}${path}`
+      url
+    };
+    const offers = buildInventoryProductOffer(row, { siteOrigin, offerUrl: url });
+    if (!offers) return listItem;
+    const image = row.photo_paths?.[0] ? inventoryPhotoAbsoluteUrl(row.photo_paths[0], supabaseUrl) : null;
+    return {
+      ...listItem,
+      item: {
+        "@type": "Product",
+        name: `${row.year} ${inventoryMakeModelTitle(row)}`,
+        ...(image ? { image } : {}),
+        offers
+      }
     };
   });
 

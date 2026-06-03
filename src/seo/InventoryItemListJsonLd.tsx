@@ -9,7 +9,8 @@ type Props = {
 export function InventoryItemListJsonLd({ rows }: Props) {
   if (rows.length === 0) return null;
 
-  const jsonLd = buildInventoryItemListJsonLd(rows);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
+  const jsonLd = buildInventoryItemListJsonLd(rows, { supabaseUrl: supabaseUrl || undefined });
   if (!jsonLd) return null;
 
   return (

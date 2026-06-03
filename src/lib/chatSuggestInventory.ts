@@ -83,6 +83,7 @@ function featuredToSuggested(u: FeaturedUnitJson): ChatSuggestedUnit | null {
     status: "Available",
     odometer_km: null,
     photo_paths: [],
+    list_price_cad: null,
     created_at: "",
     updated_at: ""
   };

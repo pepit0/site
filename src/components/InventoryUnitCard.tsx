@@ -6,7 +6,7 @@ import {
   type InventoryPublicRow,
   type VehicleCategory
 } from "../data/inventory";
-import { INVENTORY_CALL_FOR_PRICING } from "../seo/inventoryStructuredData";
+import { inventoryPublicPriceLabel } from "../lib/inventoryPublicPrice";
 import { InventoryPhotoCarousel } from "./InventoryPhotoCarousel";
 
 export type InventoryUnitCardProps = {
@@ -39,7 +39,7 @@ export function InventoryUnitCard({ item, fromCategory = "all" }: InventoryUnitC
         </p>
         <h2 className="inventory-cardTitle">{title}</h2>
         <p className="inventory-cardYearKm">{inventoryYearKmLine(item)}</p>
-        <p className="inventory-cardPrice">{INVENTORY_CALL_FOR_PRICING}</p>
+        <p className="inventory-cardPrice">{inventoryPublicPriceLabel(item)}</p>
         <p className="inventory-cardStock">Stock #{item.stock_number}</p>
       </Link>
     </article>
