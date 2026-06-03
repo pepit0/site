@@ -860,6 +860,10 @@ p {
 
 .home-previewHook {
   margin: 0 0 0.85rem;
+}
+
+.home-previewHookDisplay {
+  display: block;
   font-size: clamp(1.85rem, 5.2vw, 3.15rem);
   font-weight: 700;
   line-height: 1.08;
@@ -1189,6 +1193,9 @@ p {
 
   .home-previewHook {
     margin-bottom: 0.55rem;
+  }
+
+  .home-previewHookDisplay {
     font-size: clamp(1.5rem, 7.2vw, 1.95rem);
     line-height: 1.14;
     color: var(--text);
@@ -5292,23 +5299,6 @@ img.vehicle-category-icon {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   display: block;
-}
-
-.admin-invPhotosHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.admin-invPhotosHead .loginLabel {
-  margin: 0;
-}
-
-.admin-invDownloadPhotosBtn {
-  flex-shrink: 0;
 }
 
 .admin-invPhotoRow {
