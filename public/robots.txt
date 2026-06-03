@@ -8,4 +8,4 @@ Disallow: /login
 Disallow: /staff
 Disallow: /pre-approval/complete
 
-Sitemap: https://temptationmotorsports.com/sitemap.xml
+Sitemap: https://temptmotorsports.com/sitemap.xml
