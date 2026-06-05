@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { SiteLayout } from "./layout/SiteLayout";
 import { AdminCalculatorPage } from "./pages/AdminCalculatorPage";
@@ -18,55 +19,58 @@ export default function App() {
   const marketingOnly = isMarketingOnlySite();
 
   return (
-    <Routes>
-      <Route path="/" element={<SiteLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="home-preview" element={<Navigate to="/" replace />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="inventory/:unitId" element={<InventoryUnitDetailPage />} />
-        <Route path="sell-your-ride" element={<SellYourRidePage />} />
-        <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
-        <Route path="pre-approval" element={<PreApprovalPage />} />
-        <Route path="pre-approval/complete" element={<PreApprovalCompletePage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
-        <Route
-          path="admin/inventory"
-          element={
-            <ProtectedRoute requireCrm={false} requireInventoryAdmin>
-              <AdminInventoryPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/calculator"
-          element={
-            <ProtectedRoute requireCrm={false} requireInventoryAdmin>
-              <AdminCalculatorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/sell-queue"
-          element={
-            <ProtectedRoute requireCrm={false} requireInventoryAdmin>
-              <Navigate to="/admin/inventory?tab=sell" replace />
-            </ProtectedRoute>
-          }
-        />
-        {marketingOnly ? (
-          <Route path="staff" element={<Navigate to="/" replace />} />
-        ) : (
+    <>
+      <Routes>
+        <Route path="/" element={<SiteLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="home-preview" element={<Navigate to="/" replace />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="inventory/:unitId" element={<InventoryUnitDetailPage />} />
+          <Route path="sell-your-ride" element={<SellYourRidePage />} />
+          <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
+          <Route path="pre-approval" element={<PreApprovalPage />} />
+          <Route path="pre-approval/complete" element={<PreApprovalCompletePage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
           <Route
-            path="staff"
+            path="admin/inventory"
             element={
-              <ProtectedRoute>
-                <StaffPage />
+              <ProtectedRoute requireCrm={false} requireInventoryAdmin>
+                <AdminInventoryPage />
               </ProtectedRoute>
             }
           />
-        )}
-      </Route>
-    </Routes>
+          <Route
+            path="admin/calculator"
+            element={
+              <ProtectedRoute requireCrm={false} requireInventoryAdmin>
+                <AdminCalculatorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/sell-queue"
+            element={
+              <ProtectedRoute requireCrm={false} requireInventoryAdmin>
+                <Navigate to="/admin/inventory?tab=sell" replace />
+              </ProtectedRoute>
+            }
+          />
+          {marketingOnly ? (
+            <Route path="staff" element={<Navigate to="/" replace />} />
+          ) : (
+            <Route
+              path="staff"
+              element={
+                <ProtectedRoute>
+                  <StaffPage />
+                </ProtectedRoute>
+              }
+            />
+          )}
+        </Route>
+      </Routes>
+      <Analytics />
+    </>
   );
 }
