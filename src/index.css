@@ -1305,7 +1305,7 @@ p {
 @media (max-width: 768px) {
   .home-preview {
     --home-preview-edge-x: 1.15rem;
-    --home-preview-content-shift: 0;
+    --home-preview-content-shift: 0.45rem;
     --home-preview-seam-overlap: 0;
     --home-preview-mobile-hero-h: min(68vh, 36rem);
     --home-preview-mobile-image-zoom: 0.88;
@@ -1423,7 +1423,7 @@ p {
     width: 100%;
     height: auto;
     min-height: 0;
-    margin: calc(var(--home-preview-mobile-hero-h) - 5.5rem) 0 0;
+    margin: calc(var(--home-preview-mobile-hero-h) - 5.5rem + var(--home-preview-content-shift)) 0 0;
     padding: 0 var(--home-preview-edge-x) 1.5rem;
     background: transparent;
     align-items: stretch;
