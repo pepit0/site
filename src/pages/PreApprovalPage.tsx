@@ -461,7 +461,6 @@ export function PreApprovalPage() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const bottomVehicleRowRef = useRef<HTMLDivElement>(null);
   const wizardScrollRef = useRef<HTMLDivElement>(null);
   const skipWizardScrollRef = useRef(true);
   const applicationFinishedRef = useRef(false);
@@ -474,7 +473,6 @@ export function PreApprovalPage() {
     submitting
   });
   partialStateRef.current = { w, step, skipVehicleStep, marketingLeadId, erasedFields, submitting };
-  const [vehicleRowHeightPx, setVehicleRowHeightPx] = useState<number | null>(null);
   const otherIncomeParsed = parseMoney(w.otherIncome);
   const showOtherIncomeDescription = otherIncomeParsed.ok && otherIncomeParsed.value > 0;
 
@@ -485,20 +483,6 @@ export function PreApprovalPage() {
     }
     wizardScrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
-
-  useLayoutEffect(() => {
-    if (step !== 0 || skipVehicleStep) return;
-    const el = bottomVehicleRowRef.current;
-    if (!el) return;
-    const measure = () => {
-      const height = el.getBoundingClientRect().height;
-      if (height > 0) setVehicleRowHeightPx(height);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [step, skipVehicleStep]);
 
   useEffect(() => {
     if (!unitParam) return;
@@ -823,6 +807,10 @@ export function PreApprovalPage() {
         <script type="application/ld+json">{JSON.stringify(preapprovalFaqJsonLd())}</script>
       </Helmet>
       <div className="preapproval-shell">
+        <div className="preapproval-mobileHero" aria-hidden="true">
+          <p className="preapproval-mobileHeroKicker">Fast and simple</p>
+          <p className="preapproval-mobileHeroTitle">See if you qualify in 2 minutes</p>
+        </div>
         <div className="preapproval-mainGrid">
           <div className="preapproval-decorLayer" aria-hidden>
             <img
@@ -894,6 +882,9 @@ export function PreApprovalPage() {
               <p className="preapproval-wizardIntroSubline">{PREAPPROVAL_WIZARD_INTRO.subline}</p>
             </div>
             <nav className="preapproval-wizardProgress" aria-label="Application progress">
+              <p className="preapproval-wizardProgressMobileStep" aria-live="polite">
+                Step {step + 1} of {TOTAL_STEPS} · {PREAPPROVAL_WIZARD_STEPS[step].shortLabel}
+              </p>
               <p className="visually-hidden">
                 Step {step + 1} of {TOTAL_STEPS}: {PREAPPROVAL_WIZARD_STEPS[step].shortLabel}
               </p>
@@ -972,55 +963,27 @@ export function PreApprovalPage() {
             {!skipVehicleStep ? (
               <>
                 <h2 className="preapproval-wizardStepTitle">What type of unit are you interested in?</h2>
-                <div
-                  className="preapproval-wizardVehicleGrid"
-                  role="group"
-                  aria-label="Vehicle type"
-                  style={
-                    vehicleRowHeightPx != null
-                      ? ({ "--preapproval-vehicle-row-h": `${vehicleRowHeightPx}px` } as React.CSSProperties)
-                      : undefined
-                  }
-                >
-                  <div className="preapproval-wizardVehicleRow preapproval-wizardVehicleRow--top">
-                    {VEHICLE_CATEGORIES.slice(0, 3).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={`preapproval-wizardVehicleBtn${
-                          w.hasChosenVehicle && w.vehicleInterest === cat ? " preapproval-wizardVehicleBtnActive" : ""
-                        }`}
-                        onClick={() => selectVehicle(cat)}
-                      >
-                        <VehicleCategoryPhoto category={cat} />
-                        <span className="preapproval-wizardVehicleLabel">{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div
-                    ref={bottomVehicleRowRef}
-                    className="preapproval-wizardVehicleRow preapproval-wizardVehicleRow--bottom"
-                  >
-                    {VEHICLE_CATEGORIES.slice(3, 6).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={`preapproval-wizardVehicleBtn${
-                          w.hasChosenVehicle && w.vehicleInterest === cat ? " preapproval-wizardVehicleBtnActive" : ""
-                        }`}
-                        onClick={() => selectVehicle(cat)}
-                      >
-                        <VehicleCategoryPhoto category={cat} />
-                        <span className="preapproval-wizardVehicleLabel">{cat}</span>
-                      </button>
-                    ))}
-                  </div>
+                <div className="preapproval-wizardVehicleGrid" role="group" aria-label="Vehicle type">
+                  {VEHICLE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`preapproval-wizardVehicleBtn${
+                        w.hasChosenVehicle && w.vehicleInterest === cat ? " preapproval-wizardVehicleBtnActive" : ""
+                      }`}
+                      onClick={() => selectVehicle(cat)}
+                    >
+                      <VehicleCategoryPhoto category={cat} />
+                      <span className="preapproval-wizardVehicleLabel">{cat}</span>
+                    </button>
+                  ))}
                 </div>
                 <button
                   type="button"
-                  className={`preapproval-wizardVehicleBtn${w.hasChosenVehicle && w.vehicleInterest === "" ? " preapproval-wizardVehicleBtnActive" : ""}`}
+                  className={`preapproval-wizardVehicleBtn preapproval-wizardVehicleBtn--unsure${
+                    w.hasChosenVehicle && w.vehicleInterest === "" ? " preapproval-wizardVehicleBtnActive" : ""
+                  }`}
                   onClick={selectNotSureVehicle}
-                  style={{ width: "100%", minHeight: "auto", padding: "0.65rem 1rem" }}
                 >
                   Not sure yet
                 </button>

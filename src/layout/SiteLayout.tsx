@@ -23,27 +23,53 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   return (
-    <div className="site-shell">
+    <div className={`site-shell${mobileMenuOpen ? " site-shellMobileNavOpen" : ""}`}>
       <MarketingPixelsRouteSync />
+      <button
+        type="button"
+        className={`site-navBackdrop${mobileMenuOpen ? " site-navBackdrop--visible" : ""}`}
+        aria-hidden={!mobileMenuOpen}
+        tabIndex={mobileMenuOpen ? 0 : -1}
+        aria-label="Close menu"
+        onClick={() => setMobileMenuOpen(false)}
+      />
       <header className={`site-header${mobileMenuOpen ? " site-headerMobileOpen" : ""}`}>
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>
             <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={52} height={52} decoding="async" />
-            <span>Temptation Motorsports</span>
+            <span className="site-brandText">Temptation Motorsports</span>
           </NavLink>
-          <button
-            type="button"
-            className="site-navToggle"
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="site-main-nav"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+          <div className="site-headerActions">
+            <NavLink
+              to="/pre-approval"
+              className={`site-headerBarCta${hasResumeDraft ? " site-headerBarCta--resume" : ""}`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {hasResumeDraft ? "Resume" : "Apply"}
+            </NavLink>
+            <button
+              type="button"
+              className="site-navToggle"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="site-main-nav"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
           <nav id="site-main-nav" className={`site-nav${mobileMenuOpen ? " site-navOpen" : ""}`} aria-label="Main">
             <NavLink to="/" className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`} end>
               Home

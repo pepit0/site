@@ -138,7 +138,12 @@ export function HomePage() {
           {HOME_PREVIEW_SLIDESHOW.map((slide, index) => (
             <div
               key={slide.id}
-              className={`home-previewSlideshowSlide${index === slideIndex ? " home-previewSlideshowSlide--active" : ""}`}
+              className={`home-previewSlideshowSlide home-previewSlideshowSlide--${slide.id}${
+                index === slideIndex ? " home-previewSlideshowSlide--active" : ""
+              }`}
+              style={
+                { "--home-preview-slide-focus": slide.mobileObjectPosition } as React.CSSProperties
+              }
             >
               <img src={slide.src} alt="" className="home-previewSlideshowImg" decoding="async" draggable={false} />
             </div>
