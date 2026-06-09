@@ -1,14 +1,15 @@
 import { useCallback, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
+  INVENTORY_COMING_SOON_CATEGORIES,
   parseInventoryCategoryFromQuery,
   VEHICLE_CATEGORIES,
-  type VehicleCategory
+  type InventoryBrowseCategory
 } from "../data/inventory";
 
 const CLOSE_DELAY_MS = 150;
 
-function inventoryCategoryHref(category: VehicleCategory): string {
+function inventoryCategoryHref(category: Exclude<InventoryBrowseCategory, "all">): string {
   return `/inventory?category=${encodeURIComponent(category)}`;
 }
 
@@ -21,7 +22,7 @@ function isAllInventoryActive(pathname: string, search: string): boolean {
   return parseInventoryCategoryFromQuery(new URLSearchParams(search).get("category")) === "all";
 }
 
-function isCategoryActive(pathname: string, search: string, category: VehicleCategory): boolean {
+function isCategoryActive(pathname: string, search: string, category: Exclude<InventoryBrowseCategory, "all">): boolean {
   if (!isInventoryListingPath(pathname)) return false;
   return parseInventoryCategoryFromQuery(new URLSearchParams(search).get("category")) === category;
 }
@@ -114,6 +115,20 @@ export function SiteNavInventoryDropdown() {
             onClick={closeMenu}
           >
             {category}
+          </NavLink>
+        ))}
+        {INVENTORY_COMING_SOON_CATEGORIES.map((category) => (
+          <NavLink
+            key={category}
+            to={inventoryCategoryHref(category)}
+            role="menuitem"
+            className={() =>
+              `site-navDropdownItem site-navDropdownItem--comingSoon${isCategoryActive(location.pathname, location.search, category) ? " site-navDropdownItemActive" : ""}`
+            }
+            onClick={closeMenu}
+          >
+            <span>{category}</span>
+            <span className="site-navDropdownSoon">Coming soon</span>
           </NavLink>
         ))}
       </div>

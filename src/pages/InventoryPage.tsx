@@ -2,22 +2,24 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { InventoryUnitCard } from "../components/InventoryUnitCard";
 import {
+  INVENTORY_COMING_SOON_CATEGORIES,
   inventoryDisplayTitle,
+  isInventoryComingSoonCategory,
   parseInventoryCategoryFromQuery,
   parseInventoryPublicRow,
   VEHICLE_CATEGORIES,
-  type InventoryPublicRow,
-  type VehicleCategory
+  type InventoryBrowseCategory,
+  type InventoryPublicRow
 } from "../data/inventory";
 import { inventoryRowMatchesSearch } from "../lib/inventorySearch";
 import { supabase } from "../lib/supabase";
 import { InventoryItemListJsonLd } from "../seo/InventoryItemListJsonLd";
-import { INVENTORY_SOURCING_BLURB } from "../data/inventoryCopy";
+import { INVENTORY_AUTO_COMING_SOON, INVENTORY_SOURCING_BLURB } from "../data/inventoryCopy";
 import { Seo } from "../seo/Seo";
 
 type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
 
-function inventoryEmptyMessage(category: VehicleCategory | "all", searchQuery: string): string {
+function inventoryEmptyMessage(category: InventoryBrowseCategory, searchQuery: string): string {
   const q = searchQuery.trim();
   if (q && category !== "all") {
     return `No units match “${q}” in ${category}. Try different keywords or clear the search.`;
@@ -35,7 +37,7 @@ export function InventoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryFromUrl = parseInventoryCategoryFromQuery(searchParams.get("category"));
   const searchFromUrl = searchParams.get("q") ?? "";
-  const [category, setCategory] = useState<VehicleCategory | "all">(categoryFromUrl);
+  const [category, setCategory] = useState<InventoryBrowseCategory>(categoryFromUrl);
   const [searchQuery, setSearchQuery] = useState(searchFromUrl);
   const [sort, setSort] = useState<SortKey>("year-desc");
   const [rows, setRows] = useState<InventoryPublicRow[]>([]);
@@ -74,7 +76,7 @@ export function InventoryPage() {
   }, [searchFromUrl]);
 
   const updateSearchParams = useCallback(
-    (nextCategory: VehicleCategory | "all", nextSearch: string) => {
+    (nextCategory: InventoryBrowseCategory, nextSearch: string) => {
       const params = new URLSearchParams();
       if (nextCategory !== "all") {
         params.set("category", nextCategory);
@@ -89,7 +91,7 @@ export function InventoryPage() {
   );
 
   const handleCategoryChange = useCallback(
-    (next: VehicleCategory | "all") => {
+    (next: InventoryBrowseCategory) => {
       setCategory(next);
       updateSearchParams(next, searchQuery);
     },
@@ -104,7 +106,10 @@ export function InventoryPage() {
     [category, updateSearchParams]
   );
 
+  const isComingSoonCategory = isInventoryComingSoonCategory(category);
+
   const categoryFiltered = useMemo(() => {
+    if (isInventoryComingSoonCategory(category)) return [];
     if (category === "all") return rows;
     return rows.filter((i) => i.category === category);
   }, [category, rows]);
@@ -128,7 +133,7 @@ export function InventoryPage() {
     return list;
   }, [categoryFiltered, searchQuery, sort]);
 
-  const showResultCount = !isLoading && !loadError && rows.length > 0;
+  const showResultCount = !isLoading && !loadError && !isComingSoonCategory && rows.length > 0;
   const resultSummary =
     filteredSorted.length === categoryFiltered.length
       ? `${filteredSorted.length} unit${filteredSorted.length === 1 ? "" : "s"}`
@@ -235,6 +240,17 @@ export function InventoryPage() {
                   {c}
                 </button>
               ))}
+              {INVENTORY_COMING_SOON_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`inventory-pill inventory-pill--comingSoon${category === c ? " inventory-pillActive" : ""}`}
+                  onClick={() => handleCategoryChange(c)}
+                >
+                  {c}
+                  <span className="inventory-pillSoon">Coming soon</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -260,6 +276,15 @@ export function InventoryPage() {
         <p className="inventory-empty" role="status">
           Loading inventory…
         </p>
+      ) : isComingSoonCategory ? (
+        <div className="inventory-comingSoon" role="status">
+          <p className="inventory-comingSoonEyebrow">{INVENTORY_AUTO_COMING_SOON.eyebrow}</p>
+          <h2 className="inventory-comingSoonTitle">{INVENTORY_AUTO_COMING_SOON.title}</h2>
+          <p className="inventory-comingSoonText">{INVENTORY_AUTO_COMING_SOON.text}</p>
+          <Link className="btn btn-primary inventory-comingSoonCta" to="/pre-approval">
+            {INVENTORY_AUTO_COMING_SOON.preApprovalLinkText}
+          </Link>
+        </div>
       ) : filteredSorted.length === 0 ? (
         <div className="inventory-emptyBlock" role="status">
           <p className="inventory-empty">{inventoryEmptyMessage(category, searchQuery)}</p>
@@ -275,7 +300,10 @@ export function InventoryPage() {
         <ul className="inventory-grid">
           {filteredSorted.map((item) => (
             <li key={item.id}>
-              <InventoryUnitCard item={item} fromCategory={category} />
+              <InventoryUnitCard
+                item={item}
+                fromCategory={category === "all" || isInventoryComingSoonCategory(category) ? "all" : category}
+              />
             </li>
           ))}
         </ul>

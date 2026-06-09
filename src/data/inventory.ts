@@ -100,6 +100,17 @@ export const VEHICLE_CATEGORIES: VehicleCategory[] = [
   "Trailer"
 ];
 
+/** Shown in inventory browse UI before units exist in this category. */
+export const INVENTORY_COMING_SOON_CATEGORIES = ["Auto"] as const;
+
+export type InventoryComingSoonCategory = (typeof INVENTORY_COMING_SOON_CATEGORIES)[number];
+
+export type InventoryBrowseCategory = VehicleCategory | "all" | InventoryComingSoonCategory;
+
+export function isInventoryComingSoonCategory(value: string): value is InventoryComingSoonCategory {
+  return (INVENTORY_COMING_SOON_CATEGORIES as readonly string[]).includes(value);
+}
+
 export const INVENTORY_PHOTOS_BUCKET = "inventory-photos" as const;
 
 /** Shared copy on every public unit detail page (set once, redeploy). CTAs rendered in InventoryUnitDetailPage. */
@@ -153,11 +164,21 @@ const CATEGORY_QUERY_ALIASES: Record<string, VehicleCategory> = {
   rvs: "Trailer"
 };
 
+const COMING_SOON_QUERY_ALIASES: Record<string, InventoryComingSoonCategory> = {
+  auto: "Auto",
+  autos: "Auto",
+  car: "Auto",
+  cars: "Auto"
+};
+
 /** Reads `?category=` from inventory links (exact label or common slug). */
-export function parseInventoryCategoryFromQuery(value: string | null | undefined): VehicleCategory | "all" {
+export function parseInventoryCategoryFromQuery(value: string | null | undefined): InventoryBrowseCategory {
   if (!value?.trim()) return "all";
   const raw = decodeURIComponent(value.trim());
   if (isVehicleCategory(raw)) return raw;
+  if (isInventoryComingSoonCategory(raw)) return raw;
+  const comingSoon = COMING_SOON_QUERY_ALIASES[raw.toLowerCase()];
+  if (comingSoon) return comingSoon;
   return CATEGORY_QUERY_ALIASES[raw.toLowerCase()] ?? "all";
 }
 

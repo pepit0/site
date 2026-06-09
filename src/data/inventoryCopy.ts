@@ -1,5 +1,13 @@
 /** Public inventory page marketing copy */
 
+export const INVENTORY_AUTO_COMING_SOON = {
+  eyebrow: "Coming soon",
+  title: "Auto inventory",
+  text:
+    "We're adding cars and trucks to our lineup soon — same nationwide financing and delivery you already know from powersports. Check back here for listings, or get pre-qualified now and we'll reach out when Auto goes live.",
+  preApprovalLinkText: "Get pre-qualified"
+} as const;
+
 export const INVENTORY_SOURCING_BLURB = {
   heading: "Don't see what you want?",
   textBeforeCta:
