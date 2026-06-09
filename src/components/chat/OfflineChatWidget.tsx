@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchInventoryUnitsByIds, type ChatSuggestedUnit } from "../../lib/chatSuggestInventory";
 import {
@@ -13,6 +13,7 @@ import { CHAT_HANDOFF_FADE_MS } from "../../lib/chatTheme";
 import { openTawkHandoff, tawkHandoffFromUnit } from "../../lib/tawkHandoff";
 import { SITE_CONTACT } from "../../data/preapprovalCopy";
 import { useTawkAgentStatus } from "../../hooks/useTawkAgentStatus";
+import { registerSiteChatOpenHandler } from "../../lib/siteChatOpen";
 
 type Step = "contact" | "loading" | "unitPick" | "handoff" | "handoffRetry" | "message" | "done";
 
@@ -179,6 +180,15 @@ export function OfflineChatWidget() {
     setOpen(true);
     setStep("contact");
   }, [loadUnitPick]);
+
+  useEffect(() => {
+    if (!showIntakeWidget) {
+      registerSiteChatOpenHandler(null);
+      return;
+    }
+    registerSiteChatOpenHandler(openChatPanel);
+    return () => registerSiteChatOpenHandler(null);
+  }, [showIntakeWidget, openChatPanel]);
 
   const toggleChatPanel = useCallback(() => {
     if (open) {

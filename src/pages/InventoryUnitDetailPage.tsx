@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { InventoryCallForPricingLink } from "../components/InventoryCallForPricingLink";
+import { InventoryMessageUsLink } from "../components/InventoryMessageUsLink";
 import { InventoryPhotoCarousel } from "../components/InventoryPhotoCarousel";
 import {
   INVENTORY_UNIT_DESCRIPTION,
   inventoryMakeModelTitle,
+  inventoryOdometerLabel,
   inventoryStatusPillModifier,
-  inventoryYearKmLine,
   parseInventoryPublicRow,
   type InventoryPublicRow,
   type VehicleCategory
@@ -14,7 +16,10 @@ import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
 import { InventoryProductJsonLd } from "../seo/InventoryProductJsonLd";
-import { inventoryPublicPriceLabel } from "../lib/inventoryPublicPrice";
+import {
+  formatInventoryPriceCad,
+  inventoryPublicListPriceCad
+} from "../lib/inventoryPublicPrice";
 import {
   inventoryUnitCanonicalPath,
   inventoryUnitSeoDescription,
@@ -96,6 +101,7 @@ export function InventoryUnitDetailPage() {
 
   const backHref = inventoryBackHref(fromCategory);
   const title = row ? inventoryMakeModelTitle(row) : "Unit";
+  const listPriceCad = row ? inventoryPublicListPriceCad(row) : null;
   const seoPath = unitId ? inventoryUnitCanonicalPath(unitId) : "/inventory";
 
   return (
@@ -147,15 +153,27 @@ export function InventoryUnitDetailPage() {
 
             <div className="inventory-detailAside">
               <header className="inventory-detailHeader">
-                <p className="inventory-cardMeta inventory-detailMeta">
-                  <span className="inventory-cardCategory">{row.category}</span>
-                  <span className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)}`}>
-                    {row.status}
-                  </span>
+                <div className="inventory-detailHeaderMain">
+                  <div className="inventory-detailMetaRow">
+                    <span className="inventory-cardCategory">{row.category}</span>
+                    <span className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)}`}>
+                      {row.status}
+                    </span>
+                  </div>
+                  <p className="inventory-detailYear">{row.year}</p>
+                  <h1 className="inventory-detailTitle">{title}</h1>
+                </div>
+                <p className="inventory-detailKm">{inventoryOdometerLabel(row)}</p>
+                <p className="inventory-detailPrice">
+                  {listPriceCad != null ? (
+                    formatInventoryPriceCad(listPriceCad)
+                  ) : (
+                    <span className="inventory-detailPriceContact">
+                      <InventoryCallForPricingLink />
+                      <InventoryMessageUsLink />
+                    </span>
+                  )}
                 </p>
-                <h1 className="inventory-detailTitle">{title}</h1>
-                <p className="inventory-detailYearKm">{inventoryYearKmLine(row)}</p>
-                <p className="inventory-detailPrice">{inventoryPublicPriceLabel(row)}</p>
               </header>
 
               <section className="inventory-detailDescription" aria-labelledby="inventory-detail-desc-heading">

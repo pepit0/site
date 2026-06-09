@@ -46,8 +46,11 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
       <header className={`site-header${mobileMenuOpen ? " site-headerMobileOpen" : ""}`}>
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>
-            <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={52} height={52} decoding="async" />
-            <span className="site-brandText">Temptation Motorsports</span>
+            <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={68} height={68} decoding="async" />
+            <span className="site-brandText">
+              <span className="site-brandName">Temptation</span>
+              <span className="site-brandTagline">MOTORSPORTS</span>
+            </span>
           </NavLink>
           <div className="site-headerActions">
             <NavLink
