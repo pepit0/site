@@ -938,6 +938,8 @@ p {
   align-items: center;
   gap: 0;
   text-align: center;
+  width: 100%;
+  max-width: 32rem;
 }
 
 .site-footerLead {
@@ -945,6 +947,7 @@ p {
   flex-direction: column;
   align-items: center;
   gap: 0.08rem;
+  width: 100%;
 }
 
 .site-footerTagline {
@@ -993,16 +996,17 @@ p {
     flex-direction: row;
     align-items: center;
     gap: 0.7rem;
-    text-align: left;
   }
 
   .site-footerMeta {
-    align-items: flex-start;
-    text-align: left;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
   }
 
   .site-footerContact {
-    justify-content: flex-start;
+    justify-content: center;
   }
 }
 
@@ -1034,6 +1038,7 @@ p {
 
 .site-footerText {
   margin: 0.47rem 0 0;
+  width: 100%;
   text-align: center;
   font-size: 0.82rem;
   color: var(--text-muted);
