@@ -21,7 +21,7 @@ if (!siteUrl) {
 const staticUrls = [
   { loc: "/", priority: "1.0", changefreq: "weekly" },
   { loc: "/inventory", priority: "0.9", changefreq: "daily" },
-  { loc: "/pre-approval", priority: "0.8", changefreq: "weekly" },
+  { loc: "/apply", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }
 ];
@@ -71,7 +71,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 Disallow: /staff
-Disallow: /pre-approval/complete
+Disallow: /apply/complete
 
 Sitemap: ${origin}/sitemap.xml
 `;

@@ -1,5 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/pre-approval",
+      "destination": "/apply",
+      "permanent": true
+    },
+    {
+      "source": "/pre-approval/complete",
+      "destination": "/apply/complete",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

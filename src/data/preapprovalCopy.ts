@@ -1,4 +1,4 @@
-/** Marketing + SEO copy for /pre-approval (single source of truth). */
+/** Marketing + SEO copy for /apply (single source of truth). */
 
 export const SITE_CONTACT = {
   phoneDisplay: "(587) 415-7424",
@@ -24,7 +24,7 @@ export const PREAPPROVAL_HERO = {
     "Nationwide delivery straight to your doorstep"
   ] as const,
   compliance:
-    "Pre-qualification uses a soft credit inquiry that does not affect your score when you authorize it on the form — not a hard pull. A team member reviews your request and follows up; this is not an instant lender decision.",
+    "No credit check when you submit. If you authorize contact on the final step, we may run a soft inquiry — never a hard pull at this stage. A team member reviews your application and follows up; this is not an instant lender decision.",
   inventoryLink: "Browse inventory"
 } as const;
 
@@ -48,7 +48,7 @@ export const PREAPPROVAL_CTA = {
     "Continue to income",
     "Continue to credit estimate",
     "Continue to final details",
-    "Get my approval options ✔"
+    "Submit application"
   ] as const,
   nextHintByStep: [
     "Pick a unit type and monthly budget to get started.",
@@ -87,7 +87,7 @@ export function preapprovalProgressSuffix(step: number): string {
 }
 
 export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[4];
-export const PREAPPROVAL_SUBMITTING_LABEL = "Sending your dream ride request…";
+export const PREAPPROVAL_SUBMITTING_LABEL = "Sending your application…";
 
 export const PREAPPROVAL_COMPLETE = {
   title: "Application Complete!",

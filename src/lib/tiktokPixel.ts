@@ -40,11 +40,11 @@ export function trackTikTokPageView(): void {
 }
 
 /**
- * TikTok standard event for lead / form completion (pre-approval thank-you page).
+ * TikTok standard event for lead / form completion (apply thank-you page).
  * Use SubmitForm in Events Manager if optimizing for that event name instead.
  */
 export function trackPreApprovalTikTokLead(): void {
   callTtq("track", "SubmitForm", {
-    contents: [{ content_name: "pre-approval" }]
+    contents: [{ content_name: "apply" }]
   });
 }

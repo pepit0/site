@@ -159,7 +159,7 @@ export function InventoryPage() {
             </h2>
             <p className="inventory-seoBlurbText">
               Shop our lineup for your next ride, including trailers and RVs. Many buyers pair a unit with{" "}
-              <Link className="inventory-seoBlurbLink" to="/pre-approval">
+              <Link className="inventory-seoBlurbLink" to="/apply">
                 powersports financing
               </Link>
               . We are based in Edmonton and work with customers across Canada.
@@ -173,8 +173,8 @@ export function InventoryPage() {
               {INVENTORY_SOURCING_BLURB.textBeforeCta}{" "}
               <span className="inventory-seoBlurbCtaLine">
                 below.{" "}
-                <Link className="inventory-seoBlurbLink" to="/pre-approval">
-                  {INVENTORY_SOURCING_BLURB.preApprovalLinkText}
+                <Link className="inventory-seoBlurbLink" to="/apply">
+                  {INVENTORY_SOURCING_BLURB.applyLinkText}
                 </Link>
                 .
               </span>
@@ -281,8 +281,8 @@ export function InventoryPage() {
           <p className="inventory-comingSoonEyebrow">{INVENTORY_AUTO_COMING_SOON.eyebrow}</p>
           <h2 className="inventory-comingSoonTitle">{INVENTORY_AUTO_COMING_SOON.title}</h2>
           <p className="inventory-comingSoonText">{INVENTORY_AUTO_COMING_SOON.text}</p>
-          <Link className="btn btn-primary inventory-comingSoonCta" to="/pre-approval">
-            {INVENTORY_AUTO_COMING_SOON.preApprovalLinkText}
+          <Link className="btn btn-primary inventory-comingSoonCta" to="/apply">
+            {INVENTORY_AUTO_COMING_SOON.applyLinkText}
           </Link>
         </div>
       ) : filteredSorted.length === 0 ? (
@@ -290,8 +290,8 @@ export function InventoryPage() {
           <p className="inventory-empty">{inventoryEmptyMessage(category, searchQuery)}</p>
           <p className="inventory-emptySourcing">
             {INVENTORY_SOURCING_BLURB.textFull}{" "}
-            <Link className="inventory-seoBlurbLink" to="/pre-approval">
-              {INVENTORY_SOURCING_BLURB.preApprovalLinkText}
+            <Link className="inventory-seoBlurbLink" to="/apply">
+              {INVENTORY_SOURCING_BLURB.applyLinkText}
             </Link>
             .
           </p>

@@ -744,7 +744,7 @@ export function PreApprovalPage() {
     await cancelPartialPreapprovalQueue(marketingLeadId);
     finishPreapprovalApplication();
     markPreApprovalConversion();
-    navigate("/pre-approval/complete", { replace: true });
+    navigate("/apply/complete", { replace: true });
   };
 
   const progressLinePct =
@@ -802,14 +802,14 @@ export function PreApprovalPage() {
 
   return (
     <div className="preapproval">
-      <Seo title={PREAPPROVAL_SEO.title} description={PREAPPROVAL_SEO.description} path="/pre-approval" />
+      <Seo title={PREAPPROVAL_SEO.title} description={PREAPPROVAL_SEO.description} path="/apply" />
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(preapprovalFaqJsonLd())}</script>
       </Helmet>
       <div className="preapproval-shell">
         <div className="preapproval-mobileHero" aria-hidden="true">
           <p className="preapproval-mobileHeroKicker">Fast and simple</p>
-          <p className="preapproval-mobileHeroTitle">See if you qualify in 2 minutes</p>
+          <p className="preapproval-mobileHeroTitle">Start your application</p>
         </div>
         <div className="preapproval-mainGrid">
           <div className="preapproval-decorLayer" aria-hidden>
@@ -859,13 +859,13 @@ export function PreApprovalPage() {
             </g>
           </svg>
 
-          <div className="preapproval-visual" aria-label="Pre-approval highlights">
+          <div className="preapproval-visual" aria-label="Financing application highlights">
             <div className="preapproval-promo">
               <p className="preapproval-promoKicker">Fast and simple</p>
               <h2 className="preapproval-promoTitle">
-                Take 2 minutes
+                Takes about
                 <br />
-                to see if you qualify!
+                2 minutes
               </h2>
               <p className="preapproval-promoLead">
                 Quick form. Clear steps. We help with all credit situations.

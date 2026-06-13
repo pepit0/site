@@ -343,8 +343,8 @@ export function OfflineChatWidget() {
   const hasSavedContact = Boolean(storedContact);
 
   const preApprovalHref = selectedUnit
-    ? `/pre-approval?unit=${encodeURIComponent(selectedUnit.id)}`
-    : "/pre-approval";
+    ? `/apply?unit=${encodeURIComponent(selectedUnit.id)}`
+    : "/apply";
 
   if (!showIntakeWidget) {
     return null;
@@ -573,7 +573,7 @@ export function OfflineChatWidget() {
                 <div className="site-chatResultsFooter">
                   <p className="site-chatCtaLead">Ready for financing?</p>
                   <Link to={preApprovalHref} className="btn btn-primary site-chatSubmitBtn site-chatCtaBtn" onClick={close}>
-                    Get pre-approved
+                    Apply for financing
                   </Link>
                   <a href={`tel:${SITE_CONTACT.phoneTel}`} className="btn btn-secondary site-chatSecondaryBtn">
                     Call / text {SITE_CONTACT.phoneDisplay}

@@ -26,8 +26,8 @@ export default function App() {
         <Route path="inventory/:unitId" element={<InventoryUnitDetailPage />} />
         <Route path="sell-your-ride" element={<SellYourRidePage />} />
         <Route path="sell-your-ride/apply" element={<SellYourRideApplyPage />} />
-        <Route path="pre-approval" element={<PreApprovalPage />} />
-        <Route path="pre-approval/complete" element={<PreApprovalCompletePage />} />
+        <Route path="apply" element={<PreApprovalPage />} />
+        <Route path="apply/complete" element={<PreApprovalCompletePage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
         <Route

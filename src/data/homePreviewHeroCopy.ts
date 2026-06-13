@@ -8,9 +8,9 @@ export const HOME_PREVIEW_HERO = {
   subhook: "Finance across Canada no matter your credit situation",
   lede:
     "ATVs, Motorcycles, Side by Sides, Boats, Jetskis, Sleds, Trailers and more. Fast approvals, flexible terms and fast service that gets you riding sooner.",
-  qualifyPrompt: "Find out if you qualify",
-  qualifyAria: "Find out if you qualify — start pre-approval",
-  noCreditCheck: "(No credit check required)",
+  qualifyPrompt: "Start your application",
+  qualifyAria: "Start your application for powersports financing",
+  noCreditCheck: "(No credit check unless you consent)",
   highlights: [
     { value: "2 min", label: "online application" },
     { value: "all credit", label: "situations welcome" },

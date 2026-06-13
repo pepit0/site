@@ -46,7 +46,7 @@ function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
         📱 CALL / TEXT: <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a>
       </p>
       <Link
-        to={`/pre-approval?unit=${encodeURIComponent(unitId)}`}
+        to={`/apply?unit=${encodeURIComponent(unitId)}`}
         className="btn btn-primary inventory-detailApplyBtn"
       >
         Get financing on this unit!

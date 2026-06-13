@@ -54,7 +54,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
           </NavLink>
           <div className="site-headerActions">
             <NavLink
-              to="/pre-approval"
+              to="/apply"
               className={`site-headerBarCta${hasResumeDraft ? " site-headerBarCta--resume" : ""}`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -88,7 +88,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Sell your ride
             </NavLink>
             <NavLink
-              to="/pre-approval"
+              to="/apply"
               className={({ isActive }) =>
                 `site-navCta${hasResumeDraft ? " site-navCta--resume" : ""}${isActive ? " site-navCtaActive" : ""}`
               }
@@ -122,8 +122,8 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   </a>
                 </p>
                 <p className="site-footerSeoBlurb">
-                  Fast approvals for{" "}
-                  <Link className="site-footerSeoLink" to="/pre-approval">
+                  Financing applications for{" "}
+                  <Link className="site-footerSeoLink" to="/apply">
                     motorcycle, ATV, and snowmobile financing
                   </Link>
                   .

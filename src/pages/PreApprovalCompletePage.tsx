@@ -18,7 +18,7 @@ export function PreApprovalCompletePage() {
 
   useEffect(() => {
     if (!canViewPreApprovalCompletePage()) {
-      navigate("/pre-approval", { replace: true });
+      navigate("/apply", { replace: true });
       return;
     }
     if (hasPreApprovalLeadBeenTracked()) return;
@@ -32,7 +32,7 @@ export function PreApprovalCompletePage() {
       <Seo
         title={PREAPPROVAL_COMPLETE_SEO.title}
         description={PREAPPROVAL_COMPLETE_SEO.description}
-        path="/pre-approval/complete"
+        path="/apply/complete"
         noindex
       />
       <div className="preapproval-complete card card-pad" role="status">

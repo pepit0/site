@@ -182,7 +182,7 @@ export function HomePage() {
               <div className="home-previewCtaBlock">
                 <div className="home-previewCtaRow">
                   <PageSlideLink
-                    to="/pre-approval"
+                    to="/apply"
                     className="home-previewQualifyCta"
                     aria-label={HOME_PREVIEW_HERO.qualifyAria}
                   >
