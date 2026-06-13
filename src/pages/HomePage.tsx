@@ -118,8 +118,8 @@ export function HomePage() {
   return (
     <div className="home home-preview">
       <Seo
-        title="Powersports financing in Edmonton"
-        description="Motorcycle, snowmobile, sled, ATV, side-by-side, jet ski, boat, trailer, and RV financing. Fast, friendly credit help from Edmonton for riders across Canada."
+        title="Ride loans in Edmonton"
+        description="Loans for bikes, sleds, ATVs, jet skis, boats, trailers, and RVs. Fast, friendly help from Edmonton for riders all over Canada."
         path="/"
       />
       <LocalBusinessJsonLd />
@@ -297,8 +297,8 @@ export function HomePage() {
           aria-hidden={sidebarCollapsed || !showSidebar}
           inert={sidebarCollapsed || !showSidebar ? true : undefined}
         >
-          <p className="home-unitsSidebarTitle">Showroom floor</p>
-          <p className="home-unitsSidebarHint">Hover to highlight in the photo.</p>
+          <p className="home-unitsSidebarTitle">Shop floor</p>
+          <p className="home-unitsSidebarHint">Move your mouse over a name to see it in the photo.</p>
           <nav ref={sidebarNavRef} className="home-unitsNav" onMouseLeave={() => setSidebarGlow(null)}>
             {sidebarHotspots.map((h) => (
               <Link

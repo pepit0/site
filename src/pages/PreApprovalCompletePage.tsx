@@ -58,10 +58,10 @@ export function PreApprovalCompletePage() {
         <p className="preapproval-completeLead">{PREAPPROVAL_COMPLETE.lead}</p>
         <div className="home-actions preapproval-completeActions">
           <Link to="/" className="btn btn-secondary">
-            Back to home
+            Back home
           </Link>
           <Link to="/inventory" className="btn btn-primary">
-            Browse inventory
+            See rides for sale
           </Link>
         </div>
       </div>

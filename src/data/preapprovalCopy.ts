@@ -7,101 +7,101 @@ export const SITE_CONTACT = {
 } as const;
 
 export const PREAPPROVAL_SEO = {
-  title: "Powersports financing Canada — good & bad credit",
+  title: "Get a loan for your ride — all credit welcome",
   description:
-    "Dream ride financing from Edmonton, nationwide. Good credit, bad credit, or no credit — motorcycles, sleds, ATVs & more. No money down options, delivery to your door."
+    "We help you pay for bikes, sleds, ATVs, and more. We are in Edmonton. We ship all over Canada. Good credit or bad credit — apply free."
 } as const;
 
 export const PREAPPROVAL_HERO = {
-  eyebrow: "Find your dream ride",
+  eyebrow: "Find your ride",
   h1: "Your next ride is closer than you think.",
-  creditLine: "Good credit? Bad credit? No credit? No problem.",
+  creditLine: "Good credit? Bad credit? No credit? We can help.",
   lead:
-    "We're based in Edmonton and help Canadians coast to coast get financing on their dream ride — our team will contact you to match the right unit and payment.",
+    "We are in Edmonton. We help people all over Canada get a loan for their ride. Our team will call you to find the right ride and payment.",
   trustBullets: [
-    "100% free dream-ride request",
-    "Prime, subprime, and rebuilding credit — we help all situations get approved on their next ride",
-    "Nationwide delivery straight to your doorstep"
+    "Free to apply",
+    "We help all credit types",
+    "We can ship to your home"
   ] as const,
   compliance:
-    "No credit check when you submit. If you authorize contact on the final step, we may run a soft inquiry — never a hard pull at this stage. A team member reviews your application and follows up; this is not an instant lender decision.",
-  inventoryLink: "Browse inventory"
+    "We do not check your credit when you send the form. On the last step, you can say yes to a call from us. Then we may do a soft credit check. We never do a hard check at this step. A person on our team will call you. This is not an instant yes or no from a bank.",
+  inventoryLink: "See our rides for sale"
 } as const;
 
 export const PREAPPROVAL_WIZARD_INTRO = {
-  title: "Tell us how we can help you",
-  subline: "About 2 minutes · 5 quick questions"
+  title: "Tell us what you need",
+  subline: "About 2 minutes · 5 short steps"
 } as const;
 
 /** Short labels under wizard progress circles (order matches step index). */
 export const PREAPPROVAL_WIZARD_STEPS = [
-  { shortLabel: "Unit" },
-  { shortLabel: "Details" },
-  { shortLabel: "Income" },
+  { shortLabel: "Ride" },
+  { shortLabel: "You" },
+  { shortLabel: "Pay" },
   { shortLabel: "Credit" },
   { shortLabel: "Done" }
 ] as const;
 
 export const PREAPPROVAL_CTA = {
   nextByStep: [
-    "Continue to your details",
-    "Continue to income",
-    "Continue to credit estimate",
-    "Continue to final details",
-    "Submit application"
+    "Next: about you",
+    "Next: your pay",
+    "Next: your credit",
+    "Next: last step",
+    "Send my application"
   ] as const,
   nextHintByStep: [
-    "Pick a unit type and monthly budget to get started.",
-    "We'll use this to follow up about your application.",
-    "Income details help us understand what works for you.",
-    "Any credit range is welcome — pick what feels closest.",
-    "Submit now — a specialist from our team will contact you shortly."
+    "Pick a ride type and what you can pay each month.",
+    "We use this to call you about your application.",
+    "Your pay helps us see what works for you.",
+    "Pick the credit range that fits best.",
+    "Send it now. We will call you soon."
   ] as const,
-  step0BlockedHint: "Pick a unit type above to continue.",
-  submitHint: "We'll review your answers and contact you to help find your dream ride.",
+  step0BlockedHint: "Pick a ride type above to go on.",
+  submitHint: "We read your answers and call you to help you find your ride.",
   consentFootnote:
-    "Submitting this form requests that we contact you about financing options."
+    "When you send this form, you are asking us to call you about a loan."
 } as const;
 
 export const PREAPPROVAL_CREDIT_STEP = {
-  title: "Your credit estimate",
-  hint: "Good, bad, or no credit — all situations welcome. Pick the range that feels closest, or choose I'm really not sure."
+  title: "About your credit",
+  hint: "Good, bad, or no credit — all are OK. Pick what fits best. Or pick I'm not sure."
 } as const;
 
 /** Extra line on credit band buttons (value keys match PreApprovalPage CREDIT_BAND_OPTIONS). */
 export const PREAPPROVAL_CREDIT_BAND_SUBTEXT: Partial<Record<string, string>> = {};
 
 export const PREAPPROVAL_NAV_CTA = {
-  default: "Find your dream ride",
-  resume: "Continue application"
+  default: "Apply now",
+  resume: "Keep applying"
 } as const;
 
-export const PREAPPROVAL_FAQ_INTRO = "Have questions? Scroll down for answers.";
+export const PREAPPROVAL_FAQ_INTRO = "Got questions? Read below.";
 
 /** Progress suffix from step index 2 onward. */
 export function preapprovalProgressSuffix(step: number): string {
   if (step >= 3) return " — almost done";
-  if (step >= 2) return " — you're doing great";
-  if (step >= 1) return " — a few questions left";
+  if (step >= 2) return " — nice work";
+  if (step >= 1) return " — a few more";
   return "";
 }
 
 export const PREAPPROVAL_SUBMIT_LABEL = PREAPPROVAL_CTA.nextByStep[4];
-export const PREAPPROVAL_SUBMITTING_LABEL = "Sending your application…";
+export const PREAPPROVAL_SUBMITTING_LABEL = "Sending…";
 
 export const PREAPPROVAL_COMPLETE = {
-  title: "Application Complete!",
-  lead: "A member of our team will be in touch with you shortly to help you find your dream ride."
+  title: "You are done!",
+  lead: "Someone from our team will call you soon to help you find your ride."
 } as const;
 
 export const PREAPPROVAL_COMPLETE_SEO = {
-  title: "Dream ride request received",
+  title: "We got your application",
   description:
-    "Thank you for your dream ride request with Temptation Motorsports. Our team will contact you shortly to help you find your next powersports unit."
+    "Thanks for applying with Temptation Motorsports. Our team will call you soon to help you find your next ride."
 } as const;
 
 export const PREAPPROVAL_CONSENT_LABEL =
-  "I authorize to be contacted by the financing team regarding this application.";
+  "Yes — the loan team can call me about this application.";
 
 export const PREAPPROVAL_CONSENT_FOOTNOTE =
-  "Submitting this does not trigger a hard credit pull. A team member will contact you — typically within the hour.";
+  "Sending this form does not hurt your credit. Someone will call you — often within an hour.";

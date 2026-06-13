@@ -180,7 +180,7 @@ export function buildInventoryItemListJsonLd(
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Temptation Motorsports inventory",
-    description: "Motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, and trailers for sale in Edmonton.",
+    description: "Bikes, sleds, ATVs, side-by-sides, jet skis, and trailers for sale in Edmonton. Call for price. Apply for a loan with Temptation Motorsports.",
     numberOfItems: elements.length,
     itemListElement: elements
   };

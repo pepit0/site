@@ -75,7 +75,7 @@ const EMPLOYMENT_STATUS_OPTIONS: { value: EmploymentStatus; label: string }[] = 
   { value: "employed", label: "Employed" },
   { value: "self_employed", label: "Self-employed" },
   { value: "retired_pension", label: "Retired" },
-  { value: "other", label: "Disability/other" }
+  { value: "other", label: "Other" }
 ];
 
 type IncomeTenureBand = "under_1" | "1_2" | "3_5" | "5_plus";
@@ -762,10 +762,10 @@ export function PreApprovalPage() {
   const budgetBlock = (
     <>
       <h2 className={`preapproval-wizardStepTitle${skipVehicleStep ? "" : " preapproval-wizardStepTitleSpaced"}`}>
-        Monthly payment budget
+        Monthly payment you want
       </h2>
       <p className="preapproval-wizardHint">
-        Drag the slider to choose a monthly payment from ${BUDGET_SLIDER_MIN} to $1000+.
+        Move the slider. Pick what you can pay each month. ${BUDGET_SLIDER_MIN} to $1000+.
       </p>
       <div className="preapproval-budgetBlock">
         <div className="preapproval-budgetValue" aria-live="polite">
@@ -808,8 +808,8 @@ export function PreApprovalPage() {
       </Helmet>
       <div className="preapproval-shell">
         <div className="preapproval-mobileHero" aria-hidden="true">
-          <p className="preapproval-mobileHeroKicker">Fast and simple</p>
-          <p className="preapproval-mobileHeroTitle">Start your application</p>
+          <p className="preapproval-mobileHeroKicker">Easy and fast</p>
+          <p className="preapproval-mobileHeroTitle">Start here</p>
         </div>
         <div className="preapproval-mainGrid">
           <div className="preapproval-decorLayer" aria-hidden>
@@ -859,16 +859,16 @@ export function PreApprovalPage() {
             </g>
           </svg>
 
-          <div className="preapproval-visual" aria-label="Financing application highlights">
+          <div className="preapproval-visual" aria-label="Apply for a ride loan">
             <div className="preapproval-promo">
-              <p className="preapproval-promoKicker">Fast and simple</p>
+              <p className="preapproval-promoKicker">Easy and fast</p>
               <h2 className="preapproval-promoTitle">
-                Takes about
+                About
                 <br />
                 2 minutes
               </h2>
               <p className="preapproval-promoLead">
-                Quick form. Clear steps. We help with all credit situations.
+                Short form. Easy steps. All credit types welcome.
               </p>
               <p className="preapproval-promoMobileCue" aria-hidden>
                 ↓
@@ -951,7 +951,7 @@ export function PreApprovalPage() {
               <>
                 {" "}
                 <Link to={`/inventory/${unitParam}`} className="preapproval-unitBannerLink">
-                  View listing
+                  See this ride
                 </Link>
               </>
             ) : null}
@@ -962,8 +962,8 @@ export function PreApprovalPage() {
           <>
             {!skipVehicleStep ? (
               <>
-                <h2 className="preapproval-wizardStepTitle">What type of unit are you interested in?</h2>
-                <div className="preapproval-wizardVehicleGrid" role="group" aria-label="Vehicle type">
+                <h2 className="preapproval-wizardStepTitle">What kind of ride do you want?</h2>
+                <div className="preapproval-wizardVehicleGrid" role="group" aria-label="Ride type">
                   {VEHICLE_CATEGORIES.map((cat) => (
                     <button
                       key={cat}
@@ -995,7 +995,7 @@ export function PreApprovalPage() {
 
         {step === 1 ? (
           <>
-            <h2 className="preapproval-wizardStepTitle">Your details</h2>
+            <h2 className="preapproval-wizardStepTitle">About you</h2>
             <div className="form-row">
               <label className="form-label" htmlFor="pa-fn">
                 First name <span className="form-required">*</span>
@@ -1053,7 +1053,7 @@ export function PreApprovalPage() {
 
         {step === 2 ? (
           <>
-            <h2 className="preapproval-wizardStepTitle">Income and employment</h2>
+            <h2 className="preapproval-wizardStepTitle">Your job and pay</h2>
             <div className="form-row">
               <p className="form-label" id="pa-emp-st-label">
                 Status <span className="form-required">*</span>
@@ -1241,7 +1241,7 @@ export function PreApprovalPage() {
 
         {step === 4 ? (
           <>
-            <h2 className="preapproval-wizardStepTitle">Your contact details</h2>
+            <h2 className="preapproval-wizardStepTitle">How to reach you</h2>
             <div className="form-row">
               <label className="form-label" htmlFor="pa-dob">
                 Date of birth <span className="form-required">*</span>

@@ -122,16 +122,16 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   </a>
                 </p>
                 <p className="site-footerSeoBlurb">
-                  Financing applications for{" "}
+                  Need a loan for a{" "}
                   <Link className="site-footerSeoLink" to="/apply">
-                    motorcycle, ATV, and snowmobile financing
+                    bike, ATV, or sled
                   </Link>
-                  .
+                  ? Apply here.
                 </p>
                 <p className="site-footerSeoBlurb">
-                  Browse our{" "}
+                  See our{" "}
                   <Link className="site-footerSeoLink" to="/inventory">
-                    Edmonton powersports inventory
+                    rides for sale in Edmonton
                   </Link>
                   .
                 </p>

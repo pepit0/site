@@ -102,7 +102,7 @@ export function SiteNavInventoryDropdown() {
           }
           onClick={closeMenu}
         >
-          All inventory
+          All rides
         </NavLink>
         {VEHICLE_CATEGORIES.map((category) => (
           <NavLink

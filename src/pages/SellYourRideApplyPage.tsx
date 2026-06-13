@@ -316,8 +316,8 @@ export function SellYourRideApplyPage() {
     <div className="sell-ride-apply">
       <SellRideApplyBreadcrumbJsonLd />
       <Seo
-        title="Sell your ride application"
-        description="Submit your sled, bike, ATV, or powersports listing to Temptation Motorsports. Photos and details help us connect financed buyers with your ride."
+        title="Sell your ride form"
+        description="Send us info about your bike, ATV, sled, or other ride. Add photos. We connect you with buyers who need a loan."
         path="/sell-your-ride/apply"
       />
       <nav className="sell-ride-applyBreadcrumbs" aria-label="Breadcrumb">
@@ -345,10 +345,10 @@ export function SellYourRideApplyPage() {
           <span className={step === 2 ? "sell-ride-applyStep sell-ride-applyStepCurrent" : "sell-ride-applyStep"}>2. Review</span>
         </nav>
         <p className="page-subtitle sell-ride-applyIntro">
-          {`We will contact you at the number you provide. We may ask for your driver's licence and registration to confirm ownership before we list your unit.`}
+          We will call the number you give us. We may ask for your licence and registration to make sure you own the ride before we list it.
         </p>
         <p className="sell-ride-applyHint">
-          Your answers and selected photos are saved on this device until you submit (refresh or come back later). This is not sent to our team until you finish step 2.
+          Your answers and photos stay on this device until you send step 2. We do not get them until you finish.
         </p>
       </header>
 
@@ -518,7 +518,7 @@ export function SellYourRideApplyPage() {
           </div>
 
           <h2 className="sell-ride-applySectionTitle">Photos (minimum 3)</h2>
-          <p className="sell-ride-applyHint">Clear exterior shots help us respond faster. You can also drag files onto the box below.</p>
+          <p className="sell-ride-applyHint">Clear outside photos help us reply faster. You can drag files onto the box below.</p>
           <div className="sell-ride-applyPhotos">
             <label
               className="sell-ride-applyDropzone"
@@ -645,7 +645,7 @@ export function SellYourRideApplyPage() {
           <div className="sell-ride-applyDialogInner">
             <h2 className="page-title sell-ride-applyDialogTitle">{`You're all set`}</h2>
             <p className="page-subtitle">
-              We received your submission. Someone will be in touch shortly at the phone number you provided.
+              We got your form. We will call the number you gave us soon.
             </p>
             <div className="sell-ride-applyActions">
               <Link to="/" className="btn btn-primary" onClick={() => setSuccessOpen(false)}>

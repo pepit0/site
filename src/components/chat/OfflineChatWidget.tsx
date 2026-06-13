@@ -40,21 +40,21 @@ function unitPickLabel(u: ChatSuggestedUnit): string {
 function stepTitle(step: Step): string {
   switch (step) {
     case "contact":
-      return "We’re here to help";
+      return "We can help";
     case "loading":
       return "One moment…";
     case "unitPick":
-      return "Your recent units";
+      return "Pick a ride";
     case "handoff":
       return "Opening chat…";
     case "handoffRetry":
-      return "Open live chat";
+      return "Open chat";
     case "message":
       return "How can we help?";
     case "done":
       return "Message sent";
     default:
-      return "We’re here to help";
+      return "We can help";
   }
 }
 
@@ -63,31 +63,31 @@ function stepSubtitle(step: Step, tawkConfigured: boolean, hasSavedContact: bool
     case "contact":
       if (hasSavedContact) {
         return tawkConfigured
-          ? "Welcome back — confirm your info or continue to chat."
-          : "Welcome back — confirm your info or send a new message.";
+          ? "Welcome back. Check your info. Then go to chat."
+          : "Welcome back. Check your info. Then send a message.";
       }
       return tawkConfigured
-        ? "Share your info, then continue in our chat."
-        : "Leave your info and tell us what you’re looking for.";
+        ? "Tell us your name. Then we open chat."
+        : "Tell us your name. Then tell us what you need.";
     case "loading":
-      return "Loading your recent views…";
+      return "Loading rides you viewed…";
     case "unitPick":
       if (hasSavedContact) {
         return tawkConfigured
-          ? "Which unit are you asking about? We’ll open chat next."
-          : "Which unit are you asking about?";
+          ? "Which ride do you mean? We open chat next."
+          : "Which ride do you mean?";
       }
       return tawkConfigured
-        ? "Did you have a specific unit in mind? We’ll open chat next."
-        : "Did you have a specific unit in mind?";
+        ? "Do you have a ride in mind? We open chat next."
+        : "Do you have a ride in mind?";
     case "handoff":
       return "Connecting you to chat…";
     case "handoffRetry":
-      return "Tap below to open our chat (you or our assistant will reply).";
+      return "Tap below to open chat. You or our helper will reply.";
     case "message":
-      return "Anything we should know before we call you back?";
+      return "Anything we should know before we call you?";
     case "done":
-      return "Thanks — a team member will follow up soon.";
+      return "Thanks. We will call or message you soon.";
     default:
       return "";
   }
@@ -426,7 +426,7 @@ export function OfflineChatWidget() {
                   </button>
                 ) : null}
                 <p className="site-chatFinePrint">
-                  Availability subject to confirmation. No obligation to apply.
+                  We will confirm when we can help. You do not have to apply.
                 </p>
               </form>
             ) : null}
@@ -440,16 +440,15 @@ export function OfflineChatWidget() {
                 <span className="site-chatSpinner" aria-hidden />
                 {step === "handoff" ? (
                   <>
-                    <p className="site-chatHandoffLead">Opening live chat</p>
+                    <p className="site-chatHandoffLead">Opening chat</p>
                     {selectedUnit ? (
                       <p className="site-chatHandoffHint">
-                        We copied a message about Stock #{selectedUnit.stock_number}. When chat opens, paste (
-                        <kbd>Ctrl</kbd>+<kbd>V</kbd>) and send — that is how the assistant knows which unit you
-                        picked.
+                        We copied a note about Stock #{selectedUnit.stock_number}. When chat opens, paste (
+                        <kbd>Ctrl</kbd>+<kbd>V</kbd>) and send. That tells the helper which ride you picked.
                       </p>
                     ) : (
                       <p className="site-chatHandoffHint">
-                        Same team and assistant — continuing in our chat window…
+                        Same team — opening chat now…
                       </p>
                     )}
                   </>
@@ -567,19 +566,19 @@ export function OfflineChatWidget() {
               <div className="site-chatDone">
                 <p className="site-chatDoneLead">
                   {phone.trim().length >= 7
-                    ? "We got your message and will reach out at the number you provided."
-                    : "We got your message and will follow up in chat or by email when we can."}
+                    ? "We got your message. We will call the number you gave us."
+                    : "We got your message. We will reply in chat or by email when we can."}
                 </p>
                 <div className="site-chatResultsFooter">
-                  <p className="site-chatCtaLead">Ready for financing?</p>
+                  <p className="site-chatCtaLead">Want a loan?</p>
                   <Link to={preApprovalHref} className="btn btn-primary site-chatSubmitBtn site-chatCtaBtn" onClick={close}>
-                    Apply for financing
+                    Apply now
                   </Link>
                   <a href={`tel:${SITE_CONTACT.phoneTel}`} className="btn btn-secondary site-chatSecondaryBtn">
                     Call / text {SITE_CONTACT.phoneDisplay}
                   </a>
                   <Link to="/inventory" className="site-chatLink site-chatDoneBrowse" onClick={close}>
-                    Browse inventory
+                    See rides for sale
                   </Link>
                   <button type="button" className="site-chatTextBtn" onClick={() => resetFlow()}>
                     Start over
@@ -593,8 +592,8 @@ export function OfflineChatWidget() {
 
       {!open ? (
         <p className="site-chatFabTeaser" aria-hidden>
-          <span className="site-chatFabTeaserLine">Speak with</span>
-          <span className="site-chatFabTeaserLine">a real human</span>
+          <span className="site-chatFabTeaserLine">Talk to</span>
+          <span className="site-chatFabTeaserLine">a real person</span>
         </p>
       ) : null}
 

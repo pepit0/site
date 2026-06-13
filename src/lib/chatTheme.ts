@@ -48,7 +48,7 @@ export const CHAT_HANDOFF_FADE_MS = 340;
  * Optional add-on (do NOT replace Bob’s full Base Prompt if Tawk warns you).
  * Paste under AI Assist → Knowledge / Additional instructions / Custom training — wherever Tawk allows a short add-on.
  */
-export const TAWK_AI_ADDON_INSTRUCTION = `Website visitors often complete intake before chat. If their first message mentions a stock number or listing URL, use that as their selected unit. Never say you cannot see their unit when they already sent year/make/model/stock or a temptmotorsports.com/inventory/ link. For price or financing, offer the financing application or callback at (587) 415-7424.`;
+export const TAWK_AI_ADDON_INSTRUCTION = `Visitors often fill out a form before chat. If their first message has a stock number or listing link, that is the ride they picked. Do not say you cannot see their ride when they sent year, make, model, stock, or a temptmotorsports.com/inventory/ link. For price or a loan, send them to apply at temptmotorsports.com/apply or call (587) 415-7424.`;
 
 /** Legacy full prompt — use TAWK_AI_ADDON_INSTRUCTION instead of replacing Base Prompt when possible. */
 export const TAWK_AI_UNIT_CONTEXT_PROMPT = TAWK_AI_ADDON_INSTRUCTION;
@@ -57,7 +57,7 @@ export const TAWK_AI_UNIT_CONTEXT_PROMPT = TAWK_AI_ADDON_INSTRUCTION;
 export const TAWK_FAQ_SELECTED_UNIT = {
   question: "Visitor asks for details on the unit they chose on the website (stock number or listing link in their message)",
   answer:
-    "Use the year, make, model, stock number, and listing URL from their chat message. Summarize availability and mileage if they included it. For price or financing, direct to the financing application at temptmotorsports.com/apply or a callback — do not claim you cannot see their unit when they already named it."
+    "Use the year, make, model, stock number, and link from their chat message. Say if it is for sale and the km if they sent it. For price or a loan, send them to temptmotorsports.com/apply or call for help. Do not say you cannot see their ride when they already named it."
 };
 
 /**

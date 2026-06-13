@@ -2,18 +2,18 @@
 
 export const INVENTORY_AUTO_COMING_SOON = {
   eyebrow: "Coming soon",
-  title: "Auto inventory",
+  title: "Cars and trucks",
   text:
-    "We're adding cars and trucks to our lineup soon — same nationwide financing and delivery you already know from powersports. Check back here for listings, or apply now and we'll reach out when Auto goes live.",
+    "We will add cars and trucks soon. Same loans and shipping you know from bikes and ATVs. Check back for listings. Or apply now. We will call you when cars go live.",
   applyLinkText: "Apply now"
 } as const;
 
 export const INVENTORY_SOURCING_BLURB = {
   heading: "Don't see what you want?",
   textBeforeCta:
-    "If we don't have your unit in stock, we can still find it for you. We access one of the largest inventories across Canada—dealer units and private sales. Once you've applied, we can locate what you're looking for, even when it isn't listed",
+    "We may not have your ride on the site. But we can still find it. We can search huge lists of rides all over Canada. After you apply, we can find what you want, even if it is not listed",
   applyLinkText: "Apply now",
   /** Full sentence for empty-state copy (no layout line-break control). */
   textFull:
-    "If we don't have your unit in stock, we can still find it for you. We access one of the largest inventories across Canada—dealer units and private sales. Once you've applied, we can locate what you're looking for, even when it isn't listed below."
+    "We may not have your ride on the site. But we can still find it. We can search huge lists of rides all over Canada. After you apply, we can find what you want, even if it is not listed below."
 } as const;

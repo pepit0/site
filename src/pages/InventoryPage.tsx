@@ -22,15 +22,15 @@ type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
 function inventoryEmptyMessage(category: InventoryBrowseCategory, searchQuery: string): string {
   const q = searchQuery.trim();
   if (q && category !== "all") {
-    return `No units match “${q}” in ${category}. Try different keywords or clear the search.`;
+    return `Nothing matches “${q}” in ${category}. Try new words or clear the search.`;
   }
   if (q) {
-    return `No units match “${q}”. Try stock number, year, make, model, or a category like ATV or jetski.`;
+    return `Nothing matches “${q}”. Try stock #, year, make, model, or ATV or jetski.`;
   }
   if (category !== "all") {
-    return "No units in this category on the site right now. Try another filter, or ask us to source one for you.";
+    return "Nothing in this group right now. Try another filter. Or ask us to find a ride for you.";
   }
-  return "No units listed right now. We can still help you find what you want across Canada.";
+  return "Nothing listed right now. We can still help you find a ride all over Canada.";
 }
 
 export function InventoryPage() {
@@ -142,27 +142,27 @@ export function InventoryPage() {
   return (
     <div className="inventory">
       <Seo
-        title="Inventory"
-        description="Browse motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, and trailers in Edmonton. Call for pricing on every unit. Financing available through Temptation Motorsports."
+        title="Rides for sale"
+        description="See bikes, ATVs, sleds, side-by-sides, jet skis, and trailers in Edmonton. Call for price on every ride. Apply for a loan with Temptation Motorsports."
         path="/inventory"
       />
       {rows.length > 0 ? <InventoryItemListJsonLd rows={rows} /> : null}
       <header className="page-header">
-        <h1 className="page-title">Inventory</h1>
+        <h1 className="page-title">Rides for sale</h1>
       </header>
 
       <section className="inventory-seoBlurb" aria-labelledby="inventory-seo-heading">
         <div className="inventory-seoBlurbRow">
           <div className="inventory-seoBlurbIntro">
             <h2 id="inventory-seo-heading" className="inventory-seoBlurbTitle">
-              ATVs, sleds, bikes, trailers &amp; RVs, and more
+              ATVs, sleds, bikes, trailers, RVs, and more
             </h2>
             <p className="inventory-seoBlurbText">
-              Shop our lineup for your next ride, including trailers and RVs. Many buyers pair a unit with{" "}
+              Shop rides for your next adventure. Many buyers get a{" "}
               <Link className="inventory-seoBlurbLink" to="/apply">
-                powersports financing
+                loan to pay for their ride
               </Link>
-              . We are based in Edmonton and work with customers across Canada.
+              . We are in Edmonton. We help buyers all over Canada.
             </p>
           </div>
           <aside className="inventory-seoBlurbAside" aria-labelledby="inventory-sourcing-heading">
@@ -186,7 +186,7 @@ export function InventoryPage() {
       <div className="inventory-toolbar">
         <div className="inventory-search">
           <label className="inventory-toolbarLabel" htmlFor="inventory-search">
-            Search inventory
+            Search rides
           </label>
           <div className="inventory-searchField">
             <input

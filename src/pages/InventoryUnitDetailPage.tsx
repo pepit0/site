@@ -41,7 +41,7 @@ function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
     <>
       <p className="inventory-detailDescriptionText">{INVENTORY_UNIT_DESCRIPTION}</p>
       <p className="inventory-detailDescriptionCtas">
-        Take Next Steps:
+        What&apos;s next?
         <br />
         📱 CALL / TEXT: <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a>
       </p>
@@ -49,7 +49,7 @@ function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
         to={`/apply?unit=${encodeURIComponent(unitId)}`}
         className="btn btn-primary inventory-detailApplyBtn"
       >
-        Get financing on this unit!
+        Apply for this ride!
       </Link>
     </>
   );
@@ -116,18 +116,18 @@ export function InventoryUnitDetailPage() {
           <InventoryProductJsonLd row={row} />
         </>
       ) : (
-        <Seo title="Unit not found" description="This inventory unit could not be found." path={seoPath} noindex />
+        <Seo title="Ride not found" description="We could not find this ride." path={seoPath} noindex />
       )}
 
       <p className="inventory-detailBack">
         <Link to={backHref} className="inventory-detailBackLink">
-          ← Back to inventory
+          ← Back to rides for sale
         </Link>
       </p>
 
       {isLoading ? (
         <p className="inventory-empty" role="status">
-          Loading unit…
+          Loading…
         </p>
       ) : loadError ? (
         <p className="inventory-empty" role="alert">
@@ -135,9 +135,9 @@ export function InventoryUnitDetailPage() {
         </p>
       ) : !row ? (
         <p className="inventory-empty" role="status">
-          This unit was not found or is no longer available.{" "}
+          This ride was not found or is no longer for sale.{" "}
           <Link to="/inventory" className="inventory-seoBlurbLink">
-            Browse inventory
+            See rides for sale
           </Link>
         </p>
       ) : (
@@ -178,7 +178,7 @@ export function InventoryUnitDetailPage() {
 
               <section className="inventory-detailDescription" aria-labelledby="inventory-detail-desc-heading">
                 <h2 id="inventory-detail-desc-heading" className="inventory-detailSectionTitle">
-                  About this unit
+                  About this ride
                 </h2>
                 <InventoryUnitDescriptionBlock unitId={row.id} />
               </section>

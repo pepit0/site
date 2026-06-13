@@ -10,7 +10,7 @@ export function InventoryMessageUsLink({ className }: InventoryMessageUsLinkProp
       type="button"
       className={`inventory-messageUs${className ? ` ${className}` : ""}`}
       onClick={() => openSiteChat()}
-      aria-label="Or message us instead — open chat"
+      aria-label="Or send us a message — open chat"
     >
       <svg className="inventory-messageUsIcon" viewBox="0 0 24 24" fill="none" aria-hidden focusable="false">
         <path
@@ -21,7 +21,7 @@ export function InventoryMessageUsLink({ className }: InventoryMessageUsLinkProp
           strokeLinejoin="round"
         />
       </svg>
-      <span>or message us instead</span>
+      <span>or message us</span>
     </button>
   );
 }

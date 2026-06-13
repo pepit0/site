@@ -114,15 +114,15 @@ export function isInventoryComingSoonCategory(value: string): value is Inventory
 export const INVENTORY_PHOTOS_BUCKET = "inventory-photos" as const;
 
 /** Shared copy on every public unit detail page (set once, redeploy). CTAs rendered in InventoryUnitDetailPage. */
-export const INVENTORY_UNIT_DESCRIPTION = `Get Approved & Ride Regionally or Nationwide! 🏁
+export const INVENTORY_UNIT_DESCRIPTION = `Get approved and ride anywhere in Canada!
 
-We finance all Motorsports, RVs, Marine, and Autos with $0 down options and delivery available across Canada. Whether you have pristine credit or need a subprime approval, our team gets it done.
+We help you pay for bikes, sleds, ATVs, RVs, boats, and cars. $0 down may be open. We can ship to your home.
 
-No Down Payment? No problem.
+No money down? We can help.
 
-Bad Credit? We accept all credit tiers.
+Bad credit? All credit types welcome.
 
-Far Away? We deliver Canada-wide.`;
+Far away? We ship all over Canada.`;
 
 export function inventoryDisplayTitle(row: Pick<InventoryPublicRow, "make" | "model">): string {
   return `${row.make} ${row.model}`.trim();

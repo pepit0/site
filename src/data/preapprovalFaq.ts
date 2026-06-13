@@ -5,54 +5,54 @@ export type PreapprovalFaqItem = {
 
 export const PREAPPROVAL_FAQ: PreapprovalFaqItem[] = [
   {
-    question: "Can I get powersports financing with good credit, bad credit, or no credit?",
+    question: "Can I get a loan with good, bad, or no credit?",
     answer:
-      "Yes — good credit, bad credit, or no credit, no problem. We help customers in all credit situations, from prime to subprime and rebuilding, get approved on their next ride — motorcycle, snowmobile, ATV, side-by-side, jet ski, boat, trailer, RV, and more. Fill out the free application above and a specialist will contact you. With your consent on the form, we may run a soft credit inquiry that does not affect your score."
+      "Yes. We help people with all types of credit. That means bikes, sleds, ATVs, side-by-sides, jet skis, boats, trailers, RVs, and more. Fill out the free form above. We will call you. If you say yes on the form, we may do a soft credit check. It does not hurt your score."
   },
   {
-    question: "How does the application work?",
+    question: "How does the form work?",
     answer:
-      "Fill out the short form with what you're looking for — unit type, budget, and how to reach you. A Temptation Motorsports specialist reviews your details and contacts you by phone to help match you with inventory and financing options across Canada."
+      "Fill out the short form. Tell us what ride you want, what you can pay, and how to reach you. We read it and call you to help you find a ride and a loan."
   },
   {
-    question: "What if you don't have the unit I want in stock?",
+    question: "What if you do not have the ride I want?",
     answer:
-      "Our website shows what we have on hand right now — but that's only part of what we can access. We tap one of the largest powersports inventories across Canada, including dealer stock and private-sale units. Once you've applied, we can search for the year, make, and model you want, even if you don't see it listed on our inventory page. Tell us what you're after in the application and we'll go to work."
+      "Our website shows what we have now. But we can find more rides all over Canada. After you apply, we can look for the year, make, and model you want. Tell us in the form. We will look for you."
   },
   {
-    question: "Do you run a credit check when I fill out this form?",
+    question: "Do you check my credit when I fill this out?",
     answer:
-      "Only if you authorize it. When you check the consent box on the contact step, we may run a soft credit inquiry. We do not run a hard credit pull at this stage. If you have questions before submitting, call us — we're happy to explain the process."
+      "Only if you say yes. When you check the box on the last step, we may do a soft credit check. We do not do a hard check now. Call us if you have questions. We are happy to explain."
   },
   {
-    question: "Will filling out this form hurt my credit score?",
+    question: "Will this form hurt my credit score?",
     answer:
-      "Completing the form alone does not pull your credit. If you check the authorization box, we may run a soft inquiry, which typically does not affect your credit score the way a hard inquiry can. We do not perform a hard credit pull when you submit this application."
+      "Just filling out the form does not check your credit. If you check the yes box, we may do a soft check. That usually does not hurt your score like a hard check can. We do not do a hard check when you send this form."
   },
   {
-    question: "Do you offer no money down financing?",
+    question: "Can I buy with no money down?",
     answer:
-      "We regularly help customers across Canada with no money down options, depending on the unit and program. Tell us what you're looking for in the form and we'll go over what's available when we call."
+      "Often yes. It depends on the ride and the loan. Tell us what you want in the form. We will tell you what is open when we call."
   },
   {
-    question: "Do you ship powersports units across Canada?",
+    question: "Do you ship rides all over Canada?",
     answer:
-      "Yes. We're based in Edmonton and work with riders nationwide. Many customers have their motorcycle, snowmobile, ATV, or other unit delivered straight to their doorstep — ask us about shipping when we reach out."
+      "Yes. We are in Edmonton. We work with riders all over Canada. Many people get their bike, sled, or ATV shipped to their home. Ask us about shipping when we call."
   },
   {
-    question: "How fast will I hear back after I submit?",
+    question: "How fast will you call me?",
     answer:
-      "Many riders hear from us within one business day — often sooner. The form only takes a few minutes. We'll reach out by phone to discuss your dream ride and next steps."
+      "Many people hear from us in one business day. Often sooner. The form takes a few minutes. We call you to talk about your ride and next steps."
   },
   {
-    question: "What types of units can you help me finance?",
+    question: "What kinds of rides can you help me buy?",
     answer:
-      "Motorcycles and bikes, snowmobiles and sleds (new or used), ATVs, side-by-sides, jet skis and PWCs, boats, trailers, RVs, and more. Pick a category in the form or choose \"Not sure yet\" if you're still deciding."
+      "Motorcycles, snowmobiles, ATVs, side-by-sides, jet skis, boats, trailers, RVs, and more. Pick one in the form. Or pick Not sure yet if you are still thinking."
   },
   {
-    question: "Where are you based, and do you work outside Edmonton?",
+    question: "Where are you? Do you work outside Edmonton?",
     answer:
-      "We're based in Edmonton, Alberta, and serve customers across Canada. Delivery and out-of-province purchases are common — we'll cover logistics when we contact you."
+      "We are in Edmonton, Alberta. We help people all over Canada. Many buyers live far away. We can ship. We will talk about that when we call."
   }
 ];
 
