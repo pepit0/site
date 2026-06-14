@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Temptation Marketplace Comp Capture",
+  "version": "1.0.0",
+  "description": "Capture visible Facebook Marketplace listings for Temptation Motorsports comp search.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://temptmotorsports.com/*",
+    "http://localhost:5173/*"
+  ],
+  "action": {
+    "default_title": "Marketplace comp capture",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.facebook.com/marketplace/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

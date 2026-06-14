@@ -118,8 +118,8 @@ export function HomePage() {
   return (
     <div className="home home-preview">
       <Seo
-        title="Ride loans in Edmonton"
-        description="Loans for bikes, sleds, ATVs, jet skis, boats, trailers, and RVs. Fast, friendly help from Edmonton for riders all over Canada."
+        title="Powersports financing in Canada"
+        description="ATV, motorcycle, and snowmobile financing nationwide. Edmonton-based. Good credit, bad credit, or no credit — free online application."
         path="/"
       />
       <LocalBusinessJsonLd />

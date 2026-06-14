@@ -1,0 +1,35 @@
+#tm-comp-capture-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 88px;
+  z-index: 2147483646;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #f05d22;
+  color: #fff;
+  font:
+    600 14px/1.2 system-ui,
+    sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+#tm-comp-capture-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+#tm-comp-capture-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 140px;
+  z-index: 2147483647;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #181b22;
+  color: #e8eaef;
+  font: 13px/1.35 system-ui, sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}

@@ -10,6 +10,7 @@ import { TawkProvider } from "../components/chat/tawkContext";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
+import { contactMailtoHref } from "../data/aboutContactCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
 import tLogoUrl from "../assets/Tlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
@@ -88,6 +89,18 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Sell your ride
             </NavLink>
             <NavLink
+              to="/financing"
+              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
+            >
+              Financing
+            </NavLink>
+            <NavLink
+              to="/contact"
+              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
+            >
+              Contact
+            </NavLink>
+            <NavLink
               to="/apply"
               className={({ isActive }) =>
                 `site-navCta${hasResumeDraft ? " site-navCta--resume" : ""}${isActive ? " site-navCtaActive" : ""}`
@@ -104,42 +117,63 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
       </main>
       <footer className="site-footer">
         <div className="site-footerInner">
-          <div className="site-footerCluster">
-            <img
-              src={bikerLogoUrl}
-              alt="Temptation Motorsports"
-              className="site-footerLogo"
-              width={320}
-              height={140}
-              decoding="async"
-            />
-            <div className="site-footerMeta">
-              <div className="site-footerLead">
-                <p className="site-footerTagline">
-                  We deliver all over Canada!{" "}
-                  <a className="site-footerPhoneInline" href={`tel:${SITE_CONTACT.phoneTel}`}>
-                    {SITE_CONTACT.phoneDisplay}
-                  </a>
-                </p>
-                <p className="site-footerSeoBlurb">
-                  Need a loan for a{" "}
-                  <Link className="site-footerSeoLink" to="/apply">
-                    bike, ATV, or sled
-                  </Link>
-                  ? Apply here.
-                </p>
-                <p className="site-footerSeoBlurb">
-                  See our{" "}
-                  <Link className="site-footerSeoLink" to="/inventory">
-                    rides for sale in Edmonton
-                  </Link>
-                  .
-                </p>
-              </div>
-              <p className="site-footerText">
-                © {new Date().getFullYear()} Temptation Motorsports. All rights reserved. Based in Edmonton.
-              </p>
+          <div className="site-footerTop">
+            <div className="site-footerBrand">
+              <img
+                src={bikerLogoUrl}
+                alt="Temptation Motorsports"
+                className="site-footerLogo"
+                width={320}
+                height={140}
+                decoding="async"
+              />
+              <p className="site-footerTagline">Powersports financing and rides for sale. We deliver all over Canada.</p>
             </div>
+
+            <nav className="site-footerCol" aria-label="Footer menu">
+              <p className="site-footerColLabel">Menu</p>
+              <ul className="site-footerMenu">
+                <li>
+                  <Link to="/inventory">Inventory</Link>
+                </li>
+                <li>
+                  <Link to="/financing">Financing</Link>
+                </li>
+                <li>
+                  <Link to="/apply">Apply</Link>
+                </li>
+                <li>
+                  <Link to="/sell-your-ride">Sell your ride</Link>
+                </li>
+                <li>
+                  <Link to="/about">About</Link>
+                </li>
+                <li>
+                  <Link to="/contact">Contact</Link>
+                </li>
+              </ul>
+            </nav>
+
+            <div className="site-footerCol site-footerColContact">
+              <p className="site-footerColLabel">Get in touch</p>
+              <ul className="site-footerContactList">
+                <li>
+                  <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a>
+                </li>
+                <li>
+                  <a href={contactMailtoHref()}>{SITE_CONTACT.email}</a>
+                </li>
+              </ul>
+              <Link to="/apply" className="site-footerCta">
+                Apply for financing
+              </Link>
+            </div>
+          </div>
+
+          <div className="site-footerBar">
+            <p className="site-footerCopyright">
+              © {new Date().getFullYear()} Temptation Motorsports. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

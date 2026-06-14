@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Comp capture</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 12px;
+        width: 280px;
+        background: #12141a;
+        color: #e8eaef;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        margin: 10px 0 4px;
+        color: #9aa3b2;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #2a2f3a;
+        background: #181b22;
+        color: #e8eaef;
+      }
+      button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 10px;
+        border: 0;
+        border-radius: 8px;
+        background: #f05d22;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #9aa3b2;
+        min-height: 2.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <p style="margin: 0 0 8px; font-size: 13px">Paste the search ID from Admin → Facebook comp search.</p>
+    <label for="apiBase">Site API base URL</label>
+    <input id="apiBase" type="url" placeholder="https://temptmotorsports.com" />
+    <label for="apiKey">Extension API key</label>
+    <input id="apiKey" type="password" autocomplete="off" />
+    <label for="searchId">Search ID</label>
+    <input id="searchId" type="text" autocomplete="off" />
+    <button type="button" id="save">Save settings</button>
+    <p id="status" role="status"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

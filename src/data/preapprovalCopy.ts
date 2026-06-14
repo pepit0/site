@@ -7,9 +7,9 @@ export const SITE_CONTACT = {
 } as const;
 
 export const PREAPPROVAL_SEO = {
-  title: "Get a loan for your ride — all credit welcome",
+  title: "Powersports financing application — all credit welcome",
   description:
-    "We help you pay for bikes, sleds, ATVs, and more. We are in Edmonton. We ship all over Canada. Good credit or bad credit — apply free."
+    "Apply for ATV, motorcycle, and snowmobile financing in Canada. Edmonton-based. Good credit or bad credit — free online application. We call you to help."
 } as const;
 
 export const PREAPPROVAL_HERO = {

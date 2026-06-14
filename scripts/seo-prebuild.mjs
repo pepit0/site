@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
+import { FINANCING_PRERENDER_PAGES } from "./lib/financing-seo.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -18,9 +19,18 @@ if (!siteUrl) {
   );
 }
 
+const financingUrls = FINANCING_PRERENDER_PAGES.map((page) => ({
+  loc: page.path,
+  priority: page.path === "/financing" ? "0.88" : "0.86",
+  changefreq: "monthly"
+}));
+
 const staticUrls = [
   { loc: "/", priority: "1.0", changefreq: "weekly" },
   { loc: "/inventory", priority: "0.9", changefreq: "daily" },
+  ...financingUrls,
+  { loc: "/about", priority: "0.75", changefreq: "monthly" },
+  { loc: "/contact", priority: "0.75", changefreq: "monthly" },
   { loc: "/apply", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }

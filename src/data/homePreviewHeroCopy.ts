@@ -4,8 +4,8 @@ export const HOME_PREVIEW_HERO = {
   /** Visible hero headline on the homepage */
   hook: "Ready to unlock your dream ride this summer?",
   /** In-document H1 for SEO (visually hidden; complements page title / meta) */
-  seoH1: "Loans for bikes, sleds, and ATVs all over Canada | Temptation Motorsports",
-  subhook: "We help you get a loan anywhere in Canada",
+  seoH1: "Powersports financing — ATV, motorcycle & sled loans in Canada",
+  subhook: "ATV financing, motorcycle financing, and ride loans anywhere in Canada",
   lede:
     "ATVs, bikes, side-by-sides, boats, jet skis, sleds, trailers, and more. Fast help. Easy payments. Get riding sooner.",
   qualifyPrompt: "Start your application",
