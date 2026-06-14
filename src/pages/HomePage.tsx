@@ -161,16 +161,6 @@ export function HomePage() {
         <div className="home-content home-previewContent">
           <div className="home-previewContentInner">
             <section className="home-previewHero" aria-labelledby="home-hook">
-              <img
-                src={logoUrl}
-                alt=""
-                className="home-previewHeroLogo home-previewHeroLogo--inline"
-                width={400}
-                height={200}
-                decoding="async"
-                aria-hidden
-              />
-
               <h1 id="home-hook" className="home-previewHook">
                 <span className="home-previewHookDisplay">{HOME_PREVIEW_HERO.hook}</span>
                 <span className="visually-hidden">{HOME_PREVIEW_HERO.seoH1}</span>

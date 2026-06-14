@@ -13,7 +13,7 @@ import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown
 import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { contactMailtoHref } from "../data/aboutContactCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
-import tLogoUrl from "../assets/Tlogo.png";
+import textLogoUrl from "../assets/textlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
@@ -48,11 +48,14 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
       <header className={`site-header${mobileMenuOpen ? " site-headerMobileOpen" : ""}`}>
         <div className="site-headerInner">
           <NavLink to="/" className="site-brand" end>
-            <img src={tLogoUrl} alt="Temptation Motorsports logo" className="site-brandMark" width={68} height={68} decoding="async" />
-            <span className="site-brandText">
-              <span className="site-brandName">Temptation</span>
-              <span className="site-brandTagline">MOTORSPORTS</span>
-            </span>
+            <img
+              src={textLogoUrl}
+              alt="Temptation Motorsports"
+              className="site-brandLogo"
+              width={240}
+              height={160}
+              decoding="async"
+            />
           </NavLink>
           <div className="site-headerActions">
             <NavLink
