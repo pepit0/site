@@ -2,15 +2,21 @@ import { openSiteChat } from "../lib/siteChatOpen";
 
 type InventoryMessageUsLinkProps = {
   className?: string;
+  label?: string;
+  ariaLabel?: string;
 };
 
-export function InventoryMessageUsLink({ className }: InventoryMessageUsLinkProps) {
+export function InventoryMessageUsLink({
+  className,
+  label = "or message us",
+  ariaLabel = "Or send us a message — open chat"
+}: InventoryMessageUsLinkProps) {
   return (
     <button
       type="button"
       className={`inventory-messageUs${className ? ` ${className}` : ""}`}
       onClick={() => openSiteChat()}
-      aria-label="Or send us a message — open chat"
+      aria-label={ariaLabel}
     >
       <svg className="inventory-messageUsIcon" viewBox="0 0 24 24" fill="none" aria-hidden focusable="false">
         <path
@@ -21,7 +27,7 @@ export function InventoryMessageUsLink({ className }: InventoryMessageUsLinkProp
           strokeLinejoin="round"
         />
       </svg>
-      <span>or message us</span>
+      <span>{label}</span>
     </button>
   );
 }

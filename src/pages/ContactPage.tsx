@@ -25,7 +25,7 @@ export function ContactPage() {
 
           <div className="company-pageNapWrap">
             <h2 className="company-pageSectionHeading">Reach us</h2>
-            <BusinessNapBlock />
+            <BusinessNapBlock showChatButton />
           </div>
 
           <dl className="company-contactList">

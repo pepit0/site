@@ -20,8 +20,6 @@ export function PaymentCalculatorPage() {
       </header>
 
       <div className="paycalc-pageStack">
-        <p className="paycalc-pageIntro">{PAYMENT_CALCULATOR_HERO.intro}</p>
-
         <article className="card card-pad paycalc-pageCard">
           <PaymentCalculatorForm idPrefix="paycalc-page" />
         </article>

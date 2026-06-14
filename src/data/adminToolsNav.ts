@@ -8,7 +8,8 @@ export type AdminToolsNavItem = {
 export const ADMIN_TOOLS_NAV: AdminToolsNavItem[] = [
   { label: "Admin inventory", to: "/admin/inventory", activePrefix: "/admin/inventory" },
   { label: "Calculator", to: "/admin/calculator", activePrefix: "/admin/calculator" },
-  { label: "Facebook comps", to: "/admin/marketplace-comps", activePrefix: "/admin/marketplace-comps" }
+  { label: "Facebook comps", to: "/admin/marketplace-comps", activePrefix: "/admin/marketplace-comps" },
+  { label: "Create blog", to: "/admin/blog", activePrefix: "/admin/blog" }
 ];
 
 export const ADMIN_TOOLS_HOME = "/admin/inventory";

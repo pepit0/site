@@ -40,7 +40,7 @@ export function PaymentCalculatorWidget() {
                 Payment calculator
               </h2>
               <p className="site-payCalcPanelSubtitle">
-                Estimate your monthly payment. Includes dealer fees and finance charge plus provincial tax on the unit.
+                Honest calculations, no tricks, fees included.
               </p>
             </div>
             <button type="button" className="site-payCalcClose" onClick={() => setOpen(false)}>

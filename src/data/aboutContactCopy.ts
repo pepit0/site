@@ -5,12 +5,12 @@ import { SITE_CONTACT } from "./preapprovalCopy";
 export const ABOUT_SEO = {
   title: "About Temptation Motorsports",
   description:
-    "Temptation Motorsports helps Canadians finance and buy ATVs, motorcycles, sleds, boats, and more. Based in Sherwood Park near Edmonton. Service nationwide."
+    "Temptation Motorsports offers powersports and motorsports financing plus rides for sale across Canada. ATVs, motorcycles, sleds, boats, and more. Based in Sherwood Park near Edmonton."
 } as const;
 
 export const ABOUT_HERO = {
   h1: "About Temptation Motorsports",
-  tagline: "Powersports financing and rides for sale, from Alberta to every province.",
+  tagline: "Powersports and motorsports financing plus rides for sale, from Alberta to every province.",
   intro: [
     "Temptation Motorsports is a team in Sherwood Park near Edmonton, Alberta. We help people all over Canada pay for the rides they want and find units that fit their budget.",
     "We are not a faceless online form. A real person reads your application and calls you back. That is how we have built trust with buyers from BC to Ontario and everywhere between."
@@ -21,7 +21,7 @@ export const ABOUT_SECTIONS = [
   {
     heading: "What we do",
     body:
-      "We help with powersports financing for ATVs, motorcycles, snowmobiles, side-by-sides, boats, jet skis, trailers, and autos. We also list rides for sale and help private sellers connect with buyers who need a loan."
+      "We help with powersports financing and motorsports financing for ATVs, motorcycles, snowmobiles, side-by-sides, boats, jet skis, trailers, and autos. We also list rides for sale and help private sellers connect with buyers who need a loan."
   },
   {
     heading: "Who we help",

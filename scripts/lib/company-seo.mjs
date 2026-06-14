@@ -5,7 +5,7 @@ export const COMPANY_PRERENDER_PAGES = [
     path: "/about",
     title: "About Temptation Motorsports",
     description:
-      "Temptation Motorsports helps Canadians finance and buy ATVs, motorcycles, sleds, boats, and more. Based in Sherwood Park near Edmonton. Service nationwide.",
+      "Temptation Motorsports offers powersports and motorsports financing plus rides for sale across Canada. ATVs, motorcycles, sleds, boats, and more. Based in Sherwood Park near Edmonton.",
     h1: "About Temptation Motorsports",
     intro:
       "Temptation Motorsports is a team in Sherwood Park near Edmonton, Alberta. We help people all over Canada pay for the rides they want."

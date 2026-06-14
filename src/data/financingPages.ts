@@ -31,13 +31,13 @@ export type FinancingPageDef = {
 export const FINANCING_HUB: FinancingPageDef = {
   slug: "",
   path: "/financing",
-  seoTitle: "Powersports financing in Canada",
+  seoTitle: "Powersports & motorsports financing Canada",
   seoDescription:
-    "ATV, motorcycle, snowmobile, side-by-side, boat, jet ski, trailer, and auto financing across Canada. Based in Edmonton, Alberta. Good credit, bad credit, or no credit. Free online application.",
-  h1: "Powersports financing in Canada",
+    "Powersports and motorsports financing for ATV, motorcycle, snowmobile, side-by-side, boat, jet ski, trailer, and auto loans across Canada. Edmonton / Sherwood Park, Alberta. Good credit, bad credit, or no credit. Free online application.",
+  h1: "Powersports and motorsports financing in Canada",
   tagline: "One team in Edmonton. Many ride types. Help in every province.",
   intro: [
-    "Temptation Motorsports helps Canadians pay for recreation rides and vehicles through simple financing. We are in Sherwood Park near Edmonton and work with buyers coast to coast.",
+    "Temptation Motorsports helps Canadians pay for recreation rides and vehicles through simple powersports financing and motorsports financing. We are in Sherwood Park near Edmonton and work with buyers coast to coast.",
     "Pick a topic page below for details on ATV, motorcycle, snowmobile, side-by-side, boat, jet ski, trailer, or auto financing. Or start the free form now and we will call you."
   ],
   expertiseSections: [
@@ -88,7 +88,7 @@ export const FINANCING_HUB: FinancingPageDef = {
     }
   ],
   navLabel: "All financing",
-  serviceName: "Powersports financing"
+  serviceName: "Powersports and motorsports financing"
 };
 
 function page(

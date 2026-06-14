@@ -90,16 +90,12 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Sell your ride
             </NavLink>
             <NavLink
-              to="/financing"
-              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
+              to="/blog"
+              className={({ isActive, isPending }) =>
+                `site-navLink${isActive || (location.pathname.startsWith("/blog/") && !isPending) ? " site-navLinkActive" : ""}`
+              }
             >
-              Financing
-            </NavLink>
-            <NavLink
-              to="/contact"
-              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
-            >
-              Contact
+              Blog
             </NavLink>
             <NavLink
               to="/payment-calculator"
@@ -108,6 +104,12 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               }
             >
               Payment calculator
+            </NavLink>
+            <NavLink
+              to="/contact"
+              className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
+            >
+              Contact
             </NavLink>
             <NavLink
               to="/apply"
@@ -136,7 +138,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                 height={140}
                 decoding="async"
               />
-              <p className="site-footerTagline">Powersports financing and rides for sale. We deliver all over Canada.</p>
+              <p className="site-footerTagline">Powersports and motorsports financing plus rides for sale. We deliver all over Canada.</p>
             </div>
 
             <nav className="site-footerCol" aria-label="Footer menu">

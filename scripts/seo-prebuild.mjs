@@ -2,7 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
+import { fetchPublicBlogPosts } from "./lib/fetch-public-blog.mjs";
 import { FINANCING_PRERENDER_PAGES } from "./lib/financing-seo.mjs";
+import { BLOG_HUB_SEO } from "./lib/blog-seo.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,10 +27,30 @@ const financingUrls = FINANCING_PRERENDER_PAGES.map((page) => ({
   changefreq: "monthly"
 }));
 
+const defaultLastmod = new Date().toISOString().slice(0, 10);
+
+const { rows: blogPosts, error: blogFetchError } = await fetchPublicBlogPosts({ supabaseUrl, supabaseAnonKey });
+if (blogFetchError && blogFetchError !== "missing_supabase_env") {
+  console.warn(`[seo-prebuild] Could not fetch blog posts for sitemap (${blogFetchError}). Using static posts only.`);
+} else if (blogPosts.length > 0) {
+  console.log(`[seo-prebuild] ${blogPosts.length} blog post URL(s) for sitemap`);
+}
+
+const blogUrls = [
+  { loc: BLOG_HUB_SEO.path, priority: "0.8", changefreq: "weekly", lastmod: defaultLastmod },
+  ...blogPosts.map((post) => ({
+    loc: post.path,
+    priority: "0.78",
+    changefreq: "monthly",
+    lastmod: post.publishedAt
+  }))
+];
+
 const staticUrls = [
   { loc: "/", priority: "1.0", changefreq: "weekly" },
   { loc: "/inventory", priority: "0.9", changefreq: "daily" },
   ...financingUrls,
+  ...blogUrls,
   { loc: "/about", priority: "0.75", changefreq: "monthly" },
   { loc: "/contact", priority: "0.75", changefreq: "monthly" },
   { loc: "/payment-calculator", priority: "0.82", changefreq: "monthly" },
@@ -36,8 +58,6 @@ const staticUrls = [
   { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }
 ];
-
-const defaultLastmod = new Date().toISOString().slice(0, 10);
 
 /** @type {{ loc: string; priority: string; changefreq: string; lastmod: string }[]} */
 let inventoryUrls = [];
@@ -66,7 +86,7 @@ function urlEntry({ loc, priority, changefreq, lastmod }) {
 }
 
 const allUrls = [
-  ...staticUrls.map((u) => ({ ...u, lastmod: defaultLastmod })),
+  ...staticUrls.map((u) => ({ ...u, lastmod: u.lastmod ?? defaultLastmod })),
   ...inventoryUrls
 ];
 

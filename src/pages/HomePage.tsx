@@ -9,7 +9,9 @@ import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
 import { getHomeHeroLayerUrl } from "../lib/homeHeroLayerUrls";
 import { LocalBusinessJsonLd } from "../seo/LocalBusinessJsonLd";
+import { HOME_PAGE_DESCRIPTION, HOME_PAGE_TITLE, HOME_SEO_INTRO } from "../seo/homeSeo";
 import { Seo } from "../seo/Seo";
+import { WebSiteJsonLd } from "../seo/WebSiteJsonLd";
 
 export function HomePage() {
   const [sidebarGlow, setSidebarGlow] = useState<string | null>(null);
@@ -117,11 +119,8 @@ export function HomePage() {
 
   return (
     <div className="home home-preview">
-      <Seo
-        title="Powersports financing in Canada"
-        description="ATV, motorcycle, and snowmobile financing nationwide. Edmonton-based. Good credit, bad credit, or no credit — free online application."
-        path="/"
-      />
+      <Seo title={HOME_PAGE_TITLE} description={HOME_PAGE_DESCRIPTION} path="/" />
+      <WebSiteJsonLd />
       <LocalBusinessJsonLd />
       <div className="home-backdropAmbience" aria-hidden />
       <div className="home-backdropWarmth" aria-hidden />
@@ -176,7 +175,13 @@ export function HomePage() {
                 <span className="home-previewHookDisplay">{HOME_PREVIEW_HERO.hook}</span>
                 <span className="visually-hidden">{HOME_PREVIEW_HERO.seoH1}</span>
               </h1>
-              <p className="home-previewSubhook">{HOME_PREVIEW_HERO.subhook}</p>
+              <p className="home-previewSubhook">
+                {HOME_PREVIEW_HERO.subhook.map((line) => (
+                  <span key={line} className="home-previewSubhookLine">
+                    {line}
+                  </span>
+                ))}
+              </p>
               <p className="home-previewLede">{HOME_PREVIEW_HERO.lede}</p>
 
               <div className="home-previewCtaBlock">
@@ -331,6 +336,20 @@ export function HomePage() {
         </button>
         </div>
       ) : null}
+
+      <section className="home-seoIntro" aria-labelledby="home-seo-heading">
+        <div className="home-seoIntroInner">
+          <h2 id="home-seo-heading" className="home-seoIntroTitle">
+            {HOME_SEO_INTRO.heading}
+          </h2>
+          <p className="home-seoIntroBody">{HOME_SEO_INTRO.body}</p>
+          <p className="home-seoIntroLinks">
+            <Link to="/financing">{HOME_SEO_INTRO.financingLinkLabel}</Link>
+            <span aria-hidden> · </span>
+            <Link to="/apply">{HOME_SEO_INTRO.applyLinkLabel}</Link>
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
