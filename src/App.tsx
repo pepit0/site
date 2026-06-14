@@ -12,6 +12,7 @@ import { HomePage } from "./pages/HomePage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { InventoryUnitDetailPage } from "./pages/InventoryUnitDetailPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PaymentCalculatorPage } from "./pages/PaymentCalculatorPage";
 import { PreApprovalCompletePage } from "./pages/PreApprovalCompletePage";
 import { PreApprovalPage } from "./pages/PreApprovalPage";
 import { SellYourRideApplyPage } from "./pages/SellYourRideApplyPage";
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="financing/:slug" element={<FinancingLandingPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="payment-calculator" element={<PaymentCalculatorPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />
         <Route

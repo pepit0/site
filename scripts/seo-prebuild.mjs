@@ -31,6 +31,7 @@ const staticUrls = [
   ...financingUrls,
   { loc: "/about", priority: "0.75", changefreq: "monthly" },
   { loc: "/contact", priority: "0.75", changefreq: "monthly" },
+  { loc: "/payment-calculator", priority: "0.82", changefreq: "monthly" },
   { loc: "/apply", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }

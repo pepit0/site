@@ -3286,6 +3286,33 @@ p {
   text-decoration: underline;
 }
 
+.paycalc-page {
+  max-width: min(40rem, 100%);
+  margin: 0 auto;
+}
+
+.paycalc-pageStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.paycalc-pageIntro {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.paycalc-pageCard {
+  min-width: 0;
+}
+
+.paycalc-pageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
 .business-nap {
   display: flex;
   flex-direction: column;
@@ -8903,6 +8930,382 @@ img.vehicle-category-icon {
   .site-chatFabPulse,
   .site-chatFabTeaser,
   .site-chatPanel {
+    animation: none;
+  }
+}
+
+/* Site payment calculator (fixed top-right) */
+.site-payCalc {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 6.75rem);
+  right: 1.25rem;
+  z-index: 10045;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+}
+
+.site-payCalcFab {
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.site-payCalcFabInner {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem 0.65rem 0.85rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(145deg, #2a3140 0%, #181b22 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.site-payCalcFab:hover .site-payCalcFabInner {
+  transform: translateY(-1px);
+  border-color: rgba(240, 93, 34, 0.45);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(240, 93, 34, 0.2) inset;
+}
+
+.site-payCalcFab:focus-visible .site-payCalcFabInner {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.site-payCalcFabIcon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.site-payCalcFabLabel {
+  white-space: nowrap;
+}
+
+.site-payCalcPanel {
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(70vh, 40rem);
+  overflow: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  animation: site-payCalc-panel-in 0.28s ease-out;
+}
+
+@keyframes site-payCalc-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.site-payCalcPanelHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+}
+
+.site-payCalcPanelHeroText {
+  min-width: 0;
+}
+
+.site-payCalcPanelEyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.site-payCalcPanelTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.site-payCalcPanelSubtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.site-payCalcClose {
+  flex-shrink: 0;
+  padding: 0.35rem 0.55rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.site-payCalcClose:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.site-payCalcPanelBody {
+  padding: 1rem;
+}
+
+.site-payCalcForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.site-payCalcPanelBody .site-payCalcForm {
+  padding: 0;
+}
+
+.site-payCalcField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.site-payCalcLabel {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.site-payCalcPriceWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.site-payCalcPriceWrap:focus-within {
+  border-color: rgba(240, 93, 34, 0.55);
+  box-shadow: 0 0 0 2px rgba(240, 93, 34, 0.15);
+}
+
+.site-payCalcPricePrefix {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.site-payCalcInput,
+.site-payCalcSelect {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.site-payCalcInput--price {
+  border: none;
+  padding-left: 0;
+  background: transparent;
+}
+
+.site-payCalcInput--price:focus {
+  outline: none;
+}
+
+.site-payCalcInput:focus,
+.site-payCalcSelect:focus {
+  outline: none;
+  border-color: rgba(240, 93, 34, 0.55);
+  box-shadow: 0 0 0 2px rgba(240, 93, 34, 0.15);
+}
+
+.site-payCalcTermGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.site-payCalcTermBtn {
+  padding: 0.5rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.site-payCalcTermBtn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.site-payCalcTermBtn--active {
+  color: #fff;
+  border-color: rgba(240, 93, 34, 0.55);
+  background: rgba(240, 93, 34, 0.22);
+}
+
+.site-payCalcResult {
+  padding: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.site-payCalcPayment {
+  margin: 0;
+  font-size: clamp(1.55rem, 4vw, 1.95rem);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.site-payCalcPaymentRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+}
+
+.site-payCalcScheduleToggle {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.site-payCalcScheduleToggle:hover {
+  color: var(--accent-hover);
+}
+
+.site-payCalcPaymentLabel {
+  margin: 0.2rem 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.site-payCalcBreakdown {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.site-payCalcBreakdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+}
+
+.site-payCalcBreakdownRow dt {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.site-payCalcBreakdownRow dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.site-payCalcMuted {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.site-payCalcFinePrint {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.site-payCalcApplyBtn {
+  width: 100%;
+}
+
+@media (max-width: 899px) {
+  .site-payCalc {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-payCalcFabInner {
+    padding: 0.75rem;
+    border-radius: 50%;
+  }
+
+  .site-payCalcFabLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .site-payCalcTermGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-payCalcPanel {
     animation: none;
   }
 }

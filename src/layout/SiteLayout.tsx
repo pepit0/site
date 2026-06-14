@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { isMarketingOnlySite } from "../siteMode";
 import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync";
 import { SiteChatMount } from "../components/chat/SiteChatMount";
+import { PaymentCalculatorWidget } from "../components/PaymentCalculatorWidget";
 import { TawkProvider } from "../components/chat/tawkContext";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
@@ -101,6 +102,14 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Contact
             </NavLink>
             <NavLink
+              to="/payment-calculator"
+              className={({ isActive }) =>
+                `site-navLink site-navLinkMobileOnly${isActive ? " site-navLinkActive" : ""}`
+              }
+            >
+              Payment calculator
+            </NavLink>
+            <NavLink
               to="/apply"
               className={({ isActive }) =>
                 `site-navCta${hasResumeDraft ? " site-navCta--resume" : ""}${isActive ? " site-navCtaActive" : ""}`
@@ -178,6 +187,7 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
         </div>
       </footer>
       <SiteChatMount />
+      <PaymentCalculatorWidget />
     </div>
   );
 }

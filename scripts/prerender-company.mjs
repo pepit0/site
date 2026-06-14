@@ -116,4 +116,4 @@ for (const page of COMPANY_PRERENDER_PAGES) {
   written += 1;
 }
 
-console.log(`[prerender-company] wrote ${written} HTML file(s) under dist/about/ and dist/contact/`);
+console.log(`[prerender-company] wrote ${written} HTML file(s) under dist/about/, dist/contact/, and dist/payment-calculator/`);
