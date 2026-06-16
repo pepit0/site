@@ -1579,7 +1579,7 @@ p {
     height: auto;
     min-height: 0;
     margin: calc(var(--home-preview-mobile-hero-h) - 5.5rem + var(--home-preview-content-shift)) 0 0;
-    padding: 0 var(--home-preview-edge-x) 1.5rem;
+    padding: 0 var(--home-preview-edge-x) 2rem;
     background: transparent;
     align-items: stretch;
     justify-content: flex-start;
@@ -1675,6 +1675,8 @@ p {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.45rem;
     margin-top: 1rem;
+    position: relative;
+    z-index: 1;
   }
 
   .home-previewHighlight {
@@ -1683,16 +1685,22 @@ p {
   }
 
   .home-previewHighlightValue {
-    font-size: 0.92rem;
+    font-size: 1rem;
     color: #ffbf94;
     white-space: normal;
+    -webkit-text-stroke: 0;
+    paint-order: normal;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75);
   }
 
   .home-previewHighlightLabel {
-    font-size: 0.54rem;
-    line-height: 1.2;
-    color: rgba(248, 250, 252, 0.88);
+    font-size: 0.62rem;
+    line-height: 1.25;
+    color: rgba(248, 250, 252, 0.92);
     white-space: normal;
+    -webkit-text-stroke: 0;
+    paint-order: normal;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
   }
 
   .home-preview .home-reviewsSection {
@@ -1724,6 +1732,13 @@ p {
 }
 
 @media (max-width: 768px) {
+  .site-footerMenu {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    max-width: none;
+    row-gap: 0.45rem;
+  }
+
   .site-shell:has(.home) .site-footerBrand {
     display: none;
   }
@@ -1815,9 +1830,11 @@ p {
   background: transparent;
 }
 
-.home-preview .home-reviewsSection {
-  margin-top: clamp(-3rem, -7vh, -4.5rem);
-  z-index: 2;
+@media (min-width: 769px) {
+  .home-preview .home-reviewsSection {
+    margin-top: clamp(-3rem, -7vh, -4.5rem);
+    z-index: 2;
+  }
 }
 
 .home-preview .home-reviewsBelt {
