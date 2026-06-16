@@ -85,13 +85,15 @@ function blogHubBody(posts) {
 }
 
 function blogPostBody(post) {
-  const paragraphs = post.body.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n");
+  const bodyContent = post.bodyHtml
+    ? post.bodyHtml
+    : post.body.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n");
 
   return `
     <p><a href="/">Home</a> · <a href="/blog">Blog</a></p>
     <article>
       <h1>${escapeHtml(post.title)}</h1>
-      ${paragraphs}
+      ${bodyContent}
       <p><a href="/apply">Apply for financing</a> · <a href="/blog">Back to blog</a></p>
     </article>`;
 }

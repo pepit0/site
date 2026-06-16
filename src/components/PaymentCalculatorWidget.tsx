@@ -1,32 +1,68 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PaymentCalculatorForm } from "./PaymentCalculatorForm";
 
-function CalculatorIcon() {
-  return (
-    <svg className="site-payCalcFabIcon" viewBox="0 0 24 24" aria-hidden focusable="false">
-      <path
-        fill="currentColor"
-        d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h10V4H7zm2 2h2v2H9V6zm4 0h2v2h-2V6zM9 10h2v2H9v-2zm4 0h2v2h-2v-2zM9 14h2v2H9v-2zm4 0h2v2h-2v-2zM9 18h6v2H9v-2z"
-      />
+const MOBILE_HEADER_MQ = "(max-width: 899px)";
+
+function CalculatorIcon() {  return (
+    <svg
+      className="site-payCalcFabIcon"
+      viewBox="0 0 24 24"
+      aria-hidden
+      focusable="false"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <rect x="8" y="6" width="8" height="3.5" rx="0.75" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="13.25" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="13.25" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13.25" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="16.75" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="16.75" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="16.75" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
 export function PaymentCalculatorWidget() {
   const [open, setOpen] = useState(false);
+  const [mobileHeader, setMobileHeader] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(MOBILE_HEADER_MQ).matches : false
+  );
 
   useEffect(() => {
-    if (!open) return;
+    const mq = window.matchMedia(MOBILE_HEADER_MQ);
+    const apply = () => {
+      setMobileHeader(mq.matches);
+      if (mq.matches) setOpen(false);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!open || mobileHeader) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [open, mobileHeader]);
+
+  const fabInner = (
+    <span className="site-payCalcFabInner">
+      <CalculatorIcon />
+    </span>
+  );
 
   return (
     <div className="site-payCalc">
-      {open ? (
+      {!mobileHeader && open ? (
         <div
           className="site-payCalcPanel"
           role="dialog"
@@ -54,19 +90,22 @@ export function PaymentCalculatorWidget() {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        className={`site-payCalcFab${open ? " site-payCalcFabOpen" : ""}`}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-controls="site-payCalc-title"
-        aria-label={open ? "Close payment calculator" : "Open payment calculator"}
-      >
-        <span className="site-payCalcFabInner">
-          <CalculatorIcon />
-          <span className="site-payCalcFabLabel">Calculator</span>
-        </span>
-      </button>
+      {mobileHeader ? (
+        <Link to="/payment-calculator" className="site-payCalcFab" aria-label="Payment calculator">
+          {fabInner}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          className={`site-payCalcFab${open ? " site-payCalcFabOpen" : ""}`}
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-controls="site-payCalc-title"
+          aria-label={open ? "Close payment calculator" : "Open payment calculator"}
+        >
+          {fabInner}
+        </button>
+      )}
     </div>
   );
 }

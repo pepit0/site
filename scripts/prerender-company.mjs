@@ -3,6 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildOrganizationJsonLd, formatAddressLines, loadPublicBusinessProfile } from "./lib/business-public.mjs";
 import { COMPANY_PRERENDER_PAGES } from "./lib/company-seo.mjs";
+import {
+  buildAggregateRatingJsonLd,
+  buildReviewJsonLd,
+  loadGoogleReviews
+} from "./lib/google-reviews.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +29,7 @@ if (!siteUrl) {
 
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
+const googleReviews = loadGoogleReviews(root);
 
 function escapeHtml(s) {
   return String(s)
@@ -71,6 +77,25 @@ function companyBody(page) {
     .map((line) => `<p>${escapeHtml(line)}</p>`)
     .join("\n");
 
+  if (page.path === "/reviews") {
+    const reviewItems = googleReviews.reviews
+      .slice(0, 8)
+      .map(
+        (review) =>
+          `<li><strong>${escapeHtml(review.authorName)}</strong> — ${escapeHtml(review.rating)}/5: ${escapeHtml(review.text)}</li>`
+      )
+      .join("\n");
+
+    return `
+    <article>
+      <h1>${escapeHtml(page.h1)}</h1>
+      <p>${escapeHtml(page.intro)}</p>
+      <p>${googleReviews.summary.ratingValue} out of 5 from ${googleReviews.summary.reviewCount} Google reviews.</p>
+      <ul>${reviewItems}</ul>
+      <p><a href="/apply">Apply for financing</a></p>
+    </article>`;
+  }
+
   return `
     <article>
       <h1>${escapeHtml(page.h1)}</h1>
@@ -85,12 +110,21 @@ function companyBody(page) {
 let written = 0;
 
 for (const page of COMPANY_PRERENDER_PAGES) {
-  const pageType = page.path === "/about" ? "AboutPage" : "ContactPage";
+  const pageType =
+    page.path === "/about" ? "AboutPage" : page.path === "/contact" ? "ContactPage" : "WebPage";
   const organization = buildOrganizationJsonLd(profile, {
     pageUrl: `${siteUrl}/`,
     description: page.description,
-    types: ["Organization", "AutomotiveBusiness"]
+    types:
+      page.path === "/reviews"
+        ? ["LocalBusiness", "AutomotiveBusiness", "FinancialService"]
+        : ["Organization", "AutomotiveBusiness"]
   });
+
+  if (page.path === "/reviews") {
+    organization.aggregateRating = buildAggregateRatingJsonLd(googleReviews.summary);
+    organization.review = googleReviews.reviews.map(buildReviewJsonLd);
+  }
 
   const pageLd = {
     "@context": "https://schema.org",
@@ -116,4 +150,4 @@ for (const page of COMPANY_PRERENDER_PAGES) {
   written += 1;
 }
 
-console.log(`[prerender-company] wrote ${written} HTML file(s) under dist/about/, dist/contact/, and dist/payment-calculator/`);
+console.log(`[prerender-company] wrote ${written} HTML file(s) under dist/about/, dist/contact/, dist/payment-calculator/, and dist/reviews/`);

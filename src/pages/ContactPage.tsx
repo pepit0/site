@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { BusinessNapBlock } from "../components/BusinessNapBlock";
+import { ContactLocationMap } from "../components/ContactLocationMap";
 import { CONTACT_HERO, CONTACT_REASONS, CONTACT_SEO } from "../data/aboutContactCopy";
 import { ContactPageJsonLd } from "../seo/ContactPageJsonLd";
 import { Seo } from "../seo/Seo";
 
 export function ContactPage() {
   return (
-    <div className="company-page">
+    <div className="company-page contact-page">
       <Seo title={CONTACT_SEO.title} description={CONTACT_SEO.description} path="/contact" />
       <ContactPageJsonLd />
 
@@ -15,17 +16,23 @@ export function ContactPage() {
         <p className="page-subtitle">{CONTACT_HERO.tagline}</p>
       </header>
 
-      <div className="company-pageGrid">
-        <article className="card card-pad company-pageMain">
+      <div className="company-pageGrid contact-pageGrid">
+        <article className="card card-pad company-pageMain contact-pageMain">
           {CONTACT_HERO.intro.map((paragraph) => (
             <p key={paragraph.slice(0, 48)} className="company-pageParagraph">
               {paragraph}
             </p>
           ))}
 
-          <div className="company-pageNapWrap">
-            <h2 className="company-pageSectionHeading">Reach us</h2>
-            <BusinessNapBlock showChatButton />
+          <div className="contact-pageReach">
+            <div className="contact-pageReachInfo">
+              <h2 className="company-pageSectionHeading">Reach us</h2>
+              <BusinessNapBlock showChatButton showDirections={false} />
+            </div>
+
+            <div className="contact-pageReachMap">
+              <ContactLocationMap embedded />
+            </div>
           </div>
 
           <dl className="company-contactList">
@@ -45,7 +52,7 @@ export function ContactPage() {
           </div>
         </article>
 
-        <aside className="card card-pad company-pageAside" aria-labelledby="contact-reasons-heading">
+        <aside className="card card-pad company-pageAside contact-pageAside" aria-labelledby="contact-reasons-heading">
           <h2 id="contact-reasons-heading" className="company-pageAsideTitle">
             How can we help?
           </h2>

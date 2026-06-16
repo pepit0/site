@@ -13,6 +13,7 @@ export type BlogPost = {
   thumbnailAlt: string;
   excerpt: string;
   body: readonly string[];
+  bodyHtml?: string;
 };
 
 export const BLOG_HUB_SEO = {

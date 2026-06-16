@@ -5,12 +5,8 @@ export const HOME_PREVIEW_HERO = {
   hook: "Ready to unlock your dream ride this summer?",
   /** In-document H1 for SEO (visually hidden; complements page title / meta) */
   seoH1: "Powersports and motorsports financing in Canada",
-  subhook: [
-    "Powersports, motorsports and automotive financing,",
-    "ATV, motorcycle, boat, auto, and sled loans anywhere in Canada"
-  ] as const,
-  lede:
-    "ATVs, bikes, side-by-sides, boats, jet skis, sleds, trailers, cars, and more. Fast help. Easy payments. Get riding sooner.",
+  /** One short line under the hook — keep it human, not keyword-stuffed */
+  tagline: "Free to apply. No credit check until you say yes.",
   qualifyPrompt: "Start your application",
   qualifyAria: "Start your application for a ride loan",
   noCreditCheck: "(No credit check unless you say yes)",

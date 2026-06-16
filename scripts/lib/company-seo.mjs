@@ -27,5 +27,14 @@ export const COMPANY_PRERENDER_PAGES = [
     h1: "Payment calculator",
     intro:
       "Enter a unit price, pick your term and province, and see a rough monthly or bi-weekly payment at 6.99% interest."
+  },
+  {
+    path: "/reviews",
+    title: "Customer reviews",
+    description:
+      "Read Google reviews for Temptation Motorsports in Sherwood Park, Alberta. Powersports and motorsports financing and rides for sale across Canada.",
+    h1: "What our customers are saying",
+    intro:
+      "Real reviews from our Google Business Profile — financing, inventory, and sell-your-ride help across Canada."
   }
 ];

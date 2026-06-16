@@ -18,6 +18,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { PaymentCalculatorPage } from "./pages/PaymentCalculatorPage";
 import { PreApprovalCompletePage } from "./pages/PreApprovalCompletePage";
 import { PreApprovalPage } from "./pages/PreApprovalPage";
+import { ReviewsPage } from "./pages/ReviewsPage";
 import { SellYourRideApplyPage } from "./pages/SellYourRideApplyPage";
 import { SellYourRidePage } from "./pages/SellYourRidePage";
 import { StaffPage } from "./pages/StaffPage";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="blog" element={<BlogHubPage />} />
         <Route path="blog/:slug" element={<BlogPostPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="reviews" element={<ReviewsPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="payment-calculator" element={<PaymentCalculatorPage />} />
         <Route path="login" element={<LoginPage />} />

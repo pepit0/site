@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "ratingValue": 5,
+    "reviewCount": 8,
+    "sourceLabel": "Google"
+  },
+  "reviews": [
+    {
+      "id": "hammad-bin-arif-2026-06-15",
+      "authorName": "Hammad Bin Arif",
+      "rating": 5,
+      "text": "I stopped by Temptation Motorsports while looking for a watercraft and was pleasantly surprised by the huge variety of inventory they had available. The staff were friendly, knowledgeable, and took the time to help me find the right option without any pressure. They had a great selection, really excellent customer service, and i overall had a great experience with them. I’d definitely recommend checking them out.",
+      "publishedAt": "2026-06-15",
+      "relativeTime": "in the last week"
+    },
+    {
+      "id": "jaguar-scarfi-2026-06-15",
+      "authorName": "Jaguar Scarfi",
+      "rating": 5,
+      "text": "These guys were really helpful honestly had no idea what I was doing and they helped me every step of the way",
+      "publishedAt": "2026-06-15",
+      "relativeTime": "in the last week"
+    },
+    {
+      "id": "parker-go-2026-06-15",
+      "authorName": "Parker Go",
+      "rating": 5,
+      "text": "Kruize & Danny helped me find a camper trailer, honestly didn’t think it was going to happen but here we are. Thanks fellas!",
+      "publishedAt": "2026-06-15",
+      "relativeTime": "in the last week"
+    },
+    {
+      "id": "geovanni-banan-2026-06-13",
+      "authorName": "Geovanni Banan",
+      "rating": 5,
+      "text": "Daniel got me off the bus and onto a bike 🤙",
+      "publishedAt": "2026-06-13",
+      "relativeTime": "in the last week"
+    },
+    {
+      "id": "slick-shine-2026-06-13",
+      "authorName": "Slick Shine",
+      "rating": 5,
+      "text": "Kruize helped me find a boat, very friendly guy and no pressure. Helped me find something that’s actually within my budget too",
+      "publishedAt": "2026-06-13",
+      "relativeTime": "in the last week"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import { BlogBodyEditor } from "../components/BlogBodyEditor";
 import { createBlogPost, fetchAdminBlogPosts } from "../lib/blogAdmin";
 import { formatBlogDate } from "../data/blogPosts";
 import {
@@ -15,14 +16,14 @@ import { Seo } from "../seo/Seo";
 type BlogForm = {
   title: string;
   publishedAt: string;
-  body: string;
+  bodyHtml: string;
   thumbnailAlt: string;
 };
 
 const DEFAULT_FORM: BlogForm = {
   title: "",
   publishedAt: todayIsoDate(),
-  body: "",
+  bodyHtml: "",
   thumbnailAlt: ""
 };
 
@@ -96,7 +97,7 @@ export function AdminBlogPage() {
     const result = await createBlogPost(supabase, {
       title: form.title,
       publishedAt: form.publishedAt,
-      bodyRaw: form.body,
+      bodyHtml: form.bodyHtml,
       thumbnailFile,
       thumbnailAlt: form.thumbnailAlt,
       createdBy: user?.id
@@ -198,16 +199,14 @@ export function AdminBlogPage() {
               <label className="form-label" htmlFor="blog-body">
                 Body
               </label>
-              <textarea
-                id="blog-body"
-                className="input admin-blogBodyInput"
-                rows={12}
-                value={form.body}
-                onChange={(e) => updateField("body", e.target.value)}
-                placeholder="Write your post here. Separate paragraphs with a blank line."
-                required
+              <BlogBodyEditor
+                value={form.bodyHtml}
+                onChange={(bodyHtml) => updateField("bodyHtml", bodyHtml)}
+                onSuggestTitle={(title) => {
+                  setForm((prev) => (prev.title.trim() ? prev : { ...prev, title }));
+                }}
+                disabled={submitting}
               />
-              <p className="form-hint">Separate paragraphs with a blank line.</p>
             </div>
 
             {formError ? (
@@ -233,7 +232,8 @@ export function AdminBlogPage() {
           </h2>
           {loadError ? (
             <p className="form-error" role="alert">
-              {loadError}. Run <code>sql/marketing/28_blog_posts.sql</code> on Supabase if this is a new setup.
+              {loadError}. Run <code>sql/marketing/28_blog_posts.sql</code> and{" "}
+              <code>sql/marketing/29_blog_posts_body_html.sql</code> on Supabase if this is a new setup.
             </p>
           ) : null}
           {loadingPosts ? <p className="admin-blogMuted">Loading posts…</p> : null}

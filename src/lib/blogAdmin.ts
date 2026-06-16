@@ -1,11 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   BLOG_IMAGES_BUCKET,
-  buildBlogExcerpt,
-  parseBodyParagraphs,
   slugifyBlogTitle,
   type BlogPostRow
 } from "./blogPostsApi";
+import { buildExcerptFromHtml, htmlToParagraphs, isBlogBodyHtmlEmpty, sanitizeBlogHtml } from "./blogBodyHtml";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120);
@@ -45,7 +44,7 @@ export async function buildUniqueBlogSlug(client: SupabaseClient, title: string)
 export type CreateBlogPostInput = {
   title: string;
   publishedAt: string;
-  bodyRaw: string;
+  bodyHtml: string;
   thumbnailFile: File;
   thumbnailAlt: string;
   createdBy: string | undefined;
@@ -58,7 +57,10 @@ export async function createBlogPost(
   const title = input.title.trim();
   if (!title) return { error: "Enter a title." };
 
-  const paragraphs = parseBodyParagraphs(input.bodyRaw);
+  const bodyHtml = sanitizeBlogHtml(input.bodyHtml);
+  if (isBlogBodyHtmlEmpty(bodyHtml)) return { error: "Enter at least one paragraph in the body." };
+
+  const paragraphs = htmlToParagraphs(bodyHtml);
   if (paragraphs.length === 0) return { error: "Enter at least one paragraph in the body." };
 
   const publishedAt = input.publishedAt.trim();
@@ -70,8 +72,8 @@ export async function createBlogPost(
   if ("error" in upload) return { error: upload.error };
 
   const slug = await buildUniqueBlogSlug(client, title);
-  const excerpt = buildBlogExcerpt(paragraphs[0] ?? "");
-  const seoDescription = buildBlogExcerpt(paragraphs[0] ?? "", 320);
+  const excerpt = buildExcerptFromHtml(bodyHtml);
+  const seoDescription = buildExcerptFromHtml(bodyHtml, 320);
 
   const { data, error } = await client
     .from("blog_posts")
@@ -81,6 +83,7 @@ export async function createBlogPost(
       seo_description: seoDescription,
       excerpt,
       body_paragraphs: paragraphs,
+      body_html: bodyHtml,
       thumbnail_path: upload.path,
       thumbnail_alt: input.thumbnailAlt.trim() || title,
       published_at: publishedAt,

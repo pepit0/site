@@ -47,6 +47,26 @@ export function optionalGoogleMapsUrl(): string | undefined {
   return readEnv("VITE_PUBLIC_BUSINESS_GOOGLE_MAPS_URL");
 }
 
+/** Single-location map iframe for /contact (no locator sidebar). */
+export function optionalGoogleMapsEmbedUrl(): string | undefined {
+  return readEnv("VITE_PUBLIC_BUSINESS_GOOGLE_MAPS_EMBED_URL");
+}
+
+export function getContactMapEmbedUrl(): string {
+  const custom = optionalGoogleMapsEmbedUrl();
+  if (custom) return custom;
+
+  const geo = optionalBusinessGeo();
+  if (geo) {
+    return `https://maps.google.com/maps?q=${geo.latitude},${geo.longitude}&hl=en&z=15&output=embed`;
+  }
+
+  const query = encodeURIComponent(
+    `${BUSINESS_NAME}, ${BUSINESS_LOCATION_DEFAULTS.city}, ${BUSINESS_LOCATION_DEFAULTS.regionCode}, ${BUSINESS_LOCATION_DEFAULTS.country}`
+  );
+  return `https://maps.google.com/maps?q=${query}&hl=en&z=14&output=embed`;
+}
+
 export function optionalBusinessHoursLabel(): string | undefined {
   return readEnv("VITE_PUBLIC_BUSINESS_HOURS");
 }
@@ -102,7 +122,7 @@ export function getPublicBusinessProfile(): PublicBusinessProfile {
 
 export function formatBusinessAddressLines(profile: PublicBusinessProfile): string[] {
   const cityLine = [profile.city, profile.regionCode, profile.postalCode].filter(Boolean).join(", ");
-  return [profile.streetAddress, cityLine, profile.country].filter(Boolean) as string[];
+  return [profile.streetAddress, cityLine].filter(Boolean) as string[];
 }
 
 export function formatBusinessAddressOneLine(profile: PublicBusinessProfile): string {

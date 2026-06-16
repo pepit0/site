@@ -10,6 +10,7 @@ export type BlogPostRow = {
   seo_description: string;
   excerpt: string;
   body_paragraphs: string[];
+  body_html: string | null;
   thumbnail_path: string | null;
   thumbnail_alt: string;
   published_at: string;
@@ -67,7 +68,8 @@ export function mapBlogPostRow(client: SupabaseClient, row: BlogPostRow): BlogPo
     thumbnail: row.thumbnail_path ? blogPhotoPublicUrl(client, row.thumbnail_path) : "",
     thumbnailAlt: row.thumbnail_alt || row.title,
     excerpt: row.excerpt,
-    body: row.body_paragraphs
+    body: row.body_paragraphs,
+    bodyHtml: row.body_html ?? undefined
   };
 }
 

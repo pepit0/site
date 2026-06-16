@@ -49,6 +49,12 @@ export const CONTACT_HERO = {
   ]
 } as const;
 
+/** Google Maps embed on the Contact page (heading + iframe title). */
+export const CONTACT_LOCATION_MAP = {
+  heading: "Find us on the map",
+  iframeTitle: "Temptation Motorsports location map"
+} as const;
+
 export const CONTACT_REASONS = [
   {
     title: "Financing help",

@@ -5,7 +5,7 @@ import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
 import { fetchPublicBlogPosts } from "./lib/fetch-public-blog.mjs";
 import { FINANCING_PRERENDER_PAGES } from "./lib/financing-seo.mjs";
 import { BLOG_HUB_SEO } from "./lib/blog-seo.mjs";
-import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
+import { loadViteBuildEnv, readViteEnvVar } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
@@ -52,6 +52,7 @@ const staticUrls = [
   ...financingUrls,
   ...blogUrls,
   { loc: "/about", priority: "0.75", changefreq: "monthly" },
+  { loc: "/reviews", priority: "0.78", changefreq: "weekly" },
   { loc: "/contact", priority: "0.75", changefreq: "monthly" },
   { loc: "/payment-calculator", priority: "0.82", changefreq: "monthly" },
   { loc: "/apply", priority: "0.8", changefreq: "weekly" },
@@ -112,3 +113,9 @@ if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemap, "utf8");
 fs.writeFileSync(path.join(publicDir, "robots.txt"), robots, "utf8");
 console.log("[seo-prebuild] wrote public/sitemap.xml and public/robots.txt");
+
+const googlePlacesKey = readViteEnvVar(root, "GOOGLE_PLACES_API_KEY");
+if (googlePlacesKey) {
+  const { syncGoogleReviews } = await import("./sync-google-reviews.mjs");
+  await syncGoogleReviews(root);
+}

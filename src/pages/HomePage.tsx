@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
-import logoUrl from "../assets/logo.png";
 import { PageSlideLink } from "../components/PageSlideLink";
+import { HomeReviewsSection } from "../components/HomeReviewsSection";
 import { HOME_PREVIEW_SLIDESHOW, HOME_PREVIEW_SLIDESHOW_MS } from "../data/homePreviewSlideshow";
 import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
 import { homeHeroHotspotsForSidebar, HOME_HERO_HOTSPOTS } from "../data/homeHeroHotspots";
@@ -149,15 +149,6 @@ export function HomePage() {
           ))}
         </div>
 
-        <img
-          src={logoUrl}
-          alt="Temptation Motorsports"
-          className="home-previewHeroLogo home-previewHeroLogo--overlay"
-          width={400}
-          height={200}
-          decoding="async"
-        />
-
         <div className="home-content home-previewContent">
           <div className="home-previewContentInner">
             <section className="home-previewHero" aria-labelledby="home-hook">
@@ -165,14 +156,7 @@ export function HomePage() {
                 <span className="home-previewHookDisplay">{HOME_PREVIEW_HERO.hook}</span>
                 <span className="visually-hidden">{HOME_PREVIEW_HERO.seoH1}</span>
               </h1>
-              <p className="home-previewSubhook">
-                {HOME_PREVIEW_HERO.subhook.map((line) => (
-                  <span key={line} className="home-previewSubhookLine">
-                    {line}
-                  </span>
-                ))}
-              </p>
-              <p className="home-previewLede">{HOME_PREVIEW_HERO.lede}</p>
+              <p className="home-previewTagline">{HOME_PREVIEW_HERO.tagline}</p>
 
               <div className="home-previewCtaBlock">
                 <div className="home-previewCtaRow">
@@ -326,6 +310,8 @@ export function HomePage() {
         </button>
         </div>
       ) : null}
+
+      <HomeReviewsSection />
 
       <section className="home-seoIntro" aria-labelledby="home-seo-heading">
         <div className="home-seoIntroInner">

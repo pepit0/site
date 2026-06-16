@@ -27,6 +27,7 @@ export function parsePublicBlogRow(row, supabaseUrl) {
     publishedAt: r.published_at.slice(0, 10),
     excerpt: r.excerpt,
     body,
+    bodyHtml: typeof r.body_html === "string" && r.body_html.trim() ? r.body_html : null,
     thumbnailUrl
   };
 }
@@ -61,7 +62,7 @@ export async function fetchPublicBlogPosts(config) {
   const url = new URL(baseUrl);
   url.searchParams.set(
     "select",
-    "slug,title,seo_description,excerpt,body_paragraphs,thumbnail_path,published_at"
+    "slug,title,seo_description,excerpt,body_paragraphs,body_html,thumbnail_path,published_at"
   );
   url.searchParams.set("order", "published_at.desc");
 

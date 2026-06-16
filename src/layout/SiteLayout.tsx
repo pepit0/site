@@ -57,27 +57,6 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               decoding="async"
             />
           </NavLink>
-          <div className="site-headerActions">
-            <NavLink
-              to="/apply"
-              className={`site-headerBarCta${hasResumeDraft ? " site-headerBarCta--resume" : ""}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {hasResumeDraft ? "Resume" : "Apply"}
-            </NavLink>
-            <button
-              type="button"
-              className="site-navToggle"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="site-main-nav"
-              onClick={() => setMobileMenuOpen((open) => !open)}
-            >
-              <span />
-              <span />
-              <span />
-            </button>
-          </div>
           <nav id="site-main-nav" className={`site-nav${mobileMenuOpen ? " site-navOpen" : ""}`} aria-label="Main">
             <NavLink to="/" className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`} end>
               Home
@@ -101,14 +80,6 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Blog
             </NavLink>
             <NavLink
-              to="/payment-calculator"
-              className={({ isActive }) =>
-                `site-navLink site-navLinkMobileOnly${isActive ? " site-navLinkActive" : ""}`
-              }
-            >
-              Payment calculator
-            </NavLink>
-            <NavLink
               to="/contact"
               className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
             >
@@ -124,6 +95,28 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
             </NavLink>
             {navVariant === "crm" ? <SiteNavCrm /> : <SiteNavMarketing />}
           </nav>
+          <div className="site-headerActions">
+            <NavLink
+              to="/apply"
+              className={`site-headerBarCta${hasResumeDraft ? " site-headerBarCta--resume" : ""}`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {hasResumeDraft ? "Resume" : "Apply"}
+            </NavLink>
+            <PaymentCalculatorWidget />
+            <button
+              type="button"
+              className="site-navToggle"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="site-main-nav"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
         </div>
       </header>
       <main className="site-main" key={location.pathname}>
@@ -163,6 +156,9 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   <Link to="/about">About</Link>
                 </li>
                 <li>
+                  <Link to="/reviews">Reviews</Link>
+                </li>
+                <li>
                   <Link to="/contact">Contact</Link>
                 </li>
               </ul>
@@ -192,7 +188,6 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
         </div>
       </footer>
       <SiteChatMount />
-      <PaymentCalculatorWidget />
     </div>
   );
 }
