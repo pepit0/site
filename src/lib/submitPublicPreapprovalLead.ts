@@ -4,7 +4,7 @@ export type PublicPreapprovalPayload = {
   marketingLeadId?: string | null;
   displayName: string;
   email: string | null;
-  phone: string;
+  phone: string | null;
   dateOfBirth: string;
   street: string;
   line2: string;
@@ -54,7 +54,7 @@ export async function submitPublicPreapprovalLead(
   const { data, error } = await supabase.rpc("submit_public_preapproval_lead", {
     p_display_name: payload.displayName,
     p_email: nullIfEmpty(payload.email ?? ""),
-    p_phone: payload.phone,
+    p_phone: nullIfEmpty(payload.phone ?? ""),
     p_date_of_birth: payload.dateOfBirth,
     p_street: payload.street,
     p_line2: payload.line2.length > 0 ? payload.line2 : null,

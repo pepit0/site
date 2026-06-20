@@ -7,6 +7,7 @@ import { AdminCalculatorPage } from "./pages/AdminCalculatorPage";
 import { AdminInventoryPage } from "./pages/AdminInventoryPage";
 import { AdminMarketplaceCompPage } from "./pages/AdminMarketplaceCompPage";
 import { ContactPage } from "./pages/ContactPage";
+import { FaqPage } from "./pages/FaqPage";
 import { BlogHubPage } from "./pages/BlogHubPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { FinancingHubPage } from "./pages/FinancingHubPage";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="about" element={<AboutPage />} />
         <Route path="reviews" element={<ReviewsPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="faq" element={<FaqPage />} />
         <Route path="payment-calculator" element={<PaymentCalculatorPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<Navigate to="/admin/inventory" replace />} />

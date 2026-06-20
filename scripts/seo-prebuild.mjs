@@ -57,7 +57,8 @@ const staticUrls = [
   { loc: "/payment-calculator", priority: "0.82", changefreq: "monthly" },
   { loc: "/apply", priority: "0.8", changefreq: "weekly" },
   { loc: "/sell-your-ride", priority: "0.8", changefreq: "weekly" },
-  { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" }
+  { loc: "/sell-your-ride/apply", priority: "0.7", changefreq: "monthly" },
+  { loc: "/faq", priority: "0.72", changefreq: "monthly" }
 ];
 
 /** @type {{ loc: string; priority: string; changefreq: string; lastmod: string }[]} */
@@ -68,13 +69,14 @@ if (supabaseUrl && supabaseAnonKey) {
   if (error) {
     console.warn(`[seo-prebuild] Could not fetch inventory for sitemap (${error}). Static URLs only.`);
   } else {
-    inventoryUrls = rows.map((row) => ({
+    const indexableRows = rows.filter((row) => row.status !== "Sold");
+    inventoryUrls = indexableRows.map((row) => ({
       loc: `/inventory/${row.id}`,
-      priority: row.status === "Sold" ? "0.5" : "0.7",
+      priority: "0.7",
       changefreq: row.status === "Available" ? "daily" : "weekly",
       lastmod: (row.updated_at || defaultLastmod).slice(0, 10)
     }));
-    console.log(`[seo-prebuild] ${inventoryUrls.length} inventory unit URL(s) for sitemap`);
+    console.log(`[seo-prebuild] ${inventoryUrls.length} inventory unit URL(s) for sitemap (${rows.length - indexableRows.length} sold omitted)`);
   }
 } else {
   console.warn(

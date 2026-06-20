@@ -1,7 +1,7 @@
 {
   "summary": {
     "ratingValue": 5,
-    "reviewCount": 8,
+    "reviewCount": 7,
     "sourceLabel": "Google"
   },
   "reviews": [
@@ -35,7 +35,7 @@
       "rating": 5,
       "text": "Daniel got me off the bus and onto a bike 🤙",
       "publishedAt": "2026-06-13",
-      "relativeTime": "in the last week"
+      "relativeTime": "a week ago"
     },
     {
       "id": "danny-pepito-2026-06-10",
@@ -43,7 +43,7 @@
       "rating": 5,
       "text": "Honestly when I first applied I genuinely did not think I would be approved with my current situation but they told me it was worth a shot. Kruize helped me find a dirt bike and somehow got me approved, everything was quick and easy got it done in 2 days. Says they're closed Sat/Sun but he still helped me over the weekend. Thanks guys, you made my summer :)",
       "publishedAt": "2026-06-10",
-      "relativeTime": "in the last week"
+      "relativeTime": "a week ago"
     }
   ]
 }

@@ -24,6 +24,8 @@ After 30 minutes with no edits, **`promote_due_preapproval_partials()`** (schedu
 
 If partials fail with **“Consent to be contacted is required”**, re-run [`sql/crm/crm_marketing_ingest_bridge.sql`](crm/crm_marketing_ingest_bridge.sql) on the **CRM** project so ingest treats rows with `wizard_snapshot` / `wizard_step` as partial even when `application_status` is omitted from the webhook body.
 
+If full submits fail with **“Valid 10-digit phone is required”**, re-run the same CRM bridge SQL — phone is optional for both partial and submitted applications (10 digits when provided).
+
 **This is not instant.** Full submits appear in CRM immediately; partials appear only after the idle window + cron promotion + webhook.
 
 ### Expected timeline (testing with `28`)

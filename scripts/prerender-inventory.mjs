@@ -59,7 +59,8 @@ function buildPrerenderedHtml({
   description,
   canonicalPath,
   jsonLdObjects,
-  bodyHtml
+  bodyHtml,
+  robots = "index, follow"
 }) {
   const fullTitle = title.includes("Temptation Motorsports")
     ? title
@@ -75,6 +76,7 @@ function buildPrerenderedHtml({
     /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
     `<meta name="description" content="${escapeHtml(description)}" />`
   );
+  html = html.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/i, "");
 
   const headInject = `
     <link rel="canonical" href="${escapeHtml(canonical)}" />
@@ -82,7 +84,7 @@ function buildPrerenderedHtml({
     <meta property="og:title" content="${escapeHtml(fullTitle)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${escapeHtml(canonical)}" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="${escapeHtml(robots)}" />
     ${jsonLdScripts}`;
 
   html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
@@ -125,9 +127,11 @@ function inventoryListBody(rows) {
     <ul>${items}</ul>`;
 }
 
+const indexableRows = rows.filter((row) => row.status !== "Sold");
+
 let written = 0;
 
-for (const row of rows) {
+for (const row of indexableRows) {
   const canonicalPath = `/inventory/${row.id}`;
   const title = inventoryUnitSeoTitle(row);
   const description = inventoryUnitSeoDescription(row);
@@ -146,14 +150,14 @@ for (const row of rows) {
   written += 1;
 }
 
-const listLd = buildInventoryItemListJsonLd(rows, { siteOrigin: siteUrl, supabaseUrl });
+const listLd = buildInventoryItemListJsonLd(indexableRows, { siteOrigin: siteUrl, supabaseUrl });
 const listHtml = buildPrerenderedHtml({
   title: "Inventory",
   description:
     "Browse motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, and trailers. Call for pricing. Financing through Temptation Motorsports, Edmonton.",
   canonicalPath: "/inventory",
   jsonLdObjects: [listLd],
-  bodyHtml: inventoryListBody(rows)
+  bodyHtml: inventoryListBody(indexableRows)
 });
 
 const listDir = path.join(distDir, "inventory");

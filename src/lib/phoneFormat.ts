@@ -22,11 +22,11 @@ export function normalizeNanpTo10Digits(raw: string): string | null {
   return n;
 }
 
-/** For API writes: valid 10-digit -> digits; else validation error message. */
+/** For API writes: valid 10-digit -> digits; blank -> null; invalid -> error. */
 export function normalizePhoneForStorage(raw: string): { value: string | null; error: string | null } {
   const trimmed = raw.trim();
   if (trimmed === "") {
-    return { value: null, error: "Phone number is required." };
+    return { value: null, error: null };
   }
   const n = normalizeNanpTo10Digits(trimmed);
   if (!n) {

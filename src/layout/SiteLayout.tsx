@@ -13,11 +13,14 @@ import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown
 import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { contactMailtoHref } from "../data/aboutContactCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
+import { formatBusinessAddressLines, getPublicBusinessProfile } from "../lib/businessPublic";
 import textLogoUrl from "../assets/textlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
 
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
   const location = useLocation();
+  const businessProfile = getPublicBusinessProfile();
+  const businessAddressLines = formatBusinessAddressLines(businessProfile);
   const { label: preapprovalNavLabel, hasResumeDraft } = usePreapprovalNavCta();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -126,47 +129,72 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
         <div className="site-footerInner">
           <div className="site-footerTop">
             <div className="site-footerBrand">
-              <img
-                src={bikerLogoUrl}
-                alt="Temptation Motorsports"
-                className="site-footerLogo"
-                width={320}
-                height={140}
-                decoding="async"
-              />
-              <p className="site-footerTagline">Powersports and motorsports financing plus rides for sale. We deliver all over Canada.</p>
+              <div className="site-footerBrandRow">
+                <img
+                  src={bikerLogoUrl}
+                  alt="Temptation Motorsports"
+                  className="site-footerLogo"
+                  width={320}
+                  height={140}
+                  decoding="async"
+                />
+                <Link to="/apply" className="site-footerCta">
+                  Apply for financing
+                </Link>
+              </div>
+              <p className="site-footerTagline">Powersports, leisure, marine and auto financing in Alberta and across Canada. We help people get approved, good, bad or no credit.</p>
             </div>
 
-            <nav className="site-footerCol" aria-label="Footer menu">
-              <p className="site-footerColLabel">Menu</p>
-              <ul className="site-footerMenu">
-                <li>
-                  <Link to="/inventory">Inventory</Link>
-                </li>
-                <li>
-                  <Link to="/financing">Financing</Link>
-                </li>
-                <li>
-                  <Link to="/apply">Apply</Link>
-                </li>
-                <li>
-                  <Link to="/sell-your-ride">Sell your ride</Link>
-                </li>
-                <li>
-                  <Link to="/about">About</Link>
-                </li>
-                <li>
-                  <Link to="/reviews">Reviews</Link>
-                </li>
-                <li>
-                  <Link to="/contact">Contact</Link>
-                </li>
-              </ul>
-            </nav>
+            <div className="site-footerNavGrid">
+              <nav className="site-footerCol" aria-label="Shop">
+                <p className="site-footerColLabel">Shop</p>
+                <ul className="site-footerLinks">
+                  <li>
+                    <Link to="/inventory">Inventory</Link>
+                  </li>
+                  <li>
+                    <Link to="/apply">Apply</Link>
+                  </li>
+                  <li>
+                    <Link to="/sell-your-ride">Sell your ride</Link>
+                  </li>
+                </ul>
+              </nav>
+
+              <nav className="site-footerCol" aria-label="Learn">
+                <p className="site-footerColLabel">Learn</p>
+                <ul className="site-footerLinks">
+                  <li>
+                    <Link to="/about">About</Link>
+                  </li>
+                  <li>
+                    <Link to="/financing">Financing</Link>
+                  </li>
+                  <li>
+                    <Link to="/reviews">Reviews</Link>
+                  </li>
+                </ul>
+              </nav>
+
+              <nav className="site-footerCol" aria-label="Help">
+                <p className="site-footerColLabel">Help</p>
+                <ul className="site-footerLinks">
+                  <li>
+                    <Link to="/contact">Contact us</Link>
+                  </li>
+                  <li>
+                    <Link to="/faq">FAQ</Link>
+                  </li>
+                  <li>
+                    <Link to="/chat">Chat</Link>
+                  </li>
+                </ul>
+              </nav>
+            </div>
 
             <div className="site-footerCol site-footerColContact">
               <p className="site-footerColLabel">Get in touch</p>
-              <ul className="site-footerContactList">
+              <ul className="site-footerLinks site-footerContactList">
                 <li>
                   <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a>
                 </li>
@@ -174,9 +202,23 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   <a href={contactMailtoHref()}>{SITE_CONTACT.email}</a>
                 </li>
               </ul>
-              <Link to="/apply" className="site-footerCta">
-                Apply for financing
-              </Link>
+              <address className="site-footerAddress">
+                {businessAddressLines.map((line) => (
+                  <span key={line} className="site-footerAddressLine">
+                    {line}
+                  </span>
+                ))}
+                {businessProfile.googleMapsUrl ? (
+                  <a
+                    className="site-footerDirections"
+                    href={businessProfile.googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Directions
+                  </a>
+                ) : null}
+              </address>
             </div>
           </div>
 

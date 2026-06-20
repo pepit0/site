@@ -20,8 +20,10 @@ import {
   formatInventoryPriceCad,
   inventoryPublicListPriceCad
 } from "../lib/inventoryPublicPrice";
+import { BreadcrumbJsonLd } from "../seo/BreadcrumbJsonLd";
 import {
   inventoryUnitCanonicalPath,
+  inventoryUnitPrimaryImage,
   inventoryUnitSeoDescription,
   inventoryUnitSeoTitle
 } from "../seo/inventoryStructuredData";
@@ -103,6 +105,11 @@ export function InventoryUnitDetailPage() {
   const title = row ? inventoryMakeModelTitle(row) : "Unit";
   const listPriceCad = row ? inventoryPublicListPriceCad(row) : null;
   const seoPath = unitId ? inventoryUnitCanonicalPath(unitId) : "/inventory";
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
+  const isSold = row?.status === "Sold";
+  const unitOgImage =
+    row && !isSold && supabaseUrl ? inventoryUnitPrimaryImage(row, supabaseUrl) : undefined;
+  const unitOgAlt = row ? `${row.year} ${inventoryMakeModelTitle(row)}` : undefined;
 
   return (
     <div className="inventory inventory-detail">
@@ -112,6 +119,15 @@ export function InventoryUnitDetailPage() {
             title={inventoryUnitSeoTitle(row)}
             description={inventoryUnitSeoDescription(row)}
             path={seoPath}
+            noindex={isSold}
+            ogImageUrl={unitOgImage}
+            ogImageAlt={unitOgAlt}
+          />
+          <BreadcrumbJsonLd
+            items={[
+              { name: "Inventory", path: "/inventory" },
+              { name: title, path: seoPath }
+            ]}
           />
           <InventoryProductJsonLd row={row} />
         </>

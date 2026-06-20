@@ -703,7 +703,7 @@ export function PreApprovalPage() {
       marketingLeadId: null,
       displayName,
       email: emailTrim,
-      phone: phoneDigits ?? "",
+      phone: phoneDigits,
       dateOfBirth: w.dob.trim(),
       street: w.street.trim(),
       line2: "",

@@ -582,15 +582,11 @@ begin
     v_phone := substr(v_phone, 2);
   end if;
 
-  if v_is_partial then
-    if length(v_phone) > 0 and length(v_phone) <> 10 then
-      return jsonb_build_object('ok', false, 'error', 'Phone must be 10 digits when provided.');
-    end if;
-    if length(v_phone) = 0 then
-      v_phone := null;
-    end if;
-  elsif length(v_phone) <> 10 then
-    return jsonb_build_object('ok', false, 'error', 'Valid 10-digit phone is required.');
+  if length(v_phone) > 0 and length(v_phone) <> 10 then
+    return jsonb_build_object('ok', false, 'error', 'Phone must be 10 digits when provided.');
+  end if;
+  if length(v_phone) = 0 then
+    v_phone := null;
   end if;
 
   if v_is_partial and length(v_dob_text) = 0 then

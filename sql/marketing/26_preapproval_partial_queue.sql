@@ -239,7 +239,7 @@ begin
       public._preapproval_snapshot_text(v_snap, array['lastName', 'last_name'])
     ));
     v_email := lower(coalesce(public._preapproval_snapshot_text(v_snap, array['email', 'email']), ''));
-    v_phone := coalesce(public._preapproval_snapshot_text(v_snap, array['phone', 'phone']), '');
+    v_phone := nullif(trim(coalesce(public._preapproval_snapshot_text(v_snap, array['phone', 'phone']), '')), '');
     v_dob := coalesce(public._preapproval_snapshot_text(v_snap, array['dob', 'date_of_birth']), '');
     v_street := coalesce(public._preapproval_snapshot_text(v_snap, array['street', 'street']), '');
     v_city := coalesce(public._preapproval_snapshot_text(v_snap, array['city', 'city']), '');
@@ -451,7 +451,7 @@ begin
     set
       display_name = trim(p_display_name),
       email = v_email,
-      phone = trim(p_phone),
+      phone = nullif(trim(coalesce(p_phone, '')), ''),
       date_of_birth = trim(p_date_of_birth),
       street = trim(p_street),
       line2 = nullif(trim(coalesce(p_line2, '')), ''),
@@ -522,7 +522,7 @@ begin
         new_id,
         trim(p_display_name),
         v_email,
-        trim(p_phone),
+        nullif(trim(coalesce(p_phone, '')), ''),
         trim(p_date_of_birth),
         trim(p_street),
         nullif(trim(coalesce(p_line2, '')), ''),
@@ -593,7 +593,7 @@ begin
   values (
     trim(p_display_name),
     v_email,
-    trim(p_phone),
+    nullif(trim(coalesce(p_phone, '')), ''),
     trim(p_date_of_birth),
     trim(p_street),
     nullif(trim(coalesce(p_line2, '')), ''),

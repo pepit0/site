@@ -146,7 +146,9 @@ export function InventoryPage() {
         description="See bikes, ATVs, sleds, side-by-sides, jet skis, and trailers in Edmonton. Call for price on every ride. Apply for a loan with Temptation Motorsports."
         path="/inventory"
       />
-      {rows.length > 0 ? <InventoryItemListJsonLd rows={rows} /> : null}
+      {rows.length > 0 ? (
+        <InventoryItemListJsonLd rows={rows.filter((row) => row.status !== "Sold")} />
+      ) : null}
       <header className="page-header">
         <h1 className="page-title">Rides for sale</h1>
       </header>

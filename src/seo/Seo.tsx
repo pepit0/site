@@ -16,13 +16,24 @@ export type SeoProps = {
   noindex?: boolean;
   /** Path under `public/` for og:image, default apple-touch-icon */
   ogImagePath?: string;
+  /** Absolute URL for og:image (e.g. unit photo). Overrides ogImagePath when set. */
+  ogImageUrl?: string;
+  ogImageAlt?: string;
 };
 
-export function Seo({ title, description, path, noindex, ogImagePath = DEFAULT_OG_IMAGE_PATH }: SeoProps) {
+export function Seo({
+  title,
+  description,
+  path,
+  noindex,
+  ogImagePath = DEFAULT_OG_IMAGE_PATH,
+  ogImageUrl,
+  ogImageAlt = DEFAULT_OG_IMAGE_ALT
+}: SeoProps) {
   const fullTitle = title.includes("Temptation Motorsports") ? title : `${title} | Temptation Motorsports`;
   const useAbsolute = hasPublicSiteOrigin() && !noindex;
   const canonical = useAbsolute ? absoluteUrl(path === "" ? "/" : path) : undefined;
-  const ogImage = useAbsolute ? absoluteUrl(ogImagePath) : undefined;
+  const ogImage = useAbsolute ? (ogImageUrl ?? absoluteUrl(ogImagePath)) : undefined;
 
   return (
     <Helmet prioritizeSeoTags>
@@ -38,14 +49,14 @@ export function Seo({ title, description, path, noindex, ogImagePath = DEFAULT_O
       {ogImage ? <meta property="og:image" content={ogImage} /> : null}
       {ogImage ? <meta property="og:image:width" content={String(DEFAULT_OG_IMAGE_WIDTH)} /> : null}
       {ogImage ? <meta property="og:image:height" content={String(DEFAULT_OG_IMAGE_HEIGHT)} /> : null}
-      {ogImage ? <meta property="og:image:alt" content={DEFAULT_OG_IMAGE_ALT} /> : null}
+      {ogImage ? <meta property="og:image:alt" content={ogImageAlt} /> : null}
       {useAbsolute ? <meta property="og:site_name" content="Temptation Motorsports" /> : null}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
-      {ogImage ? <meta name="twitter:image:alt" content={DEFAULT_OG_IMAGE_ALT} /> : null}
+      {ogImage ? <meta name="twitter:image:alt" content={ogImageAlt} /> : null}
     </Helmet>
   );
 }
