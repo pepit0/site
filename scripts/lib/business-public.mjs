@@ -23,8 +23,8 @@ export function loadPublicBusinessProfile(root) {
 
   return {
     name: "Temptation Motorsports",
-    phoneDisplay: "(587) 415-7424",
-    phoneTel: "+15874157424",
+    phoneDisplay: "(587) 205-5773",
+    phoneTel: "+15872055773",
     email: "temptationmotorsports@gmail.com",
     streetAddress: readViteEnvVar(root, "VITE_PUBLIC_BUSINESS_STREET_ADDRESS") || undefined,
     city: "Sherwood Park",

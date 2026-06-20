@@ -1,8 +1,8 @@
 /** Marketing + SEO copy for /apply (single source of truth). */
 
 export const SITE_CONTACT = {
-  phoneDisplay: "(587) 415-7424",
-  phoneTel: "+15874157424",
+  phoneDisplay: "(587) 205-5773",
+  phoneTel: "+15872055773",
   email: "temptationmotorsports@gmail.com"
 } as const;
 
