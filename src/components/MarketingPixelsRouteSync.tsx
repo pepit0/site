@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { trackMarketingPageView } from "../lib/marketingPixels";
 
 /**
- * Sends page views on client-side navigations (Meta + TikTok).
+ * Sends page views on client-side navigations (Meta + TikTok + GA4).
  * Skips the first render — index.html already fired the initial page load.
  */
 export function MarketingPixelsRouteSync() {
