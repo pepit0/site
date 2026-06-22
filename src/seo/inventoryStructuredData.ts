@@ -8,7 +8,8 @@ import {
 import {
   inventoryPublicListPriceCad,
   inventoryPublicPriceLabel,
-  schemaOfferPriceCad
+  schemaOfferPriceCad,
+  schemaOfferPriceValidUntil
 } from "../lib/inventoryPublicPrice";
 
 export { INVENTORY_CALL_FOR_PRICING } from "../lib/inventoryPublicPrice";
@@ -35,7 +36,12 @@ export function inventorySchemaAvailability(status: InventoryPublicStatus): stri
   }
 }
 
-/** Offer JSON-LD only when a public list price is set (matches visible page price). */
+/** True when Product JSON-LD should be emitted (public price, not sold). */
+export function inventoryRowHasProductJsonLd(row: InventoryPublicRow): boolean {
+  return row.status !== "Sold" && inventoryPublicListPriceCad(row) != null;
+}
+
+/** Offer JSON-LD when a public list price is set (matches visible page price). */
 export function buildInventoryProductOffer(
   row: InventoryPublicRow,
   options: { origin: string; offerUrl: string }
@@ -49,17 +55,24 @@ export function buildInventoryProductOffer(
     price: schemaOfferPriceCad(price),
     priceCurrency: "CAD",
     availability: inventorySchemaAvailability(row.status),
+    priceValidUntil: schemaOfferPriceValidUntil(row.updated_at),
     seller: inventorySeller(options.origin),
     itemCondition: "https://schema.org/UsedCondition"
   };
 }
 
-export function inventoryUnitSeoTitle(row: Pick<InventoryPublicRow, "year" | "make" | "model">): string {
-  return `${row.year} ${inventoryMakeModelTitle(row)}`;
+function inventoryUnitSeoStockLabel(row: Pick<InventoryPublicRow, "stock_number">): string {
+  return `Stock ${row.stock_number.trim()}`;
+}
+
+export function inventoryUnitSeoTitle(
+  row: Pick<InventoryPublicRow, "year" | "make" | "model" | "stock_number">
+): string {
+  return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)}`;
 }
 
 export function inventoryUnitSeoDescription(row: InventoryPublicRow): string {
-  return `${row.year} ${inventoryMakeModelTitle(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${inventoryPublicPriceLabel(row)}. View photos at Temptation Motorsports, Edmonton.`;
+  return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${inventoryPublicPriceLabel(row)}. View photos at Temptation Motorsports, Edmonton.`;
 }
 
 export function inventoryUnitCanonicalPath(unitId: string): string {
@@ -85,29 +98,33 @@ export function buildInventoryProductJsonLd(
   row: InventoryPublicRow,
   options: { supabaseUrl: string; siteOrigin?: string }
 ): Record<string, unknown> | null {
+  if (!inventoryRowHasProductJsonLd(row)) return null;
+
   const origin = options.siteOrigin ?? (hasPublicSiteOrigin() ? absoluteUrl("").replace(/\/$/, "") : "");
   if (!origin) return null;
 
   const path = inventoryUnitCanonicalPath(row.id);
   const url = `${origin}${path}`;
-  const title = inventoryMakeModelTitle(row);
   const image = inventoryUnitPrimaryImage(row, options.supabaseUrl);
   const offers = buildInventoryProductOffer(row, { origin, offerUrl: url });
+  if (!offers) return null;
 
+  const mpn = row.model.trim();
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${row.year} ${title}`,
+    name: inventoryUnitSeoTitle(row),
     description: inventoryUnitSeoDescription(row),
     url,
     sku: row.stock_number,
+    ...(mpn ? { mpn } : {}),
     category: row.category,
     brand: {
       "@type": "Brand",
       name: row.make
     },
     ...(image ? { image: [image] } : {}),
-    ...(offers ? { offers } : {}),
+    offers,
     additionalProperty: [
       {
         "@type": "PropertyValue",
@@ -144,17 +161,22 @@ function buildInventoryItemListElement(
   const listItem: Record<string, unknown> = {
     "@type": "ListItem",
     position: index + 1,
-    name: `${row.year} ${inventoryMakeModelTitle(row)}`,
+    name: inventoryUnitSeoTitle(row),
     url
   };
+
+  if (!inventoryRowHasProductJsonLd(row)) return listItem;
 
   const offer = buildInventoryProductOffer(row, { origin, offerUrl: url });
   if (!offer) return listItem;
 
   const image = supabaseUrl ? inventoryUnitPrimaryImage(row, supabaseUrl) : undefined;
+  const mpn = row.model.trim();
   listItem.item = {
     "@type": "Product",
-    name: `${row.year} ${inventoryMakeModelTitle(row)}`,
+    name: inventoryUnitSeoTitle(row),
+    sku: row.stock_number,
+    ...(mpn ? { mpn } : {}),
     ...(image ? { image } : {}),
     offers: offer
   };
@@ -162,7 +184,7 @@ function buildInventoryItemListElement(
 }
 
 /**
- * ItemList for /inventory. Units without a public price are plain ListItems (no Offer).
+ * ItemList for /inventory. Units without a public price are plain ListItems (no Product/Offer).
  * Units with list_price_cad include Product/Offer so Google gets a matching price field.
  */
 export function buildInventoryItemListJsonLd(

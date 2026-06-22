@@ -10,9 +10,16 @@ import { PaymentCalculatorWidget } from "../components/PaymentCalculatorWidget";
 import { TawkProvider } from "../components/chat/tawkContext";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
+import { VEHICLE_CATEGORIES } from "../data/inventory";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { contactMailtoHref } from "../data/aboutContactCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
+import {
+  INVENTORY_POPULAR_BRANDS,
+  inventoryCategoryBrowseLabel,
+  inventoryCategoryHref,
+  inventoryMakeSearchHref
+} from "../lib/inventoryRoutes";
 import { formatBusinessAddressLines, getPublicBusinessProfile } from "../lib/businessPublic";
 import textLogoUrl from "../assets/textlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
@@ -158,6 +165,22 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   <li>
                     <Link to="/sell-your-ride">Sell your ride</Link>
                   </li>
+                </ul>
+                <p className="site-footerSublistLabel">Browse by type</p>
+                <ul className="site-footerLinks site-footerSublist">
+                  {VEHICLE_CATEGORIES.map((category) => (
+                    <li key={category}>
+                      <Link to={inventoryCategoryHref(category)}>{inventoryCategoryBrowseLabel(category)}</Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="site-footerSublistLabel">Popular brands</p>
+                <ul className="site-footerLinks site-footerSublist">
+                  {INVENTORY_POPULAR_BRANDS.map((brand) => (
+                    <li key={brand}>
+                      <Link to={inventoryMakeSearchHref(brand)}>{brand}</Link>
+                    </li>
+                  ))}
                 </ul>
               </nav>
 

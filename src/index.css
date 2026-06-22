@@ -1002,6 +1002,28 @@ p {
   color: var(--accent);
 }
 
+.site-footerSublistLabel {
+  margin: 0.55rem 0 0.1rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.site-footerSublist {
+  margin-top: 0;
+}
+
+.site-footerSublist a {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.site-footerSublist a:hover {
+  color: var(--accent);
+}
+
 .site-footerCta {
   display: inline-flex;
   align-items: center;
@@ -5938,6 +5960,15 @@ p {
   color: var(--accent);
 }
 
+.inventory-cardCategoryLink {
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.inventory-cardCategoryLink:hover {
+  color: var(--accent-hover);
+}
+
 .inventory-status {
   font-size: 0.72rem;
   font-weight: 600;
@@ -6558,6 +6589,27 @@ p {
   white-space: pre-line;
 }
 
+.inventory-detailListingCopy {
+  margin: 0 0 0.75rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.inventory-detailListingCopy:last-of-type {
+  margin-bottom: 1.25rem;
+}
+
+.inventory-detailFinancingHeading {
+  margin: 0 0 0.65rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
 .inventory-detailDescriptionCtas {
   margin: 1rem 0 0;
   line-height: 1.65;
@@ -6585,6 +6637,58 @@ p {
   border-top: 1px solid var(--border);
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+.inventory-similar {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.inventory-similarHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.inventory-similarTitle {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  line-height: 1.2;
+}
+
+.inventory-similarBrowseLink {
+  font-size: 0.88rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.inventory-similarBrowseLink:hover {
+  color: var(--accent-hover);
+}
+
+.inventory-similarGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 520px) {
+  .inventory-similarGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .inventory-similarGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Legacy card media (admin previews may still use) */

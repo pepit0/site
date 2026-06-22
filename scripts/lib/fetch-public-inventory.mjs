@@ -1,3 +1,5 @@
+import { parseInventoryListPriceCad } from "./inventory-seo.mjs";
+
 const PUBLIC_STATUSES = new Set(["Available", "Pending", "Sold"]);
 const CATEGORIES = new Set([
   "Motorcycle",
@@ -46,6 +48,7 @@ export function parsePublicInventoryRow(row) {
     category: r.category,
     status: r.status,
     photo_paths,
+    list_price_cad: parseInventoryListPriceCad(r.list_price_cad),
     created_at: r.created_at,
     updated_at: r.updated_at
   };
@@ -70,7 +73,7 @@ export async function fetchPublicInventoryUnits(config) {
     const url = new URL(baseUrl);
     url.searchParams.set(
       "select",
-      "id,stock_number,year,make,model,odometer_km,category,status,photo_paths,created_at,updated_at"
+      "id,stock_number,year,make,model,odometer_km,category,status,photo_paths,list_price_cad,created_at,updated_at"
     );
     url.searchParams.set("order", "updated_at.desc");
     url.searchParams.set("limit", String(pageSize));

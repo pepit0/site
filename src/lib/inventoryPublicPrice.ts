@@ -33,3 +33,11 @@ export function inventoryPublicPriceLabel(row: Pick<InventoryPublicRow, "list_pr
 export function schemaOfferPriceCad(amount: number): string {
   return amount.toFixed(2);
 }
+
+/** Schema.org Offer.priceValidUntil — ISO date, 90 days after listing update. */
+export function schemaOfferPriceValidUntil(updatedAt: string): string {
+  const base = new Date(updatedAt);
+  const date = Number.isNaN(base.getTime()) ? new Date() : base;
+  date.setUTCDate(date.getUTCDate() + 90);
+  return date.toISOString().slice(0, 10);
+}

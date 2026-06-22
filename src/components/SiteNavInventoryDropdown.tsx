@@ -6,12 +6,9 @@ import {
   VEHICLE_CATEGORIES,
   type InventoryBrowseCategory
 } from "../data/inventory";
+import { inventoryCategoryHref } from "../lib/inventoryRoutes";
 
 const CLOSE_DELAY_MS = 150;
-
-function inventoryCategoryHref(category: Exclude<InventoryBrowseCategory, "all">): string {
-  return `/inventory?category=${encodeURIComponent(category)}`;
-}
 
 function isInventoryListingPath(pathname: string): boolean {
   return pathname === "/inventory";

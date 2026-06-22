@@ -5,11 +5,13 @@ import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
 import {
   buildInventoryItemListJsonLd,
   buildInventoryProductJsonLd,
+  buildInventoryUnitListingParagraphs,
   INVENTORY_CALL_FOR_PRICING,
   inventoryMakeModelTitle,
   inventoryUnitSeoDescription,
   inventoryUnitSeoTitle,
-  inventoryYearKmLine
+  inventoryYearKmLine,
+  pickSimilarInventoryUnits
 } from "./lib/inventory-seo.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
@@ -98,18 +100,68 @@ function buildPrerenderedHtml({
   return html;
 }
 
-function unitDetailBody(row) {
+function inventoryCategoryHref(category) {
+  return `/inventory?category=${encodeURIComponent(category)}`;
+}
+
+function inventoryCategoryBrowseLabel(category) {
+  switch (category) {
+    case "Motorcycle":
+      return "Motorcycles for sale";
+    case "ATV":
+      return "ATVs for sale";
+    case "Snowmobile":
+      return "Snowmobiles for sale";
+    case "Side by side":
+      return "Side-by-sides for sale";
+    case "Watercraft":
+      return "Watercraft for sale";
+    case "Trailer":
+      return "Trailers for sale";
+    default:
+      return `${category} for sale`;
+  }
+}
+
+function unitDetailBody(row, allRows) {
   const title = inventoryMakeModelTitle(row);
   const path = `/inventory/${row.id}`;
+  const listingParagraphs = buildInventoryUnitListingParagraphs(row)
+    .map((p) => `<p>${escapeHtml(p)}</p>`)
+    .join("\n      ");
+  const similarRows = pickSimilarInventoryUnits(row, allRows, 4);
+  const similarItems = similarRows
+    .map((similar) => {
+      const similarTitle = inventoryMakeModelTitle(similar);
+      const href = `/inventory/${similar.id}`;
+      return `<li><a href="${escapeHtml(href)}">${escapeHtml(`${similar.year} ${similarTitle}`)}</a></li>`;
+    })
+    .join("\n        ");
+  const similarSection =
+    similarRows.length > 0
+      ? `
+      <section aria-labelledby="prerender-similar-heading">
+        <h2 id="prerender-similar-heading">You might also like</h2>
+        <ul>
+        ${similarItems}
+        </ul>
+        <p><a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(inventoryCategoryBrowseLabel(row.category))}</a></p>
+      </section>`
+      : "";
   return `
-    <p><a href="/inventory">← Inventory</a></p>
+    <p><a href="/inventory">← Inventory</a> · <a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(row.category)}</a></p>
     <article>
       <p>${escapeHtml(row.category)} · ${escapeHtml(row.status)}</p>
       <h1>${escapeHtml(`${row.year} ${title}`)}</h1>
       <p>${escapeHtml(inventoryYearKmLine(row))}</p>
       <p class="inventory-prerenderPrice"><strong>${escapeHtml(INVENTORY_CALL_FOR_PRICING)}</strong></p>
       <p>Stock #${escapeHtml(row.stock_number)}</p>
+      <section aria-labelledby="prerender-listing-heading">
+        <h2 id="prerender-listing-heading">About this ride</h2>
+        ${listingParagraphs}
+      </section>
       <p><a href="${escapeHtml(path)}">View full listing</a></p>
+      ${similarSection}
     </article>`;
 }
 
@@ -140,8 +192,8 @@ for (const row of indexableRows) {
     title,
     description,
     canonicalPath,
-    jsonLdObjects: [productLd],
-    bodyHtml: unitDetailBody(row)
+    jsonLdObjects: productLd ? [productLd] : [],
+    bodyHtml: unitDetailBody(row, rows)
   });
 
   const outDir = path.join(distDir, "inventory", row.id);

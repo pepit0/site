@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { InventoryCallForPricingLink } from "../components/InventoryCallForPricingLink";
 import { InventoryMessageUsLink } from "../components/InventoryMessageUsLink";
 import { InventoryPhotoCarousel } from "../components/InventoryPhotoCarousel";
+import { InventorySimilarUnits } from "../components/InventorySimilarUnits";
 import {
   INVENTORY_UNIT_DESCRIPTION,
   inventoryMakeModelTitle,
@@ -13,6 +14,9 @@ import {
   type VehicleCategory
 } from "../data/inventory";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
+import { buildInventoryUnitListingParagraphs } from "../lib/inventoryUnitPageCopy";
+import { inventoryCategoryHref } from "../lib/inventoryRoutes";
+import { pickSimilarInventoryUnits } from "../lib/inventorySimilarUnits";
 import { recordInventoryView } from "../lib/recentInventoryViews";
 import { supabase } from "../lib/supabase";
 import { InventoryProductJsonLd } from "../seo/InventoryProductJsonLd";
@@ -38,9 +42,18 @@ function inventoryBackHref(fromCategory: VehicleCategory | "all" | undefined): s
   return "/inventory";
 }
 
-function InventoryUnitDescriptionBlock({ unitId }: { unitId: string }) {
+function InventoryUnitDescriptionBlock({ row, unitId }: { row: InventoryPublicRow; unitId: string }) {
+  const listingParagraphs = buildInventoryUnitListingParagraphs(row);
+
   return (
     <>
+      {listingParagraphs.map((paragraph) => (
+        <p key={paragraph.slice(0, 48)} className="inventory-detailListingCopy">
+          {paragraph}
+        </p>
+      ))}
+
+      <h3 className="inventory-detailFinancingHeading">Financing this ride</h3>
       <p className="inventory-detailDescriptionText">{INVENTORY_UNIT_DESCRIPTION}</p>
       <p className="inventory-detailDescriptionCtas">
         What&apos;s next?
@@ -63,36 +76,49 @@ export function InventoryUnitDetailPage() {
   const fromCategory = (location.state as LocationState)?.fromCategory;
 
   const [row, setRow] = useState<InventoryPublicRow | null>(null);
+  const [peerRows, setPeerRows] = useState<InventoryPublicRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!unitId) {
       setRow(null);
+      setPeerRows([]);
       setLoadError("Invalid unit.");
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
     setLoadError(null);
-    const { data, error } = await supabase
-      .from("inventory_units_public")
-      .select("*")
-      .eq("id", unitId)
-      .maybeSingle();
+    const [unitResult, peersResult] = await Promise.all([
+      supabase.from("inventory_units_public").select("*").eq("id", unitId).maybeSingle(),
+      supabase
+        .from("inventory_units_public")
+        .select("*")
+        .neq("id", unitId)
+        .neq("status", "Sold")
+        .order("year", { ascending: false })
+    ]);
+    const { data, error } = unitResult;
     if (error) {
       setLoadError(error.message);
       setRow(null);
+      setPeerRows([]);
       setIsLoading(false);
       return;
     }
     const parsed = data ? parseInventoryPublicRow(data) : null;
     if (!parsed) {
       setRow(null);
+      setPeerRows([]);
       setLoadError(null);
     } else {
       setRow(parsed);
       recordInventoryView(parsed.id);
+      const peers = (peersResult.data ?? [])
+        .map((peer) => parseInventoryPublicRow(peer))
+        .filter((peer): peer is InventoryPublicRow => peer != null);
+      setPeerRows(peers);
     }
     setIsLoading(false);
   }, [unitId]);
@@ -103,6 +129,10 @@ export function InventoryUnitDetailPage() {
 
   const backHref = inventoryBackHref(fromCategory);
   const title = row ? inventoryMakeModelTitle(row) : "Unit";
+  const similarUnits = useMemo(
+    () => (row ? pickSimilarInventoryUnits(row, peerRows, 4) : []),
+    [row, peerRows]
+  );
   const listPriceCad = row ? inventoryPublicListPriceCad(row) : null;
   const seoPath = unitId ? inventoryUnitCanonicalPath(unitId) : "/inventory";
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
@@ -126,6 +156,7 @@ export function InventoryUnitDetailPage() {
           <BreadcrumbJsonLd
             items={[
               { name: "Inventory", path: "/inventory" },
+              { name: row.category, path: inventoryCategoryHref(row.category) },
               { name: title, path: seoPath }
             ]}
           />
@@ -171,7 +202,9 @@ export function InventoryUnitDetailPage() {
               <header className="inventory-detailHeader">
                 <div className="inventory-detailHeaderMain">
                   <div className="inventory-detailMetaRow">
-                    <span className="inventory-cardCategory">{row.category}</span>
+                    <Link to={inventoryCategoryHref(row.category)} className="inventory-cardCategory inventory-cardCategoryLink">
+                      {row.category}
+                    </Link>
                     <span className={`inventory-status inventory-status${inventoryStatusPillModifier(row.status)}`}>
                       {row.status}
                     </span>
@@ -196,12 +229,14 @@ export function InventoryUnitDetailPage() {
                 <h2 id="inventory-detail-desc-heading" className="inventory-detailSectionTitle">
                   About this ride
                 </h2>
-                <InventoryUnitDescriptionBlock unitId={row.id} />
+                <InventoryUnitDescriptionBlock row={row} unitId={row.id} />
               </section>
 
               <p className="inventory-detailStock">Stock #{row.stock_number}</p>
             </div>
           </div>
+
+          {similarUnits.length > 0 ? <InventorySimilarUnits current={row} units={similarUnits} /> : null}
         </article>
       )}
     </div>
