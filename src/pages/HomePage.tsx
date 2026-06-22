@@ -323,6 +323,12 @@ export function HomePage() {
             <Link to="/financing">{HOME_SEO_INTRO.financingLinkLabel}</Link>
             <span aria-hidden> · </span>
             <Link to="/apply">{HOME_SEO_INTRO.applyLinkLabel}</Link>
+            <span aria-hidden> · </span>
+            <Link to="/faq">FAQ</Link>
+            <span aria-hidden> · </span>
+            <Link to="/reviews">Reviews</Link>
+            <span aria-hidden> · </span>
+            <Link to="/payment-calculator">Payment calculator</Link>
           </p>
         </div>
       </section>

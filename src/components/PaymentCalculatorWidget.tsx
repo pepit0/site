@@ -87,6 +87,13 @@ export function PaymentCalculatorWidget() {
           <div className="site-payCalcPanelBody">
             <PaymentCalculatorForm idPrefix="paycalc-widget" onApplyClick={() => setOpen(false)} />
           </div>
+          <p className="site-payCalcPanelLinkRow">
+            Need a full-page view?{" "}
+            <Link to="/payment-calculator" onClick={() => setOpen(false)}>
+              Open payment calculator
+            </Link>
+            .
+          </p>
         </div>
       ) : null}
 

@@ -11,6 +11,7 @@ import { TawkProvider } from "../components/chat/tawkContext";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
 import { VEHICLE_CATEGORIES } from "../data/inventory";
+import { FINANCING_TOPIC_PAGES } from "../data/financingPages";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { contactMailtoHref } from "../data/aboutContactCopy";
 import { usePreapprovalNavCta } from "../hooks/usePreapprovalNavCta";
@@ -75,6 +76,14 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
               Inventory
             </NavLink>
             <SiteNavInventoryDropdown />
+            <NavLink
+              to="/financing"
+              className={({ isActive, isPending }) =>
+                `site-navLink${isActive || (location.pathname.startsWith("/financing/") && !isPending) ? " site-navLinkActive" : ""}`
+              }
+            >
+              Financing
+            </NavLink>
             <NavLink
               to="/sell-your-ride"
               className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
@@ -197,6 +206,26 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                     <Link to="/reviews">Reviews</Link>
                   </li>
                 </ul>
+                <p className="site-footerSublistLabel">Financing guides</p>
+                <ul className="site-footerLinks site-footerSublist">
+                  {FINANCING_TOPIC_PAGES.filter((page) =>
+                    [
+                      "atv-financing",
+                      "motorcycle-financing",
+                      "snowmobile-financing",
+                      "side-by-side-financing",
+                      "boat-financing",
+                      "jet-ski-financing",
+                      "trailer-financing",
+                      "auto-financing",
+                      "powersports-financing-bad-credit"
+                    ].includes(page.slug)
+                  ).map((page) => (
+                    <li key={page.slug}>
+                      <Link to={page.path}>{page.navLabel}</Link>
+                    </li>
+                  ))}
+                </ul>
               </nav>
 
               <nav className="site-footerCol" aria-label="Help">
@@ -207,6 +236,9 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   </li>
                   <li>
                     <Link to="/faq">FAQ</Link>
+                  </li>
+                  <li>
+                    <Link to="/payment-calculator">Payment calculator</Link>
                   </li>
                   <li>
                     <Link to="/chat">Chat</Link>

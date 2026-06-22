@@ -77,6 +77,46 @@ export function inventoryUnitSeoDescription(row) {
   return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${inventoryPublicPriceLabel(row)}. View photos at Temptation Motorsports, Edmonton.`;
 }
 
+/** Keep in sync with src/lib/inventoryFinancingRoutes.ts */
+export function financingPathForCategory(category) {
+  switch (category) {
+    case "Motorcycle":
+      return "/financing/motorcycle-financing";
+    case "ATV":
+      return "/financing/atv-financing";
+    case "Snowmobile":
+      return "/financing/snowmobile-financing";
+    case "Side by side":
+      return "/financing/side-by-side-financing";
+    case "Watercraft":
+      return "/financing/jet-ski-financing";
+    case "Trailer":
+      return "/financing/trailer-financing";
+    default:
+      return "/financing";
+  }
+}
+
+/** Keep in sync with src/lib/inventoryFinancingRoutes.ts */
+export function financingNavLabelForCategory(category) {
+  switch (category) {
+    case "Motorcycle":
+      return "Motorcycle financing";
+    case "ATV":
+      return "ATV financing";
+    case "Snowmobile":
+      return "Snowmobile financing";
+    case "Side by side":
+      return "Side-by-side financing";
+    case "Watercraft":
+      return "Jet ski financing";
+    case "Trailer":
+      return "Trailer financing";
+    default:
+      return "Financing";
+  }
+}
+
 function inventoryCategoryArticle(category) {
   return /^[aeiou]/i.test(String(category).trim()) ? "an" : "a";
 }

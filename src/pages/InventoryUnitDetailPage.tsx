@@ -14,6 +14,10 @@ import {
   type VehicleCategory
 } from "../data/inventory";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
+import {
+  financingNavLabelForCategory,
+  financingPathForCategory
+} from "../lib/inventoryFinancingRoutes";
 import { buildInventoryUnitListingParagraphs } from "../lib/inventoryUnitPageCopy";
 import { inventoryCategoryHref } from "../lib/inventoryRoutes";
 import { pickSimilarInventoryUnits } from "../lib/inventorySimilarUnits";
@@ -44,6 +48,8 @@ function inventoryBackHref(fromCategory: VehicleCategory | "all" | undefined): s
 
 function InventoryUnitDescriptionBlock({ row, unitId }: { row: InventoryPublicRow; unitId: string }) {
   const listingParagraphs = buildInventoryUnitListingParagraphs(row);
+  const financingPath = financingPathForCategory(row.category);
+  const financingLabel = financingNavLabelForCategory(row.category);
 
   return (
     <>
@@ -55,6 +61,13 @@ function InventoryUnitDescriptionBlock({ row, unitId }: { row: InventoryPublicRo
 
       <h3 className="inventory-detailFinancingHeading">Financing this ride</h3>
       <p className="inventory-detailDescriptionText">{INVENTORY_UNIT_DESCRIPTION}</p>
+      <p className="inventory-detailDescriptionText">
+        Learn about{" "}
+        <Link to={financingPath} className="inventory-seoBlurbLink">
+          {financingLabel.toLowerCase()}
+        </Link>{" "}
+        for this category.
+      </p>
       <p className="inventory-detailDescriptionCtas">
         What&apos;s next?
         <br />
@@ -66,6 +79,10 @@ function InventoryUnitDescriptionBlock({ row, unitId }: { row: InventoryPublicRo
       >
         Apply for this ride!
       </Link>
+      <p className="inventory-detailRelatedLinks">
+        More help: <Link to="/financing">Financing guides</Link> ·{" "}
+        <Link to="/faq">FAQ</Link> · <Link to="/payment-calculator">Payment calculator</Link>
+      </p>
     </>
   );
 }

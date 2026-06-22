@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import logoUrl from "../assets/logo.png";
+import { SiteRelatedLinks } from "../components/SiteRelatedLinks";
 import { SELL_RIDE_HERO, SELL_RIDE_SEO } from "../data/sellRideCopy";
 import { Seo } from "../seo/Seo";
 
@@ -43,6 +44,13 @@ export function SellYourRidePage() {
                 {SELL_RIDE_HERO.ctaLabel}
               </Link>
             </p>
+            <SiteRelatedLinks
+              links={[
+                { label: "Inventory", to: "/inventory" },
+                { label: "FAQ", to: "/faq" },
+                { label: "Contact us", to: "/contact" }
+              ]}
+            />
           </div>
         </div>
       </div>

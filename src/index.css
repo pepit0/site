@@ -1568,6 +1568,39 @@ p {
   text-decoration: underline;
 }
 
+.site-relatedLinks {
+  margin-top: 1.15rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.site-relatedLinksTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.site-relatedLinksList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+}
+
+.site-relatedLinksList a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-relatedLinksList a:hover {
+  color: var(--accent);
+}
+
 @media (max-width: 768px) {
   .home-preview {
     --home-preview-edge-x: 1.15rem;
@@ -6589,6 +6622,11 @@ p {
   white-space: pre-line;
 }
 
+.inventory-categoryFinancingLink {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
 .inventory-detailListingCopy {
   margin: 0 0 0.75rem;
   line-height: 1.6;
@@ -6622,6 +6660,20 @@ p {
 }
 
 .inventory-detailDescriptionCtas a:hover {
+  text-decoration: underline;
+}
+
+.inventory-detailRelatedLinks {
+  margin: 0.9rem 0 0;
+  color: var(--text-muted);
+}
+
+.inventory-detailRelatedLinks a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.inventory-detailRelatedLinks a:hover {
   text-decoration: underline;
 }
 
@@ -10048,6 +10100,22 @@ img.vehicle-category-icon {
 
 .site-payCalcPanelBody .site-payCalcForm {
   padding: 0;
+}
+
+.site-payCalcPanelLinkRow {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.site-payCalcPanelLinkRow a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.site-payCalcPanelLinkRow a:hover {
+  text-decoration: underline;
 }
 
 .site-payCalcField {

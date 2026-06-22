@@ -5,6 +5,8 @@ import { fetchPublicInventoryUnits } from "./lib/fetch-public-inventory.mjs";
 import { fetchPublicBlogPosts } from "./lib/fetch-public-blog.mjs";
 import { FINANCING_PRERENDER_PAGES } from "./lib/financing-seo.mjs";
 import { BLOG_HUB_SEO } from "./lib/blog-seo.mjs";
+import { loadPublicBusinessProfile } from "./lib/business-public.mjs";
+import { buildLlmsTxt } from "./lib/llms-txt.mjs";
 import { loadViteBuildEnv, readViteEnvVar } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -114,7 +116,12 @@ const publicDir = path.join(root, "public");
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemap, "utf8");
 fs.writeFileSync(path.join(publicDir, "robots.txt"), robots, "utf8");
-console.log("[seo-prebuild] wrote public/sitemap.xml and public/robots.txt");
+
+const businessProfile = loadPublicBusinessProfile(root);
+const llmsTxt = buildLlmsTxt({ origin, businessProfile, blogPosts });
+fs.writeFileSync(path.join(publicDir, "llms.txt"), llmsTxt, "utf8");
+
+console.log("[seo-prebuild] wrote public/sitemap.xml, public/robots.txt, and public/llms.txt");
 
 const googlePlacesKey = readViteEnvVar(root, "GOOGLE_PLACES_API_KEY");
 if (googlePlacesKey) {

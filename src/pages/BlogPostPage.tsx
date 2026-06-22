@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { SiteRelatedLinks } from "../components/SiteRelatedLinks";
 import { formatBlogDate } from "../data/blogPosts";
 import type { BlogPost } from "../data/blogPosts";
-import { fetchPublicBlogPostBySlug } from "../lib/blogPostsApi";
+import { fetchPublicBlogPostBySlug, fetchPublicBlogPosts } from "../lib/blogPostsApi";
 import { supabase } from "../lib/supabase";
 import { sanitizeBlogHtml } from "../lib/blogBodyHtml";
 import { BlogPostJsonLd } from "../seo/BlogPostJsonLd";
@@ -12,12 +13,20 @@ import { Seo } from "../seo/Seo";
 export function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | undefined>();
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);
-    const nextPost = await fetchPublicBlogPostBySlug(supabase, slug);
+    const [nextPost, allPosts] = await Promise.all([
+      fetchPublicBlogPostBySlug(supabase, slug),
+      fetchPublicBlogPosts(supabase)
+    ]);
     setPost(nextPost);
+    const related = allPosts
+      .filter((item) => item.slug !== slug)
+      .slice(0, 2);
+    setRelatedPosts(related);
     setIsLoading(false);
   }, [slug]);
 
@@ -99,6 +108,14 @@ export function BlogPostPage() {
           </Link>
         </div>
       </article>
+      <SiteRelatedLinks
+        links={[
+          { label: "Financing guides", to: "/financing" },
+          { label: "Apply for financing", to: "/apply" },
+          { label: "Back to blog", to: "/blog" },
+          ...relatedPosts.map((item) => ({ label: item.title, to: `/blog/${item.slug}` }))
+        ]}
+      />
     </div>
   );
 }

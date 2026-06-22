@@ -87,12 +87,19 @@ function conversionBody(page) {
     ).join("\n");
     extra = `<section>${faqItems}</section>`;
   }
+  const related =
+    page.path === "/faq"
+      ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/payment-calculator">Payment calculator</a> · <a href="/sell-your-ride">Sell your ride</a></p>`
+      : page.path.startsWith("/sell-your-ride")
+        ? `<p><a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a> · <a href="/contact">Contact us</a></p>`
+        : `<p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/payment-calculator">Payment calculator</a></p>`;
 
   return `
     <article>
       <h1>${escapeHtml(page.h1)}</h1>
       <p>${escapeHtml(page.intro)}</p>
       ${extra}
+      ${related}
       ${cta}
       <p>Phone: <a href="tel:${escapeHtml(profile.phoneTel)}">${escapeHtml(profile.phoneDisplay)}</a></p>
     </article>`;

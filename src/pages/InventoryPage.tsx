@@ -9,8 +9,13 @@ import {
   parseInventoryPublicRow,
   VEHICLE_CATEGORIES,
   type InventoryBrowseCategory,
-  type InventoryPublicRow
+  type InventoryPublicRow,
+  type VehicleCategory
 } from "../data/inventory";
+import {
+  financingNavLabelForCategory,
+  financingPathForCategory
+} from "../lib/inventoryFinancingRoutes";
 import { inventoryRowMatchesSearch } from "../lib/inventorySearch";
 import { supabase } from "../lib/supabase";
 import { InventoryItemListJsonLd } from "../seo/InventoryItemListJsonLd";
@@ -138,6 +143,14 @@ export function InventoryPage() {
     filteredSorted.length === categoryFiltered.length
       ? `${filteredSorted.length} unit${filteredSorted.length === 1 ? "" : "s"}`
       : `Showing ${filteredSorted.length} of ${categoryFiltered.length}`;
+  const categoryFinancingPath =
+    category !== "all" && !isComingSoonCategory
+      ? financingPathForCategory(category as VehicleCategory)
+      : null;
+  const categoryFinancingLabel =
+    category !== "all" && !isComingSoonCategory
+      ? financingNavLabelForCategory(category as VehicleCategory)
+      : null;
 
   return (
     <div className="inventory">
@@ -164,7 +177,15 @@ export function InventoryPage() {
               <Link className="inventory-seoBlurbLink" to="/apply">
                 loan to pay for their ride
               </Link>
-              . We are in Edmonton. We help buyers all over Canada.
+              . We are in Edmonton. We help buyers all over Canada. Start with our{" "}
+              <Link className="inventory-seoBlurbLink" to="/financing">
+                financing guides
+              </Link>{" "}
+              or read the{" "}
+              <Link className="inventory-seoBlurbLink" to="/faq">
+                FAQ
+              </Link>
+              .
             </p>
           </div>
           <aside className="inventory-seoBlurbAside" aria-labelledby="inventory-sourcing-heading">
@@ -184,6 +205,15 @@ export function InventoryPage() {
           </aside>
         </div>
       </section>
+      {categoryFinancingPath && categoryFinancingLabel ? (
+        <p className="inventory-categoryFinancingLink">
+          Shopping {category}? See our{" "}
+          <Link className="inventory-seoBlurbLink" to={categoryFinancingPath}>
+            {categoryFinancingLabel.toLowerCase()}
+          </Link>{" "}
+          guide.
+        </p>
+      ) : null}
 
       <div className="inventory-toolbar">
         <div className="inventory-search">

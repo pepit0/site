@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BusinessNapBlock } from "../components/BusinessNapBlock";
+import { SiteRelatedLinks } from "../components/SiteRelatedLinks";
 import { ABOUT_HERO, ABOUT_SECTIONS, ABOUT_SEO } from "../data/aboutContactCopy";
 import { AboutPageJsonLd } from "../seo/AboutPageJsonLd";
 import { Seo } from "../seo/Seo";
@@ -45,6 +46,15 @@ export function AboutPage() {
               Apply for financing
             </Link>
           </div>
+          <SiteRelatedLinks
+            links={[
+              { label: "Financing guides", to: "/financing" },
+              { label: "Customer reviews", to: "/reviews" },
+              { label: "FAQ", to: "/faq" },
+              { label: "Contact us", to: "/contact" },
+              { label: "Inventory", to: "/inventory" }
+            ]}
+          />
         </article>
       </div>
     </div>

@@ -11,7 +11,9 @@ import {
   inventoryUnitSeoDescription,
   inventoryUnitSeoTitle,
   inventoryYearKmLine,
-  pickSimilarInventoryUnits
+  pickSimilarInventoryUnits,
+  financingNavLabelForCategory,
+  financingPathForCategory
 } from "./lib/inventory-seo.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
@@ -148,6 +150,8 @@ function unitDetailBody(row, allRows) {
         <p><a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(inventoryCategoryBrowseLabel(row.category))}</a></p>
       </section>`
       : "";
+  const financingPath = financingPathForCategory(row.category);
+  const financingLabel = financingNavLabelForCategory(row.category);
   return `
     <p><a href="/inventory">← Inventory</a> · <a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(row.category)}</a></p>
     <article>
@@ -160,6 +164,7 @@ function unitDetailBody(row, allRows) {
         <h2 id="prerender-listing-heading">About this ride</h2>
         ${listingParagraphs}
       </section>
+      <p><a href="${escapeHtml(financingPath)}">${escapeHtml(financingLabel)}</a> · <a href="/financing">All financing guides</a> · <a href="/faq">FAQ</a></p>
       <p><a href="${escapeHtml(path)}">View full listing</a></p>
       ${similarSection}
     </article>`;
@@ -176,6 +181,7 @@ function inventoryListBody(rows) {
   return `
     <h1>Inventory</h1>
     <p>${rows.length} unit${rows.length === 1 ? "" : "s"} at Temptation Motorsports. ${escapeHtml(INVENTORY_CALL_FOR_PRICING)} on all listings.</p>
+    <p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/apply">Apply for financing</a></p>
     <ul>${items}</ul>`;
 }
 

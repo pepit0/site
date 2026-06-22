@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { SiteRelatedLinks } from "../components/SiteRelatedLinks";
 import { SITE_CONTACT } from "../data/preapprovalCopy";
 import { SITE_FAQ, SITE_FAQ_HERO, SITE_FAQ_SEO, siteFaqJsonLd } from "../data/faqCopy";
 import { BreadcrumbJsonLd } from "../seo/BreadcrumbJsonLd";
@@ -47,6 +48,15 @@ export function FaqPage() {
         <a href={`tel:${SITE_CONTACT.phoneTel}`}>{SITE_CONTACT.phoneDisplay}</a> or{" "}
         <Link to="/contact">contact us</Link>.
       </p>
+      <SiteRelatedLinks
+        links={[
+          { label: "Financing guides", to: "/financing" },
+          { label: "Inventory", to: "/inventory" },
+          { label: "Apply for financing", to: "/apply" },
+          { label: "Payment calculator", to: "/payment-calculator" },
+          { label: "Sell your ride", to: "/sell-your-ride" }
+        ]}
+      />
     </div>
   );
 }

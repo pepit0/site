@@ -92,15 +92,26 @@ function companyBody(page) {
       <p>${escapeHtml(page.intro)}</p>
       <p>${googleReviews.summary.ratingValue} out of 5 from ${googleReviews.summary.reviewCount} Google reviews.</p>
       <ul>${reviewItems}</ul>
+      <p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a></p>
       <p><a href="/apply">Apply for financing</a></p>
     </article>`;
   }
+
+  const relatedLinks =
+    page.path === "/about"
+      ? `<p><a href="/financing">Financing guides</a> · <a href="/reviews">Reviews</a> · <a href="/faq">FAQ</a> · <a href="/inventory">Inventory</a></p>`
+      : page.path === "/contact"
+        ? `<p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/inventory">Inventory</a></p>`
+        : page.path === "/payment-calculator"
+          ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/apply">Apply for financing</a></p>`
+          : "";
 
   return `
     <article>
       <h1>${escapeHtml(page.h1)}</h1>
       <p>${escapeHtml(page.intro)}</p>
       ${addressLines}
+      ${relatedLinks}
       <p>Phone: <a href="tel:${escapeHtml(profile.phoneTel)}">${escapeHtml(profile.phoneDisplay)}</a></p>
       <p>Email: <a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>
       <p><a href="/apply">Apply for financing</a></p>
