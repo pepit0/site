@@ -15,6 +15,9 @@ import {
 export { INVENTORY_CALL_FOR_PRICING } from "../lib/inventoryPublicPrice";
 
 import { absoluteUrl, hasPublicSiteOrigin } from "../lib/siteUrl";
+import { ensureHttpsUrl } from "../lib/ensureHttpsUrl";
+
+export const SEO_DOCUMENT_TITLE_MAX = 55;
 
 function inventorySeller(siteOrigin: string) {
   return {
@@ -71,6 +74,23 @@ export function inventoryUnitSeoTitle(
   return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)}`;
 }
 
+/** Shorter document title for SERP length (keep in sync with scripts/lib/inventory-seo.mjs). */
+export function inventoryUnitSeoDocumentTitle(
+  row: Pick<InventoryPublicRow, "year" | "make" | "model" | "stock_number">
+): string {
+  const full = inventoryUnitSeoTitle(row);
+  if (full.length <= SEO_DOCUMENT_TITLE_MAX) return full;
+
+  const stock = inventoryUnitSeoStockLabel(row);
+  const ymm = `${row.year} ${inventoryMakeModelTitle(row)}`;
+  const withStock = `${ymm} · ${stock}`;
+  if (withStock.length <= SEO_DOCUMENT_TITLE_MAX) return withStock;
+
+  const room = SEO_DOCUMENT_TITLE_MAX - stock.length - 3;
+  if (room < 12) return `${ymm.slice(0, SEO_DOCUMENT_TITLE_MAX - 1)}…`;
+  return `${ymm.slice(0, room)}… · ${stock}`;
+}
+
 export function inventoryUnitSeoDescription(row: InventoryPublicRow): string {
   return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)} — ${inventoryYearKmLine(row)}. ${row.status}. ${inventoryPublicPriceLabel(row)}. View photos at Temptation Motorsports, Edmonton.`;
 }
@@ -81,7 +101,7 @@ export function inventoryUnitCanonicalPath(unitId: string): string {
 
 /** Absolute public URL for a stored inventory photo path. */
 export function inventoryPhotoAbsoluteUrl(photoPath: string, supabaseUrl: string): string {
-  const base = supabaseUrl.replace(/\/+$/, "");
+  const base = ensureHttpsUrl(supabaseUrl).replace(/\/+$/, "");
   const encoded = photoPath
     .split("/")
     .map((seg) => encodeURIComponent(seg))
@@ -153,39 +173,20 @@ export function buildInventoryProductJsonLd(
 function buildInventoryItemListElement(
   row: InventoryPublicRow,
   index: number,
-  origin: string,
-  supabaseUrl: string | undefined
+  origin: string
 ): Record<string, unknown> {
   const path = inventoryUnitCanonicalPath(row.id);
   const url = `${origin}${path}`;
-  const listItem: Record<string, unknown> = {
+  return {
     "@type": "ListItem",
     position: index + 1,
     name: inventoryUnitSeoTitle(row),
     url
   };
-
-  if (!inventoryRowHasProductJsonLd(row)) return listItem;
-
-  const offer = buildInventoryProductOffer(row, { origin, offerUrl: url });
-  if (!offer) return listItem;
-
-  const image = supabaseUrl ? inventoryUnitPrimaryImage(row, supabaseUrl) : undefined;
-  const mpn = row.model.trim();
-  listItem.item = {
-    "@type": "Product",
-    name: inventoryUnitSeoTitle(row),
-    sku: row.stock_number,
-    ...(mpn ? { mpn } : {}),
-    ...(image ? { image } : {}),
-    offers: offer
-  };
-  return listItem;
 }
 
 /**
- * ItemList for /inventory. Units without a public price are plain ListItems (no Product/Offer).
- * Units with list_price_cad include Product/Offer so Google gets a matching price field.
+ * ItemList for /inventory. Plain ListItem entries (no nested Product) for validator compatibility.
  */
 export function buildInventoryItemListJsonLd(
   rows: InventoryPublicRow[],
@@ -194,9 +195,7 @@ export function buildInventoryItemListJsonLd(
   const origin = options.siteOrigin ?? (hasPublicSiteOrigin() ? absoluteUrl("").replace(/\/$/, "") : "");
   if (!origin) return null;
 
-  const elements = rows.map((row, index) =>
-    buildInventoryItemListElement(row, index, origin, options.supabaseUrl)
-  );
+  const elements = rows.map((row, index) => buildInventoryItemListElement(row, index, origin));
 
   return {
     "@context": "https://schema.org",

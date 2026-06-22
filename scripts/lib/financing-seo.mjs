@@ -135,14 +135,14 @@ export const FINANCING_PRERENDER_PAGES = [
   }
 ];
 
-export function buildFinancialServiceJsonLd({ serviceName, description, siteOrigin, path }) {
+export function buildFinancialServiceJsonLd({ serviceName, description, siteOrigin, path, phoneTel = "+15872055773" }) {
   return {
     "@context": "https://schema.org",
     "@type": "FinancialService",
     name: `Temptation Motorsports ${serviceName}`,
     description,
     url: `${siteOrigin}${path}`,
-    telephone: "+1-587-415-7424",
+    telephone: phoneTel,
     areaServed: { "@type": "Country", name: "Canada" },
     address: {
       "@type": "PostalAddress",

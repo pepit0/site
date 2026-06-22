@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.temptmotorsports.com" }],
+      "destination": "https://temptmotorsports.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/pre-approval",
       "destination": "/apply",
       "permanent": true

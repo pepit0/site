@@ -33,7 +33,7 @@ import {
   inventoryUnitCanonicalPath,
   inventoryUnitPrimaryImage,
   inventoryUnitSeoDescription,
-  inventoryUnitSeoTitle
+  inventoryUnitSeoDocumentTitle
 } from "../seo/inventoryStructuredData";
 import { Seo } from "../seo/Seo";
 
@@ -163,7 +163,7 @@ export function InventoryUnitDetailPage() {
       {row ? (
         <>
           <Seo
-            title={inventoryUnitSeoTitle(row)}
+            title={inventoryUnitSeoDocumentTitle(row)}
             description={inventoryUnitSeoDescription(row)}
             path={seoPath}
             noindex={isSold}

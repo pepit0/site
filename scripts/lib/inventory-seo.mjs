@@ -69,8 +69,29 @@ function inventoryUnitSeoStockLabel(row) {
   return `Stock ${row.stock_number.trim()}`;
 }
 
+export const SEO_DOCUMENT_TITLE_MAX = 55;
+
 export function inventoryUnitSeoTitle(row) {
   return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)}`;
+}
+
+/** Shorter <title> for SERP length limits (keep in sync with src/seo/inventoryStructuredData.ts). */
+export function inventoryUnitSeoDocumentTitle(row) {
+  const full = inventoryUnitSeoTitle(row);
+  if (full.length <= SEO_DOCUMENT_TITLE_MAX) return full;
+
+  const stock = inventoryUnitSeoStockLabel(row);
+  const ymm = `${row.year} ${inventoryMakeModelTitle(row)}`;
+  const withStock = `${ymm} · ${stock}`;
+  if (withStock.length <= SEO_DOCUMENT_TITLE_MAX) return withStock;
+
+  const room = SEO_DOCUMENT_TITLE_MAX - stock.length - 3;
+  if (room < 12) return `${ymm.slice(0, SEO_DOCUMENT_TITLE_MAX - 1)}…`;
+  return `${ymm.slice(0, room)}… · ${stock}`;
+}
+
+function ensureHttpsUrl(url) {
+  return String(url).replace(/^http:\/\//i, "https://");
 }
 
 export function inventoryUnitSeoDescription(row) {
@@ -153,7 +174,7 @@ export function buildInventoryUnitListingParagraphs(row) {
 }
 
 export function inventoryPhotoAbsoluteUrl(photoPath, supabaseUrl) {
-  const base = supabaseUrl.replace(/\/+$/, "");
+  const base = ensureHttpsUrl(supabaseUrl).replace(/\/+$/, "");
   const encoded = photoPath
     .split("/")
     .map((seg) => encodeURIComponent(seg))
@@ -211,33 +232,17 @@ export function buildInventoryProductJsonLd(row, { siteOrigin, supabaseUrl }) {
   };
 }
 
-export function buildInventoryItemListJsonLd(rows, { siteOrigin, supabaseUrl }) {
+export const INVENTORY_PRERENDER_LIST_LIMIT = 50;
+
+export function buildInventoryItemListJsonLd(rows, { siteOrigin }) {
   const itemListElement = rows.map((row, index) => {
     const path = `/inventory/${row.id}`;
     const url = `${siteOrigin}${path}`;
-    const listItem = {
+    return {
       "@type": "ListItem",
       position: index + 1,
       name: inventoryUnitSeoTitle(row),
       url
-    };
-    if (!inventoryRowHasProductJsonLd(row)) return listItem;
-
-    const offers = buildInventoryProductOffer(row, { siteOrigin, offerUrl: url });
-    if (!offers) return listItem;
-
-    const image = row.photo_paths?.[0] ? inventoryPhotoAbsoluteUrl(row.photo_paths[0], supabaseUrl) : null;
-    const mpn = row.model.trim();
-    return {
-      ...listItem,
-      item: {
-        "@type": "Product",
-        name: inventoryUnitSeoTitle(row),
-        sku: row.stock_number,
-        ...(mpn ? { mpn } : {}),
-        ...(image ? { image } : {}),
-        offers
-      }
     };
   });
 

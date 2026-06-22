@@ -8,6 +8,7 @@ import {
   buildReviewJsonLd,
   loadGoogleReviews
 } from "./lib/google-reviews.mjs";
+import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,47 +31,6 @@ if (!siteUrl) {
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
 const googleReviews = loadGoogleReviews(root);
-
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function buildPrerenderedHtml({ title, description, canonicalPath, jsonLdObjects, bodyHtml }) {
-  const fullTitle = title.includes("Temptation Motorsports")
-    ? title
-    : `${title} | Temptation Motorsports`;
-  const canonical = `${siteUrl}${canonicalPath}`;
-  const jsonLdScripts = jsonLdObjects
-    .map((obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</script>`)
-    .join("\n    ");
-
-  let html = shellHtml;
-  html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(fullTitle)}</title>`);
-  html = html.replace(
-    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="description" content="${escapeHtml(description)}" />`
-  );
-
-  const headInject = `
-    <link rel="canonical" href="${escapeHtml(canonical)}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="${escapeHtml(fullTitle)}" />
-    <meta property="og:description" content="${escapeHtml(description)}" />
-    <meta property="og:url" content="${escapeHtml(canonical)}" />
-    <meta name="robots" content="index, follow" />
-    ${jsonLdScripts}`;
-
-  html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
-
-  const prerenderMain = `<main class="inventory-prerender company-prerender" id="company-prerender-fallback">${bodyHtml}</main>`;
-  html = html.replace(/<div id="root"><\/div>/i, `<div id="root">${prerenderMain}</div>`);
-
-  return html;
-}
 
 function companyBody(page) {
   const addressLines = formatAddressLines(profile)
@@ -132,26 +92,49 @@ for (const page of COMPANY_PRERENDER_PAGES) {
         : ["Organization", "AutomotiveBusiness"]
   });
 
+  let pageLd;
   if (page.path === "/reviews") {
-    organization.aggregateRating = buildAggregateRatingJsonLd(googleReviews.summary);
-    organization.review = googleReviews.reviews.map(buildReviewJsonLd);
+    const pageUrl = `${siteUrl}${page.path}`;
+    const orgId = `${pageUrl}#organization`;
+    const { "@context": _ctx, ...orgBase } = organization;
+    pageLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          name: page.title,
+          description: page.description,
+          url: pageUrl,
+          mainEntity: { "@id": orgId }
+        },
+        {
+          ...orgBase,
+          "@id": orgId,
+          aggregateRating: buildAggregateRatingJsonLd(googleReviews.summary),
+          review: googleReviews.reviews.map(buildReviewJsonLd)
+        }
+      ]
+    };
+  } else {
+    pageLd = {
+      "@context": "https://schema.org",
+      "@type": pageType,
+      name: page.title,
+      description: page.description,
+      url: `${siteUrl}${page.path}`,
+      mainEntity: organization
+    };
   }
 
-  const pageLd = {
-    "@context": "https://schema.org",
-    "@type": pageType,
-    name: page.title,
-    description: page.description,
-    url: `${siteUrl}${page.path}`,
-    mainEntity: organization
-  };
-
-  const html = buildPrerenderedHtml({
+  const html = buildPrerenderedHtml(shellHtml, {
+    siteUrl,
     title: page.title,
     description: page.description,
     canonicalPath: page.path,
     jsonLdObjects: [pageLd],
-    bodyHtml: companyBody(page)
+    bodyHtml: companyBody(page),
+    mainClass: "inventory-prerender company-prerender",
+    mainId: "company-prerender-fallback"
   });
 
   const segments = page.path.replace(/^\//, "").split("/");

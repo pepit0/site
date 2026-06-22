@@ -7,14 +7,16 @@ import {
   buildInventoryProductJsonLd,
   buildInventoryUnitListingParagraphs,
   INVENTORY_CALL_FOR_PRICING,
+  INVENTORY_PRERENDER_LIST_LIMIT,
   inventoryMakeModelTitle,
   inventoryUnitSeoDescription,
-  inventoryUnitSeoTitle,
+  inventoryUnitSeoDocumentTitle,
   inventoryYearKmLine,
   pickSimilarInventoryUnits,
   financingNavLabelForCategory,
   financingPathForCategory
 } from "./lib/inventory-seo.mjs";
+import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -47,60 +49,7 @@ if (error) {
   process.exit(0);
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-/**
- * Replace or inject tags in built index.html shell for a prerendered route.
- */
-function buildPrerenderedHtml({
-  title,
-  description,
-  canonicalPath,
-  jsonLdObjects,
-  bodyHtml,
-  robots = "index, follow"
-}) {
-  const fullTitle = title.includes("Temptation Motorsports")
-    ? title
-    : `${title} | Temptation Motorsports`;
-  const canonical = `${siteUrl}${canonicalPath}`;
-  const jsonLdScripts = jsonLdObjects
-    .map((obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</script>`)
-    .join("\n    ");
-
-  let html = shellHtml;
-  html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(fullTitle)}</title>`);
-  html = html.replace(
-    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="description" content="${escapeHtml(description)}" />`
-  );
-  html = html.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/i, "");
-
-  const headInject = `
-    <link rel="canonical" href="${escapeHtml(canonical)}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="${escapeHtml(fullTitle)}" />
-    <meta property="og:description" content="${escapeHtml(description)}" />
-    <meta property="og:url" content="${escapeHtml(canonical)}" />
-    <meta name="robots" content="${escapeHtml(robots)}" />
-    ${jsonLdScripts}`;
-
-  html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
-
-  const prerenderMain = `<main class="inventory-prerender" id="inventory-prerender-fallback">${bodyHtml}</main>`;
-  html = html.replace(
-    /<div id="root"><\/div>/i,
-    `<div id="root">${prerenderMain}</div>`
-  );
-
-  return html;
-}
+const VEHICLE_CATEGORIES = ["Motorcycle", "ATV", "Snowmobile", "Side by side", "Watercraft", "Trailer"];
 
 function inventoryCategoryHref(category) {
   return `/inventory?category=${encodeURIComponent(category)}`;
@@ -123,6 +72,20 @@ function inventoryCategoryBrowseLabel(category) {
     default:
       return `${category} for sale`;
   }
+}
+
+function inventoryBrowseByTypeSection() {
+  const items = VEHICLE_CATEGORIES.map(
+    (category) =>
+      `<li><a href="${escapeHtml(inventoryCategoryHref(category))}">${escapeHtml(inventoryCategoryBrowseLabel(category))}</a></li>`
+  ).join("\n        ");
+  return `
+      <section aria-labelledby="prerender-browse-type-heading">
+        <h2 id="prerender-browse-type-heading">Browse by type</h2>
+        <ul>
+        ${items}
+        </ul>
+      </section>`;
 }
 
 function unitDetailBody(row, allRows) {
@@ -164,37 +127,63 @@ function unitDetailBody(row, allRows) {
         <h2 id="prerender-listing-heading">About this ride</h2>
         ${listingParagraphs}
       </section>
-      <p><a href="${escapeHtml(financingPath)}">${escapeHtml(financingLabel)}</a> · <a href="/financing">All financing guides</a> · <a href="/faq">FAQ</a></p>
+      <p>
+        <a href="${escapeHtml(financingPath)}">${escapeHtml(financingLabel)}</a> ·
+        <a href="/financing">All financing guides</a> ·
+        <a href="/payment-calculator">Payment calculator</a> ·
+        <a href="/faq">FAQ</a> ·
+        <a href="/reviews">Reviews</a> ·
+        <a href="/about">About us</a> ·
+        <a href="/contact">Contact</a>
+      </p>
       <p><a href="${escapeHtml(path)}">View full listing</a></p>
       ${similarSection}
+      ${inventoryBrowseByTypeSection()}
     </article>`;
 }
 
-function inventoryListBody(rows) {
-  const items = rows
+function inventoryListBody(allRows, displayRows) {
+  const items = displayRows
     .map((row) => {
       const title = inventoryMakeModelTitle(row);
       const href = `/inventory/${row.id}`;
       return `<li><a href="${escapeHtml(href)}">${escapeHtml(`${row.year} ${title}`)}</a> — ${escapeHtml(row.status)} · ${escapeHtml(INVENTORY_CALL_FOR_PRICING)}</li>`;
     })
     .join("\n");
+  const overflowNote =
+    allRows.length > displayRows.length
+      ? `<p>Showing ${displayRows.length} of ${allRows.length} units. Open the full inventory page for filters and search.</p>`
+      : "";
   return `
     <h1>Inventory</h1>
-    <p>${rows.length} unit${rows.length === 1 ? "" : "s"} at Temptation Motorsports. ${escapeHtml(INVENTORY_CALL_FOR_PRICING)} on all listings.</p>
-    <p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/apply">Apply for financing</a></p>
-    <ul>${items}</ul>`;
+    <p>${allRows.length} unit${allRows.length === 1 ? "" : "s"} at Temptation Motorsports. ${escapeHtml(INVENTORY_CALL_FOR_PRICING)} on all listings.</p>
+    <p>
+      <a href="/financing">Financing guides</a> ·
+      <a href="/faq">FAQ</a> ·
+      <a href="/payment-calculator">Payment calculator</a> ·
+      <a href="/reviews">Reviews</a> ·
+      <a href="/apply">Apply for financing</a>
+    </p>
+    ${overflowNote}
+    <ul>${items}</ul>
+    ${inventoryBrowseByTypeSection()}`;
+}
+
+function renderPage(options) {
+  return buildPrerenderedHtml(shellHtml, { siteUrl, ...options });
 }
 
 const indexableRows = rows.filter((row) => row.status !== "Sold");
+const listPreviewRows = indexableRows.slice(0, INVENTORY_PRERENDER_LIST_LIMIT);
 
 let written = 0;
 
 for (const row of indexableRows) {
   const canonicalPath = `/inventory/${row.id}`;
-  const title = inventoryUnitSeoTitle(row);
+  const title = inventoryUnitSeoDocumentTitle(row);
   const description = inventoryUnitSeoDescription(row);
   const productLd = buildInventoryProductJsonLd(row, { siteOrigin: siteUrl, supabaseUrl });
-  const html = buildPrerenderedHtml({
+  const html = renderPage({
     title,
     description,
     canonicalPath,
@@ -208,14 +197,14 @@ for (const row of indexableRows) {
   written += 1;
 }
 
-const listLd = buildInventoryItemListJsonLd(indexableRows, { siteOrigin: siteUrl, supabaseUrl });
-const listHtml = buildPrerenderedHtml({
-  title: "Inventory",
+const listLd = buildInventoryItemListJsonLd(indexableRows, { siteOrigin: siteUrl });
+const listHtml = renderPage({
+  title: "Rides for sale",
   description:
     "Browse motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, and trailers. Call for pricing. Financing through Temptation Motorsports, Edmonton.",
   canonicalPath: "/inventory",
-  jsonLdObjects: [listLd],
-  bodyHtml: inventoryListBody(indexableRows)
+  jsonLdObjects: listLd ? [listLd] : [],
+  bodyHtml: inventoryListBody(indexableRows, listPreviewRows)
 });
 
 const listDir = path.join(distDir, "inventory");

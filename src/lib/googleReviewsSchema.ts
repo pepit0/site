@@ -53,26 +53,28 @@ export function buildReviewsPageJsonLd(options: {
   organization: Record<string, unknown>;
   summary: GoogleReviewsSummary;
   reviews: readonly GoogleReview[];
-}): Record<string, unknown>[] {
-  const mainEntity = withGoogleReviewsSchema(options.organization, {
-    summary: options.summary,
-    reviews: options.reviews
-  });
-
-  return [
+}): Record<string, unknown> {
+  const orgId = `${options.pageUrl}#organization`;
+  const { "@context": _ctx, ...orgBase } = options.organization;
+  const organization = withGoogleReviewsSchema(
+    { ...orgBase, "@id": orgId },
     {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: `${REVIEWS_PAGE_SEO.title} | ${BUSINESS_NAME}`,
-      description: options.description,
-      url: options.pageUrl,
-      mainEntity
-    },
-    {
-      "@context": "https://schema.org",
-      ...mainEntity,
-      name: BUSINESS_NAME,
-      url: options.pageUrl
+      summary: options.summary,
+      reviews: options.reviews
     }
-  ];
+  );
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        name: `${REVIEWS_PAGE_SEO.title} | ${BUSINESS_NAME}`,
+        description: options.description,
+        url: options.pageUrl,
+        mainEntity: { "@id": orgId }
+      },
+      organization
+    ]
+  };
 }

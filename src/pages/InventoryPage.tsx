@@ -20,6 +20,7 @@ import { inventoryRowMatchesSearch } from "../lib/inventorySearch";
 import { supabase } from "../lib/supabase";
 import { InventoryItemListJsonLd } from "../seo/InventoryItemListJsonLd";
 import { INVENTORY_AUTO_COMING_SOON, INVENTORY_SOURCING_BLURB } from "../data/inventoryCopy";
+import { inventoryPageSeoMeta } from "../lib/inventoryPageSeo";
 import { Seo } from "../seo/Seo";
 
 type SortKey = "year-desc" | "year-asc" | "make-asc" | "stock-asc";
@@ -151,13 +152,15 @@ export function InventoryPage() {
     category !== "all" && !isComingSoonCategory
       ? financingNavLabelForCategory(category as VehicleCategory)
       : null;
+  const pageSeo = inventoryPageSeoMeta(category, searchFromUrl);
 
   return (
     <div className="inventory">
       <Seo
-        title="Rides for sale"
-        description="See bikes, ATVs, sleds, side-by-sides, jet skis, and trailers in Edmonton. Call for price on every ride. Apply for a loan with Temptation Motorsports."
+        title={pageSeo.title}
+        description={pageSeo.description}
         path="/inventory"
+        noindex={pageSeo.noindex}
       />
       {rows.length > 0 ? (
         <InventoryItemListJsonLd rows={rows.filter((row) => row.status !== "Sold")} />

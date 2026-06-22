@@ -1,7 +1,8 @@
 import { Helmet } from "react-helmet-async";
 import {
   optionalBusinessPostalCode,
-  optionalBusinessStreetAddress
+  optionalBusinessStreetAddress,
+  getPublicBusinessProfile
 } from "../lib/businessPublic";
 import { absoluteUrl, hasPublicSiteOrigin } from "../lib/siteUrl";
 
@@ -14,6 +15,7 @@ type FinancialServiceJsonLdProps = {
 export function FinancialServiceJsonLd({ serviceName, description, path }: FinancialServiceJsonLdProps) {
   if (!hasPublicSiteOrigin()) return null;
 
+  const profile = getPublicBusinessProfile();
   const streetAddress = optionalBusinessStreetAddress();
   const postalCode = optionalBusinessPostalCode();
 
@@ -23,7 +25,7 @@ export function FinancialServiceJsonLd({ serviceName, description, path }: Finan
     name: `Temptation Motorsports ${serviceName}`,
     description,
     url: absoluteUrl(path),
-    telephone: "+1-587-415-7424",
+    telephone: profile.phoneTel,
     parentOrganization: {
       "@type": "Organization",
       name: "Temptation Motorsports",

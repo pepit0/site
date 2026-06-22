@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "node scripts/seo-prebuild.mjs && node scripts/build-og-default.mjs && node scripts/build-hero-webp.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender-inventory.mjs && node scripts/prerender-financing.mjs && node scripts/prerender-company.mjs && node scripts/prerender-blog.mjs && node scripts/prerender-home.mjs && node scripts/prerender-conversion.mjs",
+    "build": "tsc -b && vite build && node scripts/prerender-inventory.mjs && node scripts/prerender-financing.mjs && node scripts/prerender-company.mjs && node scripts/prerender-blog.mjs && node scripts/prerender-home.mjs && node scripts/prerender-conversion.mjs && node scripts/verify-seo-build.mjs",
     "build:og": "node scripts/build-og-default.mjs",
     "build:hero-webp": "node scripts/build-hero-webp.mjs",
     "build:favicon": "node scripts/build-favicon.mjs",

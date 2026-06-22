@@ -14,7 +14,7 @@ export function ReviewsPageJsonLd() {
     types: ["LocalBusiness", "AutomotiveBusiness", "FinancialService"]
   });
 
-  const jsonLdObjects = buildReviewsPageJsonLd({
+  const jsonLd = buildReviewsPageJsonLd({
     pageUrl: absoluteUrl("/reviews"),
     description: REVIEWS_PAGE_SEO.description,
     organization,
@@ -24,11 +24,7 @@ export function ReviewsPageJsonLd() {
 
   return (
     <Helmet>
-      {jsonLdObjects.map((obj, index) => (
-        <script key={index} type="application/ld+json">
-          {JSON.stringify(obj)}
-        </script>
-      ))}
+      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
     </Helmet>
   );
 }

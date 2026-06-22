@@ -7,6 +7,7 @@ import {
   FAQ_PRERENDER_ITEMS
 } from "./lib/conversion-seo.mjs";
 import { loadPublicBusinessProfile } from "./lib/business-public.mjs";
+import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,48 +30,6 @@ if (!siteUrl) {
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function buildPrerenderedHtml({ title, description, canonicalPath, jsonLdObjects, bodyHtml, robots = "index, follow" }) {
-  const fullTitle = title.includes("Temptation Motorsports")
-    ? title
-    : `${title} | Temptation Motorsports`;
-  const canonical = `${siteUrl}${canonicalPath}`;
-  const jsonLdScripts = jsonLdObjects
-    .map((obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</script>`)
-    .join("\n    ");
-
-  let html = shellHtml;
-  html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(fullTitle)}</title>`);
-  html = html.replace(
-    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="description" content="${escapeHtml(description)}" />`
-  );
-  html = html.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/i, "");
-
-  const headInject = `
-    <link rel="canonical" href="${escapeHtml(canonical)}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="${escapeHtml(fullTitle)}" />
-    <meta property="og:description" content="${escapeHtml(description)}" />
-    <meta property="og:url" content="${escapeHtml(canonical)}" />
-    <meta name="robots" content="${escapeHtml(robots)}" />
-    ${jsonLdScripts}`;
-
-  html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
-
-  const prerenderMain = `<main class="inventory-prerender conversion-prerender" id="conversion-prerender-fallback">${bodyHtml}</main>`;
-  html = html.replace(/<div id="root"><\/div>/i, `<div id="root">${prerenderMain}</div>`);
-
-  return html;
-}
-
 function conversionBody(page) {
   const cta =
     page.path === "/apply"
@@ -89,7 +48,7 @@ function conversionBody(page) {
   }
   const related =
     page.path === "/faq"
-      ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/payment-calculator">Payment calculator</a> · <a href="/sell-your-ride">Sell your ride</a></p>`
+      ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/payment-calculator">Payment calculator</a> · <a href="/reviews">Reviews</a> · <a href="/sell-your-ride">Sell your ride</a></p>`
       : page.path.startsWith("/sell-your-ride")
         ? `<p><a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a> · <a href="/contact">Contact us</a></p>`
         : `<p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/payment-calculator">Payment calculator</a></p>`;
@@ -109,12 +68,15 @@ let written = 0;
 
 for (const page of CONVERSION_PRERENDER_PAGES) {
   const jsonLdObjects = page.path === "/faq" ? [buildFaqPageJsonLd(FAQ_PRERENDER_ITEMS)] : [];
-  const html = buildPrerenderedHtml({
+  const html = buildPrerenderedHtml(shellHtml, {
+    siteUrl,
     title: page.title,
     description: page.description,
     canonicalPath: page.path,
     jsonLdObjects,
-    bodyHtml: conversionBody(page)
+    bodyHtml: conversionBody(page),
+    mainClass: "inventory-prerender conversion-prerender",
+    mainId: "conversion-prerender-fallback"
   });
 
   const segments = page.path.split("/").filter(Boolean);

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { buildOrganizationJsonLd, loadPublicBusinessProfile } from "./lib/business-public.mjs";
 import { buildFinancialServiceJsonLd } from "./lib/financing-seo.mjs";
 import { HOME_FINANCING_LINKS, HOME_PRERENDER, buildWebSiteJsonLd } from "./lib/home-seo.mjs";
+import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,14 +27,6 @@ if (!siteUrl) {
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function homeBody() {
   const topicLinks = HOME_FINANCING_LINKS.map(
     (link) => `<li><a href="${escapeHtml(link.path)}">${escapeHtml(link.label)}</a></li>`
@@ -48,46 +41,15 @@ function homeBody() {
         <a href="/financing">Powersports and motorsports financing</a> ·
         <a href="/apply">Apply free online</a> ·
         <a href="/inventory">Browse inventory</a> ·
+        <a href="/faq">FAQ</a> ·
+        <a href="/reviews">Reviews</a> ·
+        <a href="/payment-calculator">Payment calculator</a> ·
         <a href="/contact">Contact us</a>
       </p>
       <h2>Popular financing topics</h2>
       <ul>${topicLinks}</ul>
       <p>Phone: <a href="tel:${escapeHtml(profile.phoneTel)}">${escapeHtml(profile.phoneDisplay)}</a></p>
     </article>`;
-}
-
-function buildPrerenderedHtml({ title, description, jsonLdObjects, bodyHtml }) {
-  const fullTitle = title.includes("Temptation Motorsports")
-    ? title
-    : `${title} | Temptation Motorsports`;
-  const canonical = siteUrl;
-
-  let html = shellHtml;
-  html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(fullTitle)}</title>`);
-  html = html.replace(
-    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="description" content="${escapeHtml(description)}" />`
-  );
-  html = html.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`);
-
-  const jsonLdScripts = jsonLdObjects
-    .map((obj) => `<script type="application/ld+json">${JSON.stringify(obj)}</script>`)
-    .join("\n    ");
-
-  const headInject = `
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="${escapeHtml(fullTitle)}" />
-    <meta property="og:description" content="${escapeHtml(description)}" />
-    <meta property="og:url" content="${escapeHtml(canonical)}" />
-    <meta name="robots" content="index, follow" />
-    ${jsonLdScripts}`;
-
-  html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
-
-  const prerenderMain = `<main class="inventory-prerender home-prerender" id="home-prerender-fallback">${bodyHtml}</main>`;
-  html = html.replace(/<div id="root"><\/div>/i, `<div id="root">${prerenderMain}</div>`);
-
-  return html;
 }
 
 const organizationLd = buildOrganizationJsonLd(profile, {
@@ -100,7 +62,8 @@ const financialServiceLd = buildFinancialServiceJsonLd({
   serviceName: "Powersports and motorsports financing",
   description: HOME_PRERENDER.description,
   siteOrigin: siteUrl,
-  path: "/financing"
+  path: "/financing",
+  phoneTel: profile.phoneTel
 });
 
 const webSiteLd = buildWebSiteJsonLd({
@@ -108,11 +71,15 @@ const webSiteLd = buildWebSiteJsonLd({
   description: HOME_PRERENDER.description
 });
 
-const html = buildPrerenderedHtml({
+const html = buildPrerenderedHtml(shellHtml, {
+  siteUrl,
   title: HOME_PRERENDER.title,
   description: HOME_PRERENDER.description,
+  canonicalPath: "/",
   jsonLdObjects: [webSiteLd, organizationLd, financialServiceLd],
-  bodyHtml: homeBody()
+  bodyHtml: homeBody(),
+  mainClass: "inventory-prerender home-prerender",
+  mainId: "home-prerender-fallback"
 });
 
 fs.writeFileSync(indexPath, html, "utf8");
