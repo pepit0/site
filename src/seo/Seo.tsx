@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { formatSeoDocumentTitle } from "../lib/seoTitle";
 import {
   absoluteUrl,
   DEFAULT_OG_IMAGE_ALT,
@@ -30,7 +31,7 @@ export function Seo({
   ogImageUrl,
   ogImageAlt = DEFAULT_OG_IMAGE_ALT
 }: SeoProps) {
-  const fullTitle = title.includes("Temptation Motorsports") ? title : `${title} | Temptation Motorsports`;
+  const fullTitle = formatSeoDocumentTitle(title);
   const useAbsolute = hasPublicSiteOrigin() && !noindex;
   const canonical = useAbsolute ? absoluteUrl(path === "" ? "/" : path) : undefined;
   const ogImage = useAbsolute ? (ogImageUrl ?? absoluteUrl(ogImagePath)) : undefined;

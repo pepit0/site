@@ -1,5 +1,7 @@
 /** Build-time SEO helpers (keep in sync with src/seo/inventoryStructuredData.ts + inventoryPublicPrice.ts). */
 
+import { SEO_BASE_TITLE_MAX_CHARS } from "./seo-title.mjs";
+
 export const INVENTORY_CALL_FOR_PRICING = "Call for pricing";
 
 export function parseInventoryListPriceCad(raw) {
@@ -69,7 +71,7 @@ function inventoryUnitSeoStockLabel(row) {
   return `Stock ${row.stock_number.trim()}`;
 }
 
-export const SEO_DOCUMENT_TITLE_MAX = 55;
+export const SEO_DOCUMENT_TITLE_MAX = SEO_BASE_TITLE_MAX_CHARS;
 
 export function inventoryUnitSeoTitle(row) {
   return `${row.year} ${inventoryMakeModelTitle(row)} · ${inventoryUnitSeoStockLabel(row)}`;

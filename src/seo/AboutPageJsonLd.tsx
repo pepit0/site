@@ -7,19 +7,27 @@ export function AboutPageJsonLd() {
   if (!hasPublicSiteOrigin()) return null;
 
   const profile = getPublicBusinessProfile();
+  const pageUrl = absoluteUrl("/about");
+  const orgId = `${pageUrl}#organization`;
   const organization = buildOrganizationJsonLd(profile, {
     pageUrl: absoluteUrl("/"),
     description: ABOUT_SEO.description,
     types: ["Organization", "AutomotiveBusiness"]
   });
+  const { "@context": _ctx, ...orgBase } = organization;
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "AboutPage",
-    name: ABOUT_SEO.title,
-    description: ABOUT_SEO.description,
-    url: absoluteUrl("/about"),
-    mainEntity: organization
+    "@graph": [
+      {
+        "@type": "AboutPage",
+        name: ABOUT_SEO.title,
+        description: ABOUT_SEO.description,
+        url: pageUrl,
+        mainEntity: { "@id": orgId }
+      },
+      { ...orgBase, "@id": orgId }
+    ]
   };
 
   return (

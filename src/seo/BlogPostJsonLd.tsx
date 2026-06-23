@@ -9,13 +9,13 @@ type BlogPostJsonLdProps = {
 export function BlogPostJsonLd({ post }: BlogPostJsonLdProps) {
   if (!hasPublicSiteOrigin()) return null;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
+  const postUrl = absoluteUrl(`/blog/${post.slug}`);
+  const blogPosting = {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.seoDescription,
     datePublished: post.publishedAt,
-    url: absoluteUrl(`/blog/${post.slug}`),
+    url: postUrl,
     ...(post.thumbnail.startsWith("http")
       ? { image: post.thumbnail }
       : post.thumbnail.startsWith("/")
@@ -30,6 +30,20 @@ export function BlogPostJsonLd({ post }: BlogPostJsonLdProps) {
       name: "Temptation Motorsports",
       url: absoluteUrl("/")
     }
+  };
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      blogPosting,
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Blog", item: absoluteUrl("/blog") },
+          { "@type": "ListItem", position: 2, name: post.title, item: postUrl }
+        ]
+      }
+    ]
   };
 
   return (

@@ -7,7 +7,7 @@ import {
   FAQ_PRERENDER_ITEMS
 } from "./lib/conversion-seo.mjs";
 import { loadPublicBusinessProfile } from "./lib/business-public.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,14 +29,15 @@ if (!siteUrl) {
 
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function conversionBody(page) {
   const cta =
     page.path === "/apply"
-      ? `<p><a href="/apply">Apply for financing</a> · <a href="/inventory">Browse inventory</a></p>`
+      ? `<p><a href="${escapeHtml(abs("/apply"))}">Apply for financing</a> · <a href="${escapeHtml(abs("/inventory"))}">Browse inventory</a></p>`
       : page.path.startsWith("/sell-your-ride")
-        ? `<p><a href="/sell-your-ride/apply">Start sell form</a> · <a href="/sell-your-ride">How it works</a></p>`
-        : `<p><a href="/apply">Apply for financing</a> · <a href="/contact">Contact us</a></p>`;
+        ? `<p><a href="${escapeHtml(abs("/sell-your-ride/apply"))}">Start sell form</a> · <a href="${escapeHtml(abs("/sell-your-ride"))}">How it works</a></p>`
+        : `<p><a href="${escapeHtml(abs("/apply"))}">Apply for financing</a> · <a href="${escapeHtml(abs("/contact"))}">Contact us</a></p>`;
 
   let extra = "";
   if (page.path === "/faq") {
@@ -48,10 +49,10 @@ function conversionBody(page) {
   }
   const related =
     page.path === "/faq"
-      ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/payment-calculator">Payment calculator</a> · <a href="/reviews">Reviews</a> · <a href="/sell-your-ride">Sell your ride</a></p>`
+      ? `<p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a> · <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a> · <a href="${escapeHtml(abs("/reviews"))}">Reviews</a> · <a href="${escapeHtml(abs("/sell-your-ride"))}">Sell your ride</a></p>`
       : page.path.startsWith("/sell-your-ride")
-        ? `<p><a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a> · <a href="/contact">Contact us</a></p>`
-        : `<p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/payment-calculator">Payment calculator</a></p>`;
+        ? `<p><a href="${escapeHtml(abs("/inventory"))}">Inventory</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a> · <a href="${escapeHtml(abs("/contact"))}">Contact us</a></p>`
+        : `<p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a> · <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a></p>`;
 
   return `
     <article>

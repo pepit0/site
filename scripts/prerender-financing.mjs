@@ -6,7 +6,7 @@ import {
   buildFinancialServiceJsonLd,
   FINANCING_PRERENDER_PAGES
 } from "./lib/financing-seo.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,25 +28,26 @@ if (!siteUrl) {
 
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function financingBody(page) {
   const topicLinks = FINANCING_PRERENDER_PAGES.filter((p) => p.path !== page.path && p.path !== "/financing")
     .map(
       (p) =>
-        `<li><a href="${escapeHtml(p.path)}">${escapeHtml(p.title.split("—")[0].trim())}</a></li>`
+        `<li><a href="${escapeHtml(abs(p.path))}">${escapeHtml(p.title.split("—")[0].trim())}</a></li>`
     )
     .join("\n");
 
   return `
-    <p><a href="/">Home</a> · <a href="/financing">Financing</a></p>
+    <p><a href="${escapeHtml(abs("/"))}">Home</a> · <a href="${escapeHtml(abs("/financing"))}">Financing</a></p>
     <article>
       <h1>${escapeHtml(page.h1)}</h1>
       <p class="financing-directAnswer">${escapeHtml(page.intro)}</p>
       <p>
-        <a href="/apply">Apply for financing</a> ·
-        <a href="/inventory">Browse inventory</a> ·
-        <a href="/payment-calculator">Payment calculator</a> ·
-        <a href="/faq">FAQ</a>
+        <a href="${escapeHtml(abs("/apply"))}">Apply for financing</a> ·
+        <a href="${escapeHtml(abs("/inventory"))}">Browse inventory</a> ·
+        <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a> ·
+        <a href="${escapeHtml(abs("/faq"))}">FAQ</a>
       </p>
       ${topicLinks ? `<h2>More financing topics</h2><ul>${topicLinks}</ul>` : ""}
     </article>`;

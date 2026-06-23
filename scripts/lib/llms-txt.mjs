@@ -123,7 +123,7 @@ export function buildLlmsTxt({ origin, businessProfile, blogPosts }) {
   ];
 
   const summary =
-    "Temptation Motorsports is an Edmonton-area powersports dealer and financing broker helping Canadians buy and finance motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, trailers, and more — good, bad, or no credit.";
+    "Temptation Motorsports is an Edmonton-area powersports dealer and financing broker helping Canadians buy and finance motorcycles, ATVs, snowmobiles, side-by-sides, watercraft, trailers, and more. Good, bad, or no credit welcome.";
 
   const contactParts = [
     `Call or text ${businessProfile.phoneDisplay}`,
@@ -147,7 +147,7 @@ export function buildLlmsTxt({ origin, businessProfile, blogPosts }) {
     section("Shop", shopItems),
     section("Financing", financingItems),
     section("Company", companyItems),
-    section("Optional", optionalItems)
+    section("More", optionalItems)
   ]
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")

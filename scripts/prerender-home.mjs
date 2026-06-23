@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { buildOrganizationJsonLd, loadPublicBusinessProfile } from "./lib/business-public.mjs";
 import { buildFinancialServiceJsonLd } from "./lib/financing-seo.mjs";
 import { HOME_FINANCING_LINKS, HOME_PRERENDER, buildWebSiteJsonLd } from "./lib/home-seo.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,10 +26,11 @@ if (!siteUrl) {
 
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function homeBody() {
   const topicLinks = HOME_FINANCING_LINKS.map(
-    (link) => `<li><a href="${escapeHtml(link.path)}">${escapeHtml(link.label)}</a></li>`
+    (link) => `<li><a href="${escapeHtml(abs(link.path))}">${escapeHtml(link.label)}</a></li>`
   ).join("\n");
 
   return `
@@ -38,13 +39,13 @@ function homeBody() {
       <p>${escapeHtml(HOME_PRERENDER.intro)}</p>
       <p>${escapeHtml(HOME_PRERENDER.subIntro)}</p>
       <p>
-        <a href="/financing">Powersports and motorsports financing</a> ·
-        <a href="/apply">Apply free online</a> ·
-        <a href="/inventory">Browse inventory</a> ·
-        <a href="/faq">FAQ</a> ·
-        <a href="/reviews">Reviews</a> ·
-        <a href="/payment-calculator">Payment calculator</a> ·
-        <a href="/contact">Contact us</a>
+        <a href="${escapeHtml(abs("/financing"))}">Powersports and motorsports financing</a> ·
+        <a href="${escapeHtml(abs("/apply"))}">Apply free online</a> ·
+        <a href="${escapeHtml(abs("/inventory"))}">Browse inventory</a> ·
+        <a href="${escapeHtml(abs("/faq"))}">FAQ</a> ·
+        <a href="${escapeHtml(abs("/reviews"))}">Reviews</a> ·
+        <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a> ·
+        <a href="${escapeHtml(abs("/contact"))}">Contact us</a>
       </p>
       <h2>Popular financing topics</h2>
       <ul>${topicLinks}</ul>

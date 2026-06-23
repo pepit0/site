@@ -5,7 +5,7 @@
 export const FINANCING_PRERENDER_PAGES = [
   {
     path: "/financing",
-    title: "Powersports & motorsports financing Canada",
+    title: "Powersports financing guides Canada",
     description:
       "Powersports and motorsports financing for ATV, motorcycle, snowmobile, side-by-side, boat, jet ski, trailer, and auto loans across Canada. Edmonton / Sherwood Park, Alberta. Good credit, bad credit, or no credit. Free online application.",
     h1: "Powersports and motorsports financing in Canada",

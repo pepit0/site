@@ -7,19 +7,27 @@ export function ContactPageJsonLd() {
   if (!hasPublicSiteOrigin()) return null;
 
   const profile = getPublicBusinessProfile();
+  const pageUrl = absoluteUrl("/contact");
+  const orgId = `${pageUrl}#organization`;
   const organization = buildOrganizationJsonLd(profile, {
     pageUrl: absoluteUrl("/"),
     description: CONTACT_SEO.description,
     types: ["Organization", "AutomotiveBusiness", "FinancialService"]
   });
+  const { "@context": _ctx, ...orgBase } = organization;
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "ContactPage",
-    name: CONTACT_SEO.title,
-    description: CONTACT_SEO.description,
-    url: absoluteUrl("/contact"),
-    mainEntity: organization
+    "@graph": [
+      {
+        "@type": "ContactPage",
+        name: CONTACT_SEO.title,
+        description: CONTACT_SEO.description,
+        url: pageUrl,
+        mainEntity: { "@id": orgId }
+      },
+      { ...orgBase, "@id": orgId }
+    ]
   };
 
   return (

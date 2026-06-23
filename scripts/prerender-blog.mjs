@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchPublicBlogPosts } from "./lib/fetch-public-blog.mjs";
 import { BLOG_HUB_SEO, buildBlogPostingJsonLd } from "./lib/blog-seo.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,22 +26,23 @@ if (!siteUrl) {
 const { rows: blogPosts } = await fetchPublicBlogPosts({ supabaseUrl, supabaseAnonKey });
 
 const shellHtml = fs.readFileSync(indexPath, "utf8");
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function blogHubBody(posts) {
   const links = posts
     .map(
       (post) =>
-        `<li><a href="${escapeHtml(post.path)}">${escapeHtml(post.title)}</a> — ${escapeHtml(post.excerpt)}</li>`
+        `<li><a href="${escapeHtml(abs(post.path))}">${escapeHtml(post.title)}</a> — ${escapeHtml(post.excerpt)}</li>`
     )
     .join("\n");
 
   return `
-    <p><a href="/">Home</a> · Blog</p>
+    <p><a href="${escapeHtml(abs("/"))}">Home</a> · Blog</p>
     <article>
       <h1>${escapeHtml(BLOG_HUB_SEO.h1)}</h1>
       <p>${escapeHtml(BLOG_HUB_SEO.tagline)}</p>
       <ul>${links}</ul>
-      <p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a></p>
+      <p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a></p>
     </article>`;
 }
 
@@ -51,15 +52,15 @@ function blogPostBody(post) {
     : post.body.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n");
 
   return `
-    <p><a href="/">Home</a> · <a href="/blog">Blog</a></p>
+    <p><a href="${escapeHtml(abs("/"))}">Home</a> · <a href="${escapeHtml(abs("/blog"))}">Blog</a></p>
     <article>
       <h1>${escapeHtml(post.title)}</h1>
       ${bodyContent}
       <p>
-        <a href="/apply">Apply for financing</a> ·
-        <a href="/financing">Financing guides</a> ·
-        <a href="/inventory">Inventory</a> ·
-        <a href="/blog">Back to blog</a>
+        <a href="${escapeHtml(abs("/apply"))}">Apply for financing</a> ·
+        <a href="${escapeHtml(abs("/financing"))}">Financing guides</a> ·
+        <a href="${escapeHtml(abs("/inventory"))}">Inventory</a> ·
+        <a href="${escapeHtml(abs("/blog"))}">Back to blog</a>
       </p>
     </article>`;
 }

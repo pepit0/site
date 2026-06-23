@@ -1,11 +1,19 @@
 /** Shared prerender HTML injection (react-helmet-async dedupes tags marked data-rh="true"). */
 
+import { formatSeoDocumentTitle } from "./seo-title.mjs";
+
 export function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+export function absoluteInternalUrl(siteUrl, path) {
+  const base = String(siteUrl).replace(/\/+$/, "");
+  const loc = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${loc}`;
 }
 
 /**
@@ -38,7 +46,7 @@ export function buildPrerenderedHtml(
     mainId = "inventory-prerender-fallback"
   }
 ) {
-  const fullTitle = title.includes("Temptation Motorsports") ? title : `${title} | Temptation Motorsports`;
+  const fullTitle = formatSeoDocumentTitle(title);
   const canonical = `${siteUrl}${canonicalPath}`;
   const rh = ' data-rh="true"';
   const jsonLdScripts = jsonLdObjects
@@ -65,8 +73,8 @@ export function buildPrerenderedHtml(
   html = html.replace(/<\/head>/i, `${headInject}\n  </head>`);
 
   const rootAttr = rootClass ? ` class="${escapeHtml(rootClass)}"` : "";
-  const prerenderMain = `<main class="${escapeHtml(mainClass)}" id="${escapeHtml(mainId)}">${bodyHtml}</main>`;
-  html = html.replace(/<div id="root"><\/div>/i, `<div id="root"${rootAttr}>${prerenderMain}</div>`);
+  const prerenderMain = `<main class="${escapeHtml(mainClass)}" id="${escapeHtml(mainId)}" hidden aria-hidden="true">${bodyHtml}</main>`;
+  html = html.replace(/<div id="root"><\/div>/i, `<div id="root"${rootAttr}></div>\n    ${prerenderMain}`);
 
   return html;
 }

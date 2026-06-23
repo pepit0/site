@@ -16,7 +16,7 @@ import {
   financingNavLabelForCategory,
   financingPathForCategory
 } from "./lib/inventory-seo.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +50,7 @@ if (error) {
 }
 
 const VEHICLE_CATEGORIES = ["Motorcycle", "ATV", "Snowmobile", "Side by side", "Watercraft", "Trailer"];
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function inventoryCategoryHref(category) {
   return `/inventory?category=${encodeURIComponent(category)}`;
@@ -77,7 +78,7 @@ function inventoryCategoryBrowseLabel(category) {
 function inventoryBrowseByTypeSection() {
   const items = VEHICLE_CATEGORIES.map(
     (category) =>
-      `<li><a href="${escapeHtml(inventoryCategoryHref(category))}">${escapeHtml(inventoryCategoryBrowseLabel(category))}</a></li>`
+      `<li><a href="${escapeHtml(abs(inventoryCategoryHref(category)))}">${escapeHtml(inventoryCategoryBrowseLabel(category))}</a></li>`
   ).join("\n        ");
   return `
       <section aria-labelledby="prerender-browse-type-heading">
@@ -98,7 +99,7 @@ function unitDetailBody(row, allRows) {
   const similarItems = similarRows
     .map((similar) => {
       const similarTitle = inventoryMakeModelTitle(similar);
-      const href = `/inventory/${similar.id}`;
+      const href = abs(`/inventory/${similar.id}`);
       return `<li><a href="${escapeHtml(href)}">${escapeHtml(`${similar.year} ${similarTitle}`)}</a></li>`;
     })
     .join("\n        ");
@@ -110,13 +111,13 @@ function unitDetailBody(row, allRows) {
         <ul>
         ${similarItems}
         </ul>
-        <p><a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(inventoryCategoryBrowseLabel(row.category))}</a></p>
+        <p><a href="${escapeHtml(abs(inventoryCategoryHref(row.category)))}">${escapeHtml(inventoryCategoryBrowseLabel(row.category))}</a></p>
       </section>`
       : "";
   const financingPath = financingPathForCategory(row.category);
   const financingLabel = financingNavLabelForCategory(row.category);
   return `
-    <p><a href="/inventory">← Inventory</a> · <a href="${escapeHtml(inventoryCategoryHref(row.category))}">${escapeHtml(row.category)}</a></p>
+    <p><a href="${escapeHtml(abs("/inventory"))}">← Inventory</a> · <a href="${escapeHtml(abs(inventoryCategoryHref(row.category)))}">${escapeHtml(row.category)}</a></p>
     <article>
       <p>${escapeHtml(row.category)} · ${escapeHtml(row.status)}</p>
       <h1>${escapeHtml(`${row.year} ${title}`)}</h1>
@@ -128,15 +129,15 @@ function unitDetailBody(row, allRows) {
         ${listingParagraphs}
       </section>
       <p>
-        <a href="${escapeHtml(financingPath)}">${escapeHtml(financingLabel)}</a> ·
-        <a href="/financing">All financing guides</a> ·
-        <a href="/payment-calculator">Payment calculator</a> ·
-        <a href="/faq">FAQ</a> ·
-        <a href="/reviews">Reviews</a> ·
-        <a href="/about">About us</a> ·
-        <a href="/contact">Contact</a>
+        <a href="${escapeHtml(abs(financingPath))}">${escapeHtml(financingLabel)}</a> ·
+        <a href="${escapeHtml(abs("/financing"))}">All financing guides</a> ·
+        <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a> ·
+        <a href="${escapeHtml(abs("/faq"))}">FAQ</a> ·
+        <a href="${escapeHtml(abs("/reviews"))}">Reviews</a> ·
+        <a href="${escapeHtml(abs("/about"))}">About us</a> ·
+        <a href="${escapeHtml(abs("/contact"))}">Contact</a>
       </p>
-      <p><a href="${escapeHtml(path)}">View full listing</a></p>
+      <p><a href="${escapeHtml(abs(path))}">View full listing</a></p>
       ${similarSection}
       ${inventoryBrowseByTypeSection()}
     </article>`;
@@ -146,7 +147,7 @@ function inventoryListBody(allRows, displayRows) {
   const items = displayRows
     .map((row) => {
       const title = inventoryMakeModelTitle(row);
-      const href = `/inventory/${row.id}`;
+      const href = abs(`/inventory/${row.id}`);
       return `<li><a href="${escapeHtml(href)}">${escapeHtml(`${row.year} ${title}`)}</a> — ${escapeHtml(row.status)} · ${escapeHtml(INVENTORY_CALL_FOR_PRICING)}</li>`;
     })
     .join("\n");
@@ -158,11 +159,11 @@ function inventoryListBody(allRows, displayRows) {
     <h1>Inventory</h1>
     <p>${allRows.length} unit${allRows.length === 1 ? "" : "s"} at Temptation Motorsports. ${escapeHtml(INVENTORY_CALL_FOR_PRICING)} on all listings.</p>
     <p>
-      <a href="/financing">Financing guides</a> ·
-      <a href="/faq">FAQ</a> ·
-      <a href="/payment-calculator">Payment calculator</a> ·
-      <a href="/reviews">Reviews</a> ·
-      <a href="/apply">Apply for financing</a>
+      <a href="${escapeHtml(abs("/financing"))}">Financing guides</a> ·
+      <a href="${escapeHtml(abs("/faq"))}">FAQ</a> ·
+      <a href="${escapeHtml(abs("/payment-calculator"))}">Payment calculator</a> ·
+      <a href="${escapeHtml(abs("/reviews"))}">Reviews</a> ·
+      <a href="${escapeHtml(abs("/apply"))}">Apply for financing</a>
     </p>
     ${overflowNote}
     <ul>${items}</ul>

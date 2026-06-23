@@ -8,7 +8,7 @@ import {
   buildReviewJsonLd,
   loadGoogleReviews
 } from "./lib/google-reviews.mjs";
-import { buildPrerenderedHtml, escapeHtml } from "./lib/prerender-html.mjs";
+import { buildPrerenderedHtml, escapeHtml, absoluteInternalUrl } from "./lib/prerender-html.mjs";
 import { loadViteBuildEnv } from "./lib/read-vite-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +31,7 @@ if (!siteUrl) {
 const shellHtml = fs.readFileSync(indexPath, "utf8");
 const profile = loadPublicBusinessProfile(root);
 const googleReviews = loadGoogleReviews(root);
+const abs = (path) => absoluteInternalUrl(siteUrl, path);
 
 function companyBody(page) {
   const addressLines = formatAddressLines(profile)
@@ -52,18 +53,18 @@ function companyBody(page) {
       <p>${escapeHtml(page.intro)}</p>
       <p>${googleReviews.summary.ratingValue} out of 5 from ${googleReviews.summary.reviewCount} Google reviews.</p>
       <ul>${reviewItems}</ul>
-      <p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/faq">FAQ</a></p>
-      <p><a href="/apply">Apply for financing</a></p>
+      <p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a></p>
+      <p><a href="${escapeHtml(abs("/apply"))}">Apply for financing</a></p>
     </article>`;
   }
 
   const relatedLinks =
     page.path === "/about"
-      ? `<p><a href="/financing">Financing guides</a> · <a href="/reviews">Reviews</a> · <a href="/faq">FAQ</a> · <a href="/inventory">Inventory</a></p>`
+      ? `<p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/reviews"))}">Reviews</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a></p>`
       : page.path === "/contact"
-        ? `<p><a href="/financing">Financing guides</a> · <a href="/faq">FAQ</a> · <a href="/inventory">Inventory</a></p>`
+        ? `<p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/faq"))}">FAQ</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a></p>`
         : page.path === "/payment-calculator"
-          ? `<p><a href="/financing">Financing guides</a> · <a href="/inventory">Inventory</a> · <a href="/apply">Apply for financing</a></p>`
+          ? `<p><a href="${escapeHtml(abs("/financing"))}">Financing guides</a> · <a href="${escapeHtml(abs("/inventory"))}">Inventory</a> · <a href="${escapeHtml(abs("/apply"))}">Apply for financing</a></p>`
           : "";
 
   return `
@@ -74,7 +75,7 @@ function companyBody(page) {
       ${relatedLinks}
       <p>Phone: <a href="tel:${escapeHtml(profile.phoneTel)}">${escapeHtml(profile.phoneDisplay)}</a></p>
       <p>Email: <a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>
-      <p><a href="/apply">Apply for financing</a></p>
+      <p><a href="${escapeHtml(abs("/apply"))}">Apply for financing</a></p>
     </article>`;
 }
 
@@ -116,13 +117,21 @@ for (const page of COMPANY_PRERENDER_PAGES) {
       ]
     };
   } else {
+    const pageUrl = `${siteUrl}${page.path}`;
+    const orgId = `${pageUrl}#organization`;
+    const { "@context": _ctx, ...orgBase } = organization;
     pageLd = {
       "@context": "https://schema.org",
-      "@type": pageType,
-      name: page.title,
-      description: page.description,
-      url: `${siteUrl}${page.path}`,
-      mainEntity: organization
+      "@graph": [
+        {
+          "@type": pageType,
+          name: page.title,
+          description: page.description,
+          url: pageUrl,
+          mainEntity: { "@id": orgId }
+        },
+        { ...orgBase, "@id": orgId }
+      ]
     };
   }
 

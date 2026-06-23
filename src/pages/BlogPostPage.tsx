@@ -7,7 +7,6 @@ import { fetchPublicBlogPostBySlug, fetchPublicBlogPosts } from "../lib/blogPost
 import { supabase } from "../lib/supabase";
 import { sanitizeBlogHtml } from "../lib/blogBodyHtml";
 import { BlogPostJsonLd } from "../seo/BlogPostJsonLd";
-import { BreadcrumbJsonLd } from "../seo/BreadcrumbJsonLd";
 import { Seo } from "../seo/Seo";
 
 export function BlogPostPage() {
@@ -60,12 +59,6 @@ export function BlogPostPage() {
     <div className="blog-page">
       <Seo title={post.title} description={post.seoDescription} path={`/blog/${post.slug}`} />
       <BlogPostJsonLd post={post} />
-      <BreadcrumbJsonLd
-        items={[
-          { name: "Blog", path: "/blog" },
-          { name: post.title, path: `/blog/${post.slug}` }
-        ]}
-      />
 
       <header className="page-header">
         <nav className="blog-breadcrumbs" aria-label="Breadcrumb">

@@ -157,19 +157,30 @@ export function InventoryUnitDetailPage() {
   const unitOgImage =
     row && !isSold && supabaseUrl ? inventoryUnitPrimaryImage(row, supabaseUrl) : undefined;
   const unitOgAlt = row ? `${row.year} ${inventoryMakeModelTitle(row)}` : undefined;
+  const seoTitle = row
+    ? inventoryUnitSeoDocumentTitle(row)
+    : unitId
+      ? "Ride for sale"
+      : "Ride not found";
+  const seoDescription = row
+    ? inventoryUnitSeoDescription(row)
+    : unitId
+      ? "View this ride at Temptation Motorsports in Edmonton. Call for pricing. Financing available across Canada."
+      : "We could not find this ride.";
+  const seoNoindex = row ? isSold : true;
 
   return (
     <div className="inventory inventory-detail">
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        path={seoPath}
+        noindex={seoNoindex}
+        ogImageUrl={unitOgImage}
+        ogImageAlt={unitOgAlt}
+      />
       {row ? (
         <>
-          <Seo
-            title={inventoryUnitSeoDocumentTitle(row)}
-            description={inventoryUnitSeoDescription(row)}
-            path={seoPath}
-            noindex={isSold}
-            ogImageUrl={unitOgImage}
-            ogImageAlt={unitOgAlt}
-          />
           <BreadcrumbJsonLd
             items={[
               { name: "Inventory", path: "/inventory" },
@@ -179,9 +190,7 @@ export function InventoryUnitDetailPage() {
           />
           <InventoryProductJsonLd row={row} />
         </>
-      ) : (
-        <Seo title="Ride not found" description="We could not find this ride." path={seoPath} noindex />
-      )}
+      ) : null}
 
       <p className="inventory-detailBack">
         <Link to={backHref} className="inventory-detailBackLink">
@@ -190,9 +199,12 @@ export function InventoryUnitDetailPage() {
       </p>
 
       {isLoading ? (
-        <p className="inventory-empty" role="status">
-          Loading…
-        </p>
+        <>
+          <h1 className="inventory-detailTitle" role="status">
+            Loading ride details…
+          </h1>
+          <p className="inventory-empty">Loading…</p>
+        </>
       ) : loadError ? (
         <p className="inventory-empty" role="alert">
           {loadError}

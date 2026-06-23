@@ -9,7 +9,7 @@ export const ABOUT_SEO = {
 } as const;
 
 export const ABOUT_HERO = {
-  h1: "About Temptation Motorsports",
+  h1: "Our Edmonton-area team",
   tagline: "Powersports and motorsports financing plus rides for sale, from Alberta to every province.",
   intro: [
     "Temptation Motorsports is a team in Sherwood Park near Edmonton, Alberta. We help people all over Canada pay for the rides they want and find units that fit their budget.",

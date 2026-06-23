@@ -16,8 +16,9 @@ export { INVENTORY_CALL_FOR_PRICING } from "../lib/inventoryPublicPrice";
 
 import { absoluteUrl, hasPublicSiteOrigin } from "../lib/siteUrl";
 import { ensureHttpsUrl } from "../lib/ensureHttpsUrl";
+import { SEO_BASE_TITLE_MAX_CHARS } from "../lib/seoTitle";
 
-export const SEO_DOCUMENT_TITLE_MAX = 55;
+export const SEO_DOCUMENT_TITLE_MAX = SEO_BASE_TITLE_MAX_CHARS;
 
 function inventorySeller(siteOrigin: string) {
   return {
