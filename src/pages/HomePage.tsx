@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import heroBackgroundPng from "../assets/background.png";
 import heroBackgroundWebp from "../assets/background.webp";
 import { PageSlideLink } from "../components/PageSlideLink";
+import { HomeHeroReviewCarousel } from "../components/HomeHeroReviewCarousel";
+import { HomeHeroRotatingHook } from "../components/HomeHeroRotatingHook";
 import { HomeReviewsSection } from "../components/HomeReviewsSection";
 import { HOME_PREVIEW_SLIDESHOW, HOME_PREVIEW_SLIDESHOW_MS } from "../data/homePreviewSlideshow";
 import { HOME_PREVIEW_HERO } from "../data/homePreviewHeroCopy";
@@ -153,7 +155,9 @@ export function HomePage() {
           <div className="home-previewContentInner">
             <section className="home-previewHero" aria-labelledby="home-hook">
               <h1 id="home-hook" className="home-previewHook">
-                <span className="home-previewHookDisplay">{HOME_PREVIEW_HERO.hook}</span>
+                <span className="home-previewHookDisplay">
+                  <HomeHeroRotatingHook />
+                </span>
                 <span className="visually-hidden">{HOME_PREVIEW_HERO.seoH1}</span>
               </h1>
               <p className="home-previewTagline">{HOME_PREVIEW_HERO.tagline}</p>
@@ -190,6 +194,7 @@ export function HomePage() {
               </div>
             </section>
           </div>
+          <HomeHeroReviewCarousel />
         </div>
 
         {!reduceMotion && HOME_PREVIEW_SLIDESHOW.length > 1 ? (

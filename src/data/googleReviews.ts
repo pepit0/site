@@ -29,6 +29,9 @@ export function hasPublishedGoogleReviews(): boolean {
 /** Reviews shown in the home page marquee (positive Google reviews only). */
 export const HOME_FEATURED_REVIEWS = GOOGLE_REVIEWS.filter((review) => review.rating >= 4);
 
+/** Five-star reviews for the home hero carousel. */
+export const HOME_HERO_FIVE_STAR_REVIEWS = GOOGLE_REVIEWS.filter((review) => review.rating === 5);
+
 export const REVIEWS_PAGE_SEO = {
   title: "Customer reviews",
   description:
@@ -48,6 +51,13 @@ export const HOME_REVIEWS_SECTION = {
   onGoogleLabel: "See all reviews on Google",
   readMoreLabel: "Read more"
 } as const;
+
+export const HOME_HERO_REVIEW_CAROUSEL = {
+  heading: "Reviews from Canadians we've helped!"
+} as const;
+
+/** Max characters shown in the home hero review carousel card. */
+export const HOME_HERO_REVIEW_MAX_CHARS = 200;
 
 /** Max characters shown in the home review slider before "Read more". */
 export const HOME_REVIEW_PREVIEW_MAX_CHARS = 110;

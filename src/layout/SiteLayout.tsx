@@ -8,6 +8,7 @@ import { MarketingPixelsRouteSync } from "../components/MarketingPixelsRouteSync
 import { SiteChatMount } from "../components/chat/SiteChatMount";
 import { PaymentCalculatorWidget } from "../components/PaymentCalculatorWidget";
 import { TawkProvider } from "../components/chat/tawkContext";
+import { SiteFooterCollapsibleSection } from "../components/SiteFooterCollapsibleSection";
 import { SiteNavAdminToolsDropdown } from "../components/SiteNavAdminToolsDropdown";
 import { SiteNavInventoryDropdown } from "../components/SiteNavInventoryDropdown";
 import { VEHICLE_CATEGORIES } from "../data/inventory";
@@ -24,6 +25,18 @@ import {
 import { formatBusinessAddressLines, getPublicBusinessProfile } from "../lib/businessPublic";
 import textLogoUrl from "../assets/textlogo.png";
 import bikerLogoUrl from "../assets/bikerlogo.png";
+
+const FINANCING_FOOTER_GUIDE_SLUGS = new Set([
+  "atv-financing",
+  "motorcycle-financing",
+  "snowmobile-financing",
+  "side-by-side-financing",
+  "boat-financing",
+  "jet-ski-financing",
+  "trailer-financing",
+  "auto-financing",
+  "powersports-financing-bad-credit"
+]);
 
 function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
   const location = useLocation();
@@ -58,13 +71,13 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
       />
       <header className={`site-header${mobileMenuOpen ? " site-headerMobileOpen" : ""}`}>
         <div className="site-headerInner">
-          <NavLink to="/" className="site-brand" end>
+          <NavLink to="/" className="site-brand" end aria-label="Temptation Motorsports home">
             <img
               src={textLogoUrl}
-              alt="Temptation Motorsports"
+              alt=""
               className="site-brandLogo"
-              width={240}
-              height={160}
+              width={640}
+              height={560}
               decoding="async"
             />
           </NavLink>
@@ -77,26 +90,10 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
             </NavLink>
             <SiteNavInventoryDropdown />
             <NavLink
-              to="/financing"
-              className={({ isActive, isPending }) =>
-                `site-navLink${isActive || (location.pathname.startsWith("/financing/") && !isPending) ? " site-navLinkActive" : ""}`
-              }
-            >
-              Financing
-            </NavLink>
-            <NavLink
               to="/sell-your-ride"
               className={({ isActive }) => `site-navLink${isActive ? " site-navLinkActive" : ""}`}
             >
               Sell your ride
-            </NavLink>
-            <NavLink
-              to="/blog"
-              className={({ isActive, isPending }) =>
-                `site-navLink${isActive || (location.pathname.startsWith("/blog/") && !isPending) ? " site-navLinkActive" : ""}`
-              }
-            >
-              Blog
             </NavLink>
             <NavLink
               to="/contact"
@@ -175,22 +172,24 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                     <Link to="/sell-your-ride">Sell your ride</Link>
                   </li>
                 </ul>
-                <p className="site-footerSublistLabel">Browse by type</p>
-                <ul className="site-footerLinks site-footerSublist">
-                  {VEHICLE_CATEGORIES.map((category) => (
-                    <li key={category}>
-                      <Link to={inventoryCategoryHref(category)}>{inventoryCategoryBrowseLabel(category)}</Link>
-                    </li>
-                  ))}
-                </ul>
-                <p className="site-footerSublistLabel">Popular brands</p>
-                <ul className="site-footerLinks site-footerSublist">
-                  {INVENTORY_POPULAR_BRANDS.map((brand) => (
-                    <li key={brand}>
-                      <Link to={inventoryMakeSearchHref(brand)}>{brand}</Link>
-                    </li>
-                  ))}
-                </ul>
+                <SiteFooterCollapsibleSection label="Browse by type">
+                  <ul className="site-footerLinks site-footerSublist">
+                    {VEHICLE_CATEGORIES.map((category) => (
+                      <li key={category}>
+                        <Link to={inventoryCategoryHref(category)}>{inventoryCategoryBrowseLabel(category)}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </SiteFooterCollapsibleSection>
+                <SiteFooterCollapsibleSection label="Popular brands">
+                  <ul className="site-footerLinks site-footerSublist">
+                    {INVENTORY_POPULAR_BRANDS.map((brand) => (
+                      <li key={brand}>
+                        <Link to={inventoryMakeSearchHref(brand)}>{brand}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </SiteFooterCollapsibleSection>
               </nav>
 
               <nav className="site-footerCol" aria-label="Learn">
@@ -205,27 +204,19 @@ function SiteLayoutChrome({ navVariant }: { navVariant: "crm" | "marketing" }) {
                   <li>
                     <Link to="/reviews">Reviews</Link>
                   </li>
+                  <li>
+                    <Link to="/blog">Blog</Link>
+                  </li>
                 </ul>
-                <p className="site-footerSublistLabel">Financing guides</p>
-                <ul className="site-footerLinks site-footerSublist">
-                  {FINANCING_TOPIC_PAGES.filter((page) =>
-                    [
-                      "atv-financing",
-                      "motorcycle-financing",
-                      "snowmobile-financing",
-                      "side-by-side-financing",
-                      "boat-financing",
-                      "jet-ski-financing",
-                      "trailer-financing",
-                      "auto-financing",
-                      "powersports-financing-bad-credit"
-                    ].includes(page.slug)
-                  ).map((page) => (
-                    <li key={page.slug}>
-                      <Link to={page.path}>{page.navLabel}</Link>
-                    </li>
-                  ))}
-                </ul>
+                <SiteFooterCollapsibleSection label="Financing guides">
+                  <ul className="site-footerLinks site-footerSublist">
+                    {FINANCING_TOPIC_PAGES.filter((page) => FINANCING_FOOTER_GUIDE_SLUGS.has(page.slug)).map((page) => (
+                      <li key={page.slug}>
+                        <Link to={page.path}>{page.navLabel}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </SiteFooterCollapsibleSection>
               </nav>
 
               <nav className="site-footerCol" aria-label="Help">
